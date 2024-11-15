@@ -6,7 +6,9 @@ use App\Models\Proyecto;
 use App\Http\Controllers\class\StatusController;
 use App\Http\Controllers\class\PorcentTasksController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\class\ProgressPublicaciontController;
 use DB;
+
 
 
 class ApiController extends Controller
@@ -19,12 +21,22 @@ class ApiController extends Controller
     //busca por nombre del proyecto, clave o responsable
     public function getProjectsByNombreClaveResponsable(Request $request){
         $statusController = new StatusController();
+        //instancia la clase que calcula progresos de acuerdo con publicacion
+        $progressPublicationController = new ProgressPublicaciontController();
 
         $projectsByName = $statusController->appendLabelAndColorStatus($this->getProjectsByName($request->value));
         $projectsByClave = $statusController->appendLabelAndColorStatus($this->getProjectsByClave($request->value));
         $projectsByResp = $statusController->appendLabelAndColorStatus($this->getProjectsByResponsable($request->value));
 
-        return response()->json($projectsByName->concat($projectsByClave)->concat($projectsByResp));
+        $allCoincidencies = $projectsByName->concat($projectsByClave)->concat($projectsByResp)
+        ->map(function($project) use ($progressPublicationController){
+            //embebimos el progreso
+            $virtualProgressPublication = $progressPublicationController->getProgressByPublication($project);
+            $project->progreso = $virtualProgressPublication;
+            return $project;
+        });
+
+        return response()->json($allCoincidencies);
     }
 
     function getProjectsByClave($value){

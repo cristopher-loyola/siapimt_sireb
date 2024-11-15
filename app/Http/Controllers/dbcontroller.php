@@ -50,6 +50,8 @@ use App\Http\Controllers\EjecutivoController;
 use App\Http\Controllers\class\StatusController;
 use App\Http\Controllers\class\PorcentTasksController;
 use App\Http\Controllers\ProyectoController;
+use App\Http\Controllers\class\ProgressPublicaciontController;
+
 
 
 
@@ -914,6 +916,9 @@ class dbcontroller extends Controller
         obtenemos los proyectos a un area dada
     */
     public function getProjectsByArea($area){
+        //instancia la clase que calcula progresos de acuerdo con publicacion
+        $progressPublicationController = new ProgressPublicaciontController(); 
+
         $projectsArea = Proyecto::select(
             'proyectos.id',
             'proyectos.nomproy',
@@ -945,7 +950,13 @@ class dbcontroller extends Controller
         ->orderBy('proyectos.clavey', 'ASC')
         ->join('usuarios','proyectos.idusuarior','=','usuarios.id')
         ->join('area_adscripcion','proyectos.idarea','=','area_adscripcion.id')
-        ->get();
+        ->get()
+        ->map(function($project) use ($progressPublicationController){
+            //embebimos el progreso
+            $virtualProgressPublication = $progressPublicationController->getProgressByPublication($project);
+            $project->progreso = $virtualProgressPublication;
+            return $project;
+        });
 
         return $projectsArea;
     }
@@ -953,6 +964,8 @@ class dbcontroller extends Controller
 
     //obtiene los proyectos de multicoordinacion de un usaurio que pertence a un area dada
     function getProjectsMulticoordinacionArea($area){
+        //instancia la clase que calcula progresos de acuerdo con publicacion
+        $progressPublicationController = new ProgressPublicaciontController();
         $projectsAreaMulticoordinacion = Proyecto::select(
             'proyectos.id',
             'proyectos.nomproy',
@@ -987,7 +1000,18 @@ class dbcontroller extends Controller
         ->orderBy('proyectos.clavet', 'ASC')
         ->orderBy('proyectos.claven', 'ASC')
         ->orderBy('proyectos.clavey', 'ASC')
-        ->get();
+        ->get()
+        ->map(function($project) use ($progressPublicationController){
+            //en caso de que el proyecto sea interno y este 100%
+            if($progressPublicationController->isInternalProject($project->clavet) 
+                && $project->progreso >= 100
+            ){
+                //embebimos el progreso
+                $virtualProgressPublication = $progressPublicationController->getProgressByPublication($project);
+                $project->progreso = $virtualProgressPublication;
+            }
+            return $project;
+        });
 
         return $projectsAreaMulticoordinacion;
     }

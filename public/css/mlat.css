@@ -1,0 +1,512 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    background: #fff;
+    background-size: 400% 400%;
+    min-height: 100vh;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    height: 100vh;
+    overflow-y:auto;
+}
+
+/*Estilos del header*/
+.header-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr; /* Define 4 columnas con anchuras proporcionales */
+    grid-template-rows: auto; /* Las filas crecen automáticamente según el contenido */
+    gap: 10px; /* Espacio entre las celdas */
+    align-items: center; /* Centrar verticalmente los elementos */
+    padding: 15px; /* Añade relleno si es necesario */
+  }
+
+  .logo {
+    grid-column: 1; /* Ocupa la primera columna */
+    justify-self: end; /* Alinea el logo a la derecha dentro de la columna */
+  }
+
+  title {
+    grid-column: 2; /* Ocupa la segunda columna */
+    text-align: center; /* Alinea el contenido al centro */
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  }
+
+  .user-info {
+    grid-column: 3; /* Ocupa la tercera columna */
+  }
+
+  .date {
+    grid-column: 4; /* Ocupa la cuarta columna */
+    text-align: right; /* Alinea el contenido a la derecha */
+  }
+
+  /* Estilos para los elementos individuales */
+
+  #titulo {
+    font-size: 30px;
+    font-weight: 500;
+    color: #000000;
+  }
+
+  #subtitulo {
+    font-size: 22px;
+    color: #000000;
+  }
+
+  #sesion {
+    font-size: 20px;
+    color: #000000;
+  }
+
+  #dia {
+    font-size: 1rem;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000000;
+    text-indent: 0; /* Elimina la sangría del texto */
+    position: relative;
+    grid-column: 4; /* Mantenemos la columna 4 */
+    justify-self: start; /* Alinea el texto a la izquierda */
+  }
+
+  #userid {
+    font-size: 20px;
+    color: #0ebd42;
+    font-weight: 100;
+  }
+
+  #myForm {
+    display: none;
+}
+
+
+/*Componentes del menú lateral*/
+#menu{
+    background: #1e106d;
+    transition: all 0.5s ease;
+}
+
+.sidebar{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 76rem;
+    width: 5.625rem;
+    z-index: 4;
+    background: #1e106d;
+    padding: 6px 14px;
+    transition: all 0.5s ease;
+}
+
+.sidebar.active{
+    width: 18.75rem;
+}
+
+
+
+/*Menu desplegable Difusión y docencia*/
+/* Fixed sidenav, full height */
+
+  /* Style the sidenav links and the dropdown button */
+  .sidenav a, .dropdown-btn {
+    text-decoration: none;
+    font-size: 20px;
+    color: #ffffff;
+    display: block;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+  }
+  /* On mouse-over */
+  .sidenav a:hover, .dropdown-btn:hover {
+    color: #000000;
+  }
+
+  .dropdown-btn:hover .links_name {
+    color: black;
+}
+
+  /* Dropdown container (hidden by default). Optional: add a lighter background color and some left padding to change the design of the dropdown content */
+  .dropdown-container {
+    display: none;
+    background-color: none;
+    padding-left: .8rem;
+    animation-name: fade-in; /* Nombre de la animación */
+    animation-duration: 0.5s; /* Duración de la animación en segundos */
+    animation-timing-function: ease; /* Función de temporización (suave) */
+    animation-fill-mode: forwards; /* Mantiene el estado final de la animación */
+    border-radius: 10px; /*Redondea el contorno*/
+}
+/* Estilo para los elementos desplegados dentro de .dropdown-container */
+.dropdown-container li {
+    background-color: #2f2fe179;
+    border-radius: .6rem;
+}
+
+@keyframes fade-in {
+    0% { opacity: 0; transform: translateY(-10px); } /* Estado inicial */
+    100% { opacity: 1; transform: translateY(0); } /* Estado final */
+}
+
+  /* Optional: Style the caret down icon */
+  .fa-caret-down {
+    float: right;
+    padding-right: 8px;
+  }
+  /* Some media queries for responsiveness */
+  @media screen and (max-height: 450px) {
+    .sidenav {padding-top: 15px;}
+    .sidenav a {font-size: 18px;}
+  }
+
+/*Fin de menu desplegable*/
+
+
+
+
+/*Define los elementos de la navbar de manera que se pueda manejar*/
+.sidebar .logo_content .logo{
+    color: #fff;
+    display: flex;
+    height: 50px;
+    width: 100%;
+    align-items: center;
+}
+.sidebar.active .logo_content .logo{
+    opacity: 1;
+    pointer-events: none;
+}
+/*Oculta el logo y lo muestra al desplegar*/
+.sidebar #blanco{
+    opacity: 0;
+    pointer-events: none;
+}
+.sidebar.sidebar.active #blanco{
+    opacity: 1;
+    pointer-events: none;
+}
+/*Define el tamaño de los div mencionados*/
+.logo_content .logo{
+    font-size: 28px;
+    margin-right: 5px;
+}
+.logo_content .logo .logo_name{
+    font-size: 28px;
+    margin-right: 400;
+}
+.sidebar #btn{
+    color: #fff;
+    position: absolute;
+    left: 50%;
+    top: 6px;
+    font-size: 20px;
+    height: 50px;
+    width: 50px;
+    text-align: center;
+    line-height: 50px;
+    transform: translateX(-50%);
+}
+ /*Activa la navbar para desplegarla*/
+.sidebar.active #btn{
+    left: 90%;
+}
+/*Parametros de los elementos de la navbar*/
+.sidebar ul{
+    margin-top: 20px;
+}
+.sidebar ul li{
+    position: relative;
+    height: 50px;
+    width: 100%;
+    margin: 0 5px;
+    list-style: none;
+    line-height: 50px;
+
+}
+.sidebar ul li .tooltip {
+    position: absolute;
+    left: 180%; /* Centrar horizontalmente */
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 6px;
+    padding: 10px; /* Agrega relleno para aumentar el espacio alrededor del contenido */
+    background: #fff;
+    line-height: 1.4; /* Ajusta la altura de línea según tus necesidades */
+    text-align: center;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    transition: 0s;
+    opacity: 0;
+    z-index: 9999;
+    display: block;
+    /*En caso de tronar, borrar*/
+    pointer-events: none;
+}
+
+/*Actica la navbar con el efecto ocultando los tooltip*/
+.sidebar.active ul li:hover .tooltip{
+    position: absolute;
+    position: absolute;
+    opacity: 0;
+    display: block;
+    z-index: 4;
+    z-index: 4;
+}
+
+.sidebar ul li a{
+    color: #fff;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: all 0.5s ease;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+.sidebar ul li a:hover{
+    color: #11101d;
+    background: #fff;
+}
+.sidebar ul li i{
+    height: 50px;
+    min-width: 50px;
+    border-radius: 12px;
+    line-height: 50px;
+    text-align: center;
+}
+/*Ocultan los links de los botones de la nav*/
+.sidebar .links_name_alt{
+    opacity: 0;
+    color: #ffffff;
+    pointer-events: none;
+    font-size: 10px;
+}
+.links_name {
+    font-size: 15px; /* Puedes ajustar el valor a tu preferencia */
+}
+.sidebar.active .links_name_alt{
+    opacity: 1;
+    pointer-events: auto;
+    color: #ffffff;
+    transition: all 0.5s ease;
+}
+.sidebar .links_namealt{
+    opacity: 0;
+    pointer-events: none;
+}
+.sidebar.active .links_namealt{
+    opacity: 1;
+    pointer-events: auto;
+    color: #000000;
+    transition: all 0.5s ease;
+}
+.sidebar .links_name{
+    opacity: 0;
+    pointer-events: none;
+}
+.sidebar.active .links_name{
+    opacity: 1;
+    pointer-events: auto;
+    transition: all 0.5s ease;
+}
+
+/*Muesta los tooltips al pasar por encima y solo sin estar acticva la navbar*/
+.sidebar ul li:hover .tooltip{
+    top: 50%;
+    opacity: 1;
+    transition: all 0.5s ease;
+    z-index: 4;
+    display: block;
+    position: absolute;
+    z-index: 4;
+    display: block;
+    position: absolute;
+}
+
+#icon{
+    opacity: 0;
+    top: 50%;
+    opacity: 1;
+    transition: all 0.5s ease;
+    display: block;
+}
+ #icon{
+    color: #fff;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: all 0.5s ease;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+#icon:hover{
+    color: #11101d;
+    background: #fff;
+}
+#icon{
+    height: 50px;
+    min-width: 50px;
+    border-radius: 12px;
+    line-height: 50px;
+    text-align: center;
+}
+
+
+
+
+
+
+
+
+/*Botones y texto vario*/
+/*redondea los botones*/
+#redond{
+    border-radius: 100%;
+}
+#redondb{
+    border-radius: 25px;
+    height:40px;
+}
+#redondbc{
+    border-radius: 100px;
+}
+
+#notifDiv{
+    z-index: 10000;
+    display: none;
+    background-color: rgb(29, 165, 63);
+    font-weight: 450;
+    width: 350px;
+    position: fixed;
+    top: 80%;
+    left: 5%;
+    color: white;
+    border-radius: 25PX;
+    padding: 5px 20px;
+}
+.toggle{
+    border-radius: 20px;
+}
+.slow .toggle-group{
+    transition: left 0.7s;
+    -webkit-transition: left 0.7s;
+}
+
+
+
+.img-hover-effect i {
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center;
+    list-style: none;
+}
+
+.img-hover-effect i img {
+    position: absolute;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.img-hover-effect i .hover-image {
+    opacity: 0;
+}
+
+.img-hover-effect:hover i .normal-image {
+    opacity: 0;
+}
+
+.img-hover-effect:hover i .hover-image {
+    opacity: 1;
+}
+
+/* Estilos para la sección activa en modo colapsado */
+.sidebar.active .active-section {
+    background-color: #007BFF; /* Color de fondo para resaltar */
+    color: #ffffff; /* Color del texto para resaltar */
+    border-radius: 10px;
+    /* Otros estilos de resaltado que desees */
+}
+
+/* Estilos para la sección activa en modo expandido */
+.sidebar .active-section {
+    background-color: #007BFF; /* Color de fondo para resaltar */
+    color: #000000; /* Color del texto para resaltar */
+    border-radius: 10px;
+    /* Otros estilos de resaltado que desees */
+}
+
+/*Scroll bar*/
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #999;
+  }
+
+
+  #selected-options-paragraph-editar {
+    font-family: "Arial"; /* Reemplaza "TuTipoDeLetra" con el tipo de letra que desees */
+  }
+
+  button {
+    margin: .8rem;
+}
+
+
+
+/*Ya no utilizado*/
+/*
+#titulo{
+    font-size: 30px;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    text-indent: 40px;
+    color: #000000;
+    text-align: center;
+    position: absolute;
+}
+#subtitulo{
+    font-size: 22px;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    text-indent: 40px;
+    color: #000000;
+    text-align:center;
+    position: relative;
+    top: 15px;
+}
+#sesion{
+    font-size: 20px;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    text-indent: 40px;
+    color: #000000;
+    float: right;
+    position: relative;
+    top: 15px;
+}
+#userid{
+    font-size: 20px;
+    font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    text-indent: 40px;
+    color: #0ebd42;
+    float: right;
+    position: relative;
+    top: 15px;
+}
+#dia{
+    font-size: 15px;
+    font-family:Arial, Helvetica, sans-serif;
+    color: #000000;
+    text-indent: 150px;
+    position: relative;
+    top: 15px;
+}
+

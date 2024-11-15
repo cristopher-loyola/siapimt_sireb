@@ -1,0 +1,18 @@
+
+form {
+    width: 100%;
+    height: 8rem;
+    padding: 1rem 2rem;
+    box-sizing: border-box;
+    border: .1rem solid #ccc;
+    border-radius: .2rem;
+    background-color: #f8f8f8;
+    resize: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#selected-options-paragraph-editar {
+    font-family: "Arial"; /* Reemplaza "TuTipoDeLetra" con el tipo de letra que desees */
+  }

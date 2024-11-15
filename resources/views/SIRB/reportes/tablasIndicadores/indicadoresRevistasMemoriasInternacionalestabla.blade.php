@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablas</title>
+    <link rel="stylesheet" href="{{ asset('css/indicadoresrendimientotablas.css') }}">
+</head>
+<body>
+
+
+
+
+@for ($i = 1; $i <= 6; $i++)
+    @if (!empty($serviciosRevistasMemorasGET[$i]))
+        <center><h2>Bimestre {{ $i }}</h2></center>
+        <table>
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Participantes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($serviciosRevistasMemorasGET[$i] as $servicio)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $servicio->titulo }}</td>
+                        <td>
+                            @if ($servicio instanceof \App\Models\Revista)
+                                Revista
+                            @elseif ($servicio instanceof \App\Models\Memoria)
+                                Memoria
+                            @endif
+                        </td>
+                        <td>
+                            {{ $servicio->encargado }}<br>
+                            @foreach($nombresParticipantesPorRevistaI[$servicio->id] ?? [] as $participante)
+                                {{ $participante->Nombre }} {{ $participante->Apellido_Paterno }} {{ $participante->Apellido_Materno }}<br>
+                            @endforeach
+                            {{-- Agregar participantes de memorias --}}
+                            @if ($servicio instanceof \App\Models\Memoria)
+                                @foreach($nombresParticipantesPorMemoriaI[$servicio->id] ?? [] as $participanteMemoria)
+                                    {{ $participanteMemoria->Nombre }} {{ $participanteMemoria->Apellido_Paterno }} {{ $participanteMemoria->Apellido_Materno }}<br>
+                                @endforeach
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        <br>
+        <br>
+    @endif
+@endfor
+
+
+
+
+    <br>
+    <br>
+    <br>
+</body>
+</html>

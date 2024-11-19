@@ -41,9 +41,11 @@
                             {{$areauser->nombre_area.' | '.$areauser->inicial_clave}}
                         </option>
                         @foreach ($areas as $area)
-                        <option value="{{$area->id}}" data-area="{{$area->inicial_clave}}">
-                            {{$area->nombre_area.' | '.$area->inicial_clave}}
-                        </option>
+                        @if($area->id != 12 && $area->inicial_clave != 'M')
+                            <option value="{{$area->id}}" data-area="{{$area->inicial_clave}}">
+                                {{$area->nombre_area.' | '.$area->inicial_clave}}
+                            </option>
+                        @endif
                         @endforeach
                     </select>
                     <span class="text-danger">@error('areas') {{$message}} @enderror</span>

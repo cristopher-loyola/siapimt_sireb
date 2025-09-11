@@ -98,7 +98,7 @@
 
                     <div class="mb-2">
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
                     </div>
@@ -115,27 +115,118 @@
                     </div>
                 </div>
             </div>
+            <div class="mb-4">
+                <label class="form-label"> Nombre del proyecto (200 caracteres máximo)</label>
+                {{----
+                <input type="text" class="form-control" name="nameproy"
+                value="{{old('nameproy')}}" maxlength="200" style="text-transform:uppercase"
+                onclick="calcularm()"
+                >
+                --}}
+                <input type="text" class="form-control" name="nameproy" value="{{old('nameproy')}}" maxlength="200" onclick="calcularm()"
+                style="text-transform:uppercase" id="project-name">
+                <span class="text-danger">@error('nameproy') {{$message}} @enderror</span>
+            </div>
+            {{-- Nuevo codigo --}}
+            <div class="mb-1 input-group">
+                <div class="mb-4 col">
+                    <label class="form-label"> Materia </label>
+                        <select name="materia" id="materia" class="form-control">
+                            <option value="{{old('materia')}}">Seleccione una Materia </option>
+                            @foreach ($materia as $mat)
+                                <option value="{{ $mat->id }}">
+                                    {{$mat->descmateria}}
+                                </option>
+                            @endforeach
+                        </select>
+                    <span class="text-danger">@error('materia') {{$message}} @enderror</span>
+                </div>
+            </div>
+            <div class="mb-1 input-group">
+                <div class="mb-4 col">
+                    <label class="form-label"> Orientación </label>
+                        <select name="orien" id="orien" class="form-control">
+                            <option value="{{old('orien')}}">Seleccione una orientación </option>
+                            @foreach ($orientacion as $ore)
+                                <option value="{{ $ore->id }}">
+                                    {{$ore->descorientacion}}
+                                </option>
+                            @endforeach
+                        </select>
+                    <span class="text-danger">@error('orien') {{$message}} @enderror</span>
+                </div>
+            </div>
+            <div class="mb-1 input-group">
+                <div class="mb-4 col">
+                    <label class="form-label"> Nivel de impacto social o Económico </label>
+                        <select name="nivel" id="nivel" class="form-control">
+                            <option value="{{old('nivel')}}">Seleccione una nivel </option>
+                            @foreach ($nivel as $lvl)
+                                <option value="{{ $lvl->id }}">
+                                    {{$lvl->nivel}}
+                                </option>
+                            @endforeach
+                        </select>
+                    <span class="text-danger">@error('nivel') {{$message}} @enderror</span>
+                </div>
+            </div>
+        {{-- Nuevo codigo --}}
+            <div class="mb-1">
+                <div class="mb-2">
+                    <label class="form-label"> Antecedentes </label>
+                    <textarea  type="text" class="form-control" id="antecedente" name="antecedente" rows="5">{{old('antecedente')}}</textarea>
+                    <span class="text-danger">@error('antecedente') {{$message}} @enderror</span>
+                </div>
+            </div>
+            <br>
             <div class="mb-1">
                 <div class="mb-2">
                     <label class="form-label"> Objetivo del proyecto </label>
-                    <textarea  type="text" class="form-control" id="objetivo"
-                    name="objetivo" rows="5">
-                    {{{old('objetivo')}}}
-                    </textarea>
+                    <textarea  type="text" class="form-control" id="objetivo" name="objetivo" rows="5">{{old('objetivo')}}</textarea>
                     <span class="text-danger">@error('objetivo') {{$message}} @enderror</span>
                 </div>
             </div>
             <br>
             <div class="mb-1">
                 <div class="mb-2">
+                    <label class="form-label"> Alcances </label>
+                    <textarea  type="text" class="form-control" id="alcance" name="alcance" rows="3">{{old('alcance')}}</textarea>
+                    <span class="text-danger">@error('alcance') {{$message}} @enderror</span>
+                </div>
+            </div>
+            <br>
+            <div class="mb-1">
+                <div class="mb-2">
+                    <label class="form-label"> Metodología </label>
+                    <textarea  type="text" class="form-control" id="metodologia" name="metodologia" rows="3">{{old('metodologia')}}</textarea>
+                    <span class="text-danger">@error('metodologia') {{$message}} @enderror</span>
+                </div>
+            </div>
+            <br>
+            <div class="mb-1">
+                <div class="mb-2">
                     <label class="form-label"> Producto por obtener</label>
-                    <textarea  type="text" class="form-control" id="prodobt"
-                    name="prodobt" rows="5" maxlength="500">
-                    {{{old('prodobt')}}}
-                    </textarea>
+                    <textarea  type="text" class="form-control" id="prodobt" name="prodobt" rows="5" maxlength="500">{{old('prodobt')}}</textarea>
                     <span class="text-danger">@error('prodobt') {{$message}} @enderror</span>
                 </div>
             </div>
+            <br>
+            <div class="mb-1">
+                <div class="mb-2">
+                    <label class="form-label"> Compromisos del cliente </label>
+                    <textarea  type="text" class="form-control" id="comciente" name="comciente" rows="3">{{old('comciente')}}</textarea>
+                    <span class="text-danger">@error('comciente') {{$message}} @enderror</span>
+                </div>
+            </div>
+            <br>
+            <div class="mb-1">
+                <div class="mb-2">
+                    <label class="form-label"> Beneficios esperados </label>
+                    <textarea  type="text" class="form-control" id="beneficios" name="beneficios" rows="3">{{old('beneficios')}}</textarea>
+                    <span class="text-danger">@error('beneficios') {{$message}} @enderror</span>
+                </div>
+            </div>
+            <br>
             <div class="mb-1 input-group">
                 <div class="mb-4 col">
                     <label class="form-label"> Línea de investigación  </label>
@@ -185,50 +276,6 @@
                     </div>
                 </div>
             </div>
-            {{-- Nuevo codigo --}}
-                <div class="mb-1 input-group">
-                    <div class="mb-4 col">
-                        <label class="form-label"> Materia </label>
-                            <select name="materia" id="materia" class="form-control">
-                                <option value="{{old('materia')}}">Seleccione una Materia </option>
-                                @foreach ($materia as $mat)
-                                    <option value="{{ $mat->id }}">
-                                        {{$mat->descmateria}}
-                                    </option>
-                                @endforeach
-                            </select>
-                        <span class="text-danger">@error('materia') {{$message}} @enderror</span>
-                    </div>
-                </div>
-                <div class="mb-1 input-group">
-                    <div class="mb-4 col">
-                        <label class="form-label"> Orientación </label>
-                            <select name="orien" id="orien" class="form-control">
-                                <option value="{{old('orien')}}">Seleccione una orientación </option>
-                                @foreach ($orientacion as $ore)
-                                    <option value="{{ $ore->id }}">
-                                        {{$ore->descorientacion}}
-                                    </option>
-                                @endforeach
-                            </select>
-                        <span class="text-danger">@error('orien') {{$message}} @enderror</span>
-                    </div>
-                </div>
-                <div class="mb-1 input-group">
-                    <div class="mb-4 col">
-                        <label class="form-label"> Nivel de impacto social o Económico </label>
-                            <select name="nivel" id="nivel" class="form-control">
-                                <option value="{{old('nivel')}}">Seleccione una nivel </option>
-                                @foreach ($nivel as $lvl)
-                                    <option value="{{ $lvl->id }}">
-                                        {{$lvl->nivel}}
-                                    </option>
-                                @endforeach
-                            </select>
-                        <span class="text-danger">@error('nivel') {{$message}} @enderror</span>
-                    </div>
-                </div>
-            {{-- Nuevo codigo --}}
             <div class="mb-1 input-group">
                 <div class="mb-4 col">
                     <label class="form-label"> Modo de transporte </label>
@@ -285,21 +332,12 @@
                     <span class="text-danger">@error('yearcre') {{$message}} @enderror</span>
                 </div> -->
             </div>
-            <div class="mb-4">
-                <label class="form-label"> Nombre del proyecto (200 caracteres máximo)</label>
-                {{----
-                <input type="text" class="form-control" name="nameproy"
-                value="{{old('nameproy')}}" maxlength="200" style="text-transform:uppercase"
-                onclick="calcularm()"
-                >
-                --}}
-                <input type="text" class="form-control" name="nameproy"
-                    value="{{old('nameproy')}}" maxlength="200" onclick="calcularm()"
-                    style="text-transform:uppercase"
-                    id="project-name"
-                >
-
-                <span class="text-danger">@error('nameproy') {{$message}} @enderror</span>
+            <div class="mb-1">
+                <div class="mb-2">
+                    <label class="form-label"> Referencias </label>
+                    <textarea  type="text" class="form-control" id="referencia" name="referencia" rows="3">{{old('referencia')}}</textarea>
+                    <span class="text-danger">@error('referencia') {{$message}} @enderror</span>
+                </div>
             </div>
             <div class="mb-4">
                 <input id="meses" name="meses" type="text" class="form-control" hidden>
@@ -381,15 +419,15 @@
 </script>
 <script>
     function showInp(){
-    getSelectValue = document.getElementById("tran").value;
-    if(getSelectValue=="7"){
-        document.getElementById("otran").style.display = "inline-block";
-    } else {
-        document.getElementById("otran").style.display = "none";
-        document.getElementById("otran").style.display = "disabled";
-        document.getElementById("otran").value= "N/A";
+        getSelectValue = document.getElementById("tran").value;
+        if(getSelectValue=="7"){
+            document.getElementById("otran").style.display = "inline-block";
+        } else {
+            document.getElementById("otran").style.display = "none";
+            document.getElementById("otran").style.display = "disabled";
+            document.getElementById("otran").value= "N/A";
+        }
     }
-}
 </script>
 <script>
     function showInpt(){
@@ -418,5 +456,12 @@
         document.getElementById('areads').style.display = "inline-block";
         document.getElementById('areads').value=(valorActuala=='') ? x : valorActuala;
     });
+</script>
+<script>
+    const input = document.getElementById('expandingInput');
+    function ajustarAncho() {
+        input.style.width = (input.value.length + 1) * 8 + 'px';
+    }
+    input.addEventListener('input', ajustarAncho);
 </script>
 @endpush

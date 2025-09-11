@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Autorización Reprogramacion {{$nombreproyecto}}</title>
+    <title>Autorización Cancelación {{$nombreproyecto}}</title>
     <style>
         /* Estilos CSS para el PDF, puedes personalizarlos según tus necesidades */
 
@@ -125,7 +125,7 @@
         <img src="{{ public_path('img/Logo_IMT.png') }}" alt="Logo IMT">
         <p>&nbsp;</p>
         <h1>INSTITUTO MEXICANO DEL TRANSPORTE</h1>
-        <p><strong>AUTORIZACIÓN REPROGRAMACIÓN DE PROYECTO</strong></p>
+        <p><strong>AUTORIZACIÓN DE CANCELACIÓN DE PROYECTO</strong></p>
 
     </header>
     <!--FIN DEL SEGMENTO DEL ENCABEZADO  -->

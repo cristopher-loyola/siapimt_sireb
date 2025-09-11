@@ -66,27 +66,18 @@
                 </div>
 
                 <div class="row">
-
-                <div class="col-md-6">
-                    <div class="mb-3">
-                    <label class="form-label">Dependencia o Institución</label>
-                    <select name="D_perteneciente" id="D_perteneciente" class="form-control" style="height: 47px;" required>
-                        @foreach ($Cliente as $Clientes)
-                        <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                            {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                        </option>
-
-                        @endforeach
-                    </select>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
+                <div class="col">
                     <div class="mb-3">
                     <label class="form-label">Cargo</label>
                     <input id="cargo_actual" type="text" class="form-control" name="cargo_actual" placeholder="Cargo" required>
                     </div>
                 </div>
+                </div>
+
+                <div class="row">
+                  <div class="col">
+                      <x-select-client label="Dependencia o institución" nameField='D_perteneciente' :categories="$categoriesN1" filterN2='{{false}}'/>
+                  </div>
                 </div>
 
                 <div class="row">
@@ -237,25 +228,25 @@
             </div>
 
             <div class="row">
-
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Dependencia o Institución</label>
-                  <select name="D_perteneciente" id="D_pertenecienteedit" class="form-control" style="height: 47px;" required>
-                    @foreach ($Cliente as $Clientes)
-                    <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                        {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                    </option>
-                    @endforeach
-                  </select>
-                </div>
-              </div>
-
-              <div class="col-md-6">
+              <div class="col">
                 <div class="mb-3">
                   <label class="form-label">Cargo</label>
                   <input id="cargo_actualedit" type="text" class="form-control" name="cargo_actual" placeholder="Cargo" required>
                 </div>
+              </div>
+            </div>
+
+            <div class="row pb-3">
+              <div class="col">
+                <label class="form-label">Nombre del cliente actual</label>
+                <input type="text" class="form-control" value="" id="D_pertenecienteedit" readonly/>
+              </div>
+            </div>
+
+
+            <div class="row">
+              <div class="col">
+                <x-select-client label="Cambiar dependencia" nameField='D_perteneciente' :categories="$categoriesN1" filterN2='{{false}}'/>
               </div>
             </div>
 

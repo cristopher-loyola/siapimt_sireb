@@ -2,7 +2,7 @@
 @section('contenido') 
 <title>Reporte</title>
         <h3 class="fw-bold text-center py-5">Reporte de Proyectos por Fechas</h3>
-             <form action="excelporfecha" method="POST">
+             <form action="{{route('report.date')}}" method="POST">
             @if (Session::has('success'))
                     <div class="alert-success">{{Session::get('success')}}</div>
                     <br>
@@ -35,7 +35,7 @@
             <div class="mb-4">
             <h3 class="fw-bold text-center py-5">Reporte General de Proyectos</h3>
                 <div>
-                    <a href="{{ route('exceltodosglobal')}}" class="btn btn-warning" tabindex="5" id="redondb">
+                    <a href="{{ route('general.report')}}" class="btn btn-warning" tabindex="5" id="redondb">
                         <i class="bx bxs-file-export bx-fw bx-flashing-hover"></i>
                         Reporte General de Proyectos
                     </a>

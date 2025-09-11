@@ -6,11 +6,25 @@
                 <div>
                     <h2 class="text-center" id="title">Administración de proyectos</h2>
                 </div>
-                <div class="text-right">
-                    <a href="{{ route('vistareportesglobal')}}" class="btn btn-warning" tabindex="5" id="redondb">
-                        <i class="bx bxs-file-export bx-fw bx-flashing-hover"></i>
-                        Reportes
-                    </a>
+                <label for="buscarp" class="form-label">Clave o Nombre del Proyecto</label>
+                <div class="container mt-1">
+                    <form action="{{ route('adpindex') }}" method="GET" enctype="multipart/form-data">
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                <input id="buscarp" name="buscarp" class="form-control" type="search"
+                                    placeholder="Buscar..." value="{{ $texto }}">
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary" type="submit" id="buscar">🔎
+                                </button>
+                            </div>
+                            <div class="col d-flex justify-content-end">
+                                <a href="{{ route('vistareportesglobal') }}" class="btn btn-warning" id="redondb">
+                                    <i class="bx bxs-file-export bx-fw bx-flashing-hover"></i> Reportes
+                                </a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
                 <br>
                 <table class="table table-dark table-hover">

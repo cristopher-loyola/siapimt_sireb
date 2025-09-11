@@ -401,7 +401,8 @@ function convchr($letraf)
         $portada->setCellValue("A6", "");
         /* Fila 7 */
         $portada->setCellValue("A7", "Objetivo del proyecto");
-        $portada->setCellValue("B7", $proyt->objetivo);
+        $portada->setCellValue("B7", strip_tags($proyt->objetivo));
+        // $portada->setCellValue("B7", strip_tags( {!!$proyt->objetivo!!} ));
         $portada->setCellValue("D7", "Fecha de inicio");
         $portada->setCellValue("E7", $proyt->fecha_inicio);
         /* Fila 8 */
@@ -439,7 +440,7 @@ function convchr($letraf)
         $portada->setCellValue("A12", "Objetivo sectorial");
         $portada->setCellValue("B12", $obj->nombre_objetivosec);
         $portada->setCellValue("D12", "Producto por obtener");
-        $portada->setCellValue("E12", $proyt->producto);
+        $portada->setCellValue("E12", strip_tags($proyt->producto));
         /* Fila 13 */
         $portada->setCellValue("A13", "Contribución a");
             $con = "";
@@ -482,9 +483,9 @@ function convchr($letraf)
         /* Fila 22 */
         $portada->setCellValue("D22", "");
         /* Fila 23 */
-        $portada->setCellValue("A23", "REV 07, FECHA:20221223");
+        $portada->setCellValue("A23", "REV 06, FECHA:20250130");
         $portada->setCellValue("C23", "HOJA 1 DE 2");
-        $portada->setCellValue("E23", "F1 RI-002");
+        $portada->setCellValue("E23", "F2 RI-001");
     /* Datos y construccion de la portada fin */
     /* Datos y construccion del Cronograma Inicio */
         $cronograma = $documento->getActiveSheet(1);
@@ -598,12 +599,50 @@ foreach ($tarea as $ta) {
             $cronograma->setCellValue('B'.$cont, $act);
             $cronograma->setCellValue('C'.$cont, 'P');
             $cronograma->setCellValue('C'.$comb, 'R');
-                $real = round(100/$mesesa, 2);
-                $c = $ta->duracion;
-                $p = $ta->progreso;
-                $op = round($real * $c, 2);
-                $f = round(($op*$p)/100, 2);
-                $fr = $fr+$op;
+
+                // $real = round(100/$mesesa, 2);
+                // $c = $ta->duracion;
+                // $p = $ta->progreso;
+                // $op = round($real * $c, 2);
+                // $f = round(($op*$p)/100, 2);
+                // $fr = $fr+$op;
+
+            if ($proyt->clavet == 'I') {
+                if ($proyt->publicacion == 1 || $proyt->publicacion == 2) {
+                    /*Generar los porcentajes de tareas Inicio*/
+                        $real = round(100/$mesesa, 2);
+                        $c = $ta->duracion;
+                        $p = $ta->progreso;
+                        $op = round($real * $c, 2);
+                        $f = round(($op*$p)/100, 2);
+                        $fr = $fr+$op;
+                    /*Generar los porcentajes de tareas Fin*/
+                } else {
+                    /*Generar los porcentajes de tareas Inicio*/
+                        $real2 = round(100/$mesesa, 2);
+                        $real = round(100/$mesesa, 2);
+                        $c = $ta->duracion;
+                        $p = $ta->progreso;
+
+                        $op = round($real * $c, 2);
+
+                        $op2 = round($real2 * $c, 2);
+
+                        $f = round(($op2*$p)/100, 2);
+                        $fr = $fr+$op;
+                    /*Generar los porcentajes de tareas Fin*/
+                }
+            } elseif ($proyt->clavet == 'E' ) {
+                    /*Generar los porcentajes de tareas Inicio*/
+                        $real = round(100/$mesesa, 2);
+                        $c = $ta->duracion;
+                        $p = $ta->progreso;
+                        $op = round($real * $c, 2);
+                        $f = round(($op*$p)/100, 2);
+                        $fr = $fr+$op;
+                    /*Generar los porcentajes de tareas Fin*/
+            }
+
 
             /* Formato de las celdas Inicio */
                 $documento->getActiveSheet()->getStyle('A'.$cont.':A'.$comb)
@@ -746,7 +785,28 @@ foreach ($tarea as $ta) {
         $cronograma->setCellValue('C'.$cont, 'P');
         $cronograma->setCellValue('C'.$comb, 'R');
         $cronograma->setCellValue('D'.$cont, round($fr).'%');
-        $cronograma->setCellValue('D'.$comb, round($proyt->progreso).'%');
+
+        if ($proyt->clavet == 'I' ) {
+            if ($proyt->publicacion == 1 || $proyt->publicacion == 2) {
+                $cronograma->setCellValue('D'.$comb, round($proyt->progreso).'%');
+            } else {
+                if ($proyt->progreso == 0) {
+                    $cronograma->setCellValue('D'.$comb, '0%');
+                } else {
+                    if ($proyt->progreso == 100) {
+                        $por2 = round($proyt->progreso)-2;
+                        $cronograma->setCellValue('D'.$comb, round($por2).'%');
+                    } else {
+                        $por2 = round($proyt->progreso);
+                        $cronograma->setCellValue('D'.$comb, round($por2).'%');
+                    }
+                }
+            }
+        } elseif ($proyt->clavet == 'E') {
+            $cronograma->setCellValue('D'.$comb, round($proyt->progreso).'%');
+        }
+
+        // $cronograma->setCellValue('D'.$comb, round($proyt->progreso).'%');
         /* Suma de porcentajes Inicio*/
            $inicio=9;
            $colini=69;
@@ -772,7 +832,7 @@ foreach ($tarea as $ta) {
                                 $cronograma->setCellValue(convchr($colini).$comb, round($totalr).'%');
                             }
                         }
-                    } else {
+                    } elseif ($proyt->clavet == 'E') {
                         $cronograma->setCellValue(convchr($colini).$comb, round($totalr).'%');
                     }
                 // Code 98% nuevo
@@ -884,9 +944,9 @@ foreach ($tarea as $ta) {
                     ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)->setWrapText(true);
         /* Formato Observaciones Inicio */
         $pie = $comb+5;
-        $cronograma->setCellValue('A'.$pie, "REV 07, FECHA:20221223");
+        $cronograma->setCellValue('A'.$pie, "REV 06, FECHA:20250130");
         $cronograma->setCellValue('C'.$pie, "HOJA 2 DE 2");
-        $cronograma->setCellValue($letra.$pie, "F1 RI-002");
+        $cronograma->setCellValue($letra.$pie, "F2 RI-001");
             /* Bordes pie de pagina Inicio */
                 $documento->getActiveSheet()->getStyle('A'.$pie)
                     ->getBorders()

@@ -51,7 +51,7 @@
     <script type="module">
       document.getElementById('btn-toogle-dialog-modal').click();
     </script>
-      <div class="container-dialog-message">       
+      <div class="container-dialog-message">
       <div class="modal" tabindex="-1" id="modal-dialog-message" >
           <div class="modal-dialog">
             <div class="modal-content">
@@ -76,13 +76,28 @@
         <br>
             <h2 class="text-center" id="title"> Proyectos </h2>
         <br><br>
-        <div>
-            <form action="newp" method="get">
-                <button type="submit" class="btn btn-success" id="redondb">
-                  <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i>
-                  Nuevo
-                </button>
+        <style>
+          .botonera {
+            display: flex;
+            justify-content: left;  /* Centra horizontalmente */
+            gap: 10px;                /* Espacio entre los botones */
+          }
+        </style>
+        <div class="botonera">
+          <form action="claveproy" method="get">
+            <button type="submit" class="btn btn-success" id="redondb">
+              <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i>
+              Nuevo
+            </button>
+          </form>
+          @if ($LoggedUserInfo['pcospii'] == 1)
+            <form action="firmarcospiii" method="GET">
+              <button type="submit" class="btn" id="redondb" style="background: #1373c1; color: white;">
+                <img src="{{asset('/img/signature.png')}}" alt="" width="20px" height="20px" style="margin-bottom: 5px;">
+                COSPIII
+              </button>
             </form>
+          @endif
         </div>
         <div class="text-right">
           <a href="{{ route('vistareportes')}}" class="btn btn-warning" tabindex="5" id="redondb">
@@ -116,7 +131,15 @@
                   <?php if ($pr->claven < 10) { echo "<td>$pr->clavea$pr->clavet-0$pr->claven/$pr->clavey</td>"; }
                     else{ echo "<td>$pr->clavea$pr->clavet-$pr->claven/$pr->clavey</td>"; }
                   ?>
-                  <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                  @if ($pr->completado == 1)
+                    <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                  @else
+                    @if($pr->estado != 4 && $pr->estado != 5)
+                      <td><a href="{{ route('proydatos', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                    @else
+                      <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                    @endif
+                  @endif
                   <td>{{$pr->fecha_inicio}}</td>
                   <td>{{$pr->fecha_fin}}</td>
                   <td>
@@ -136,13 +159,13 @@
                   <td>$ {{round($pr->costo,1)}}</td>
                   <td>
                     <div class="container-progress-bar space-between-vertical">
-
+                      <a class="popup-link" href="{{ route('resumenMensual', $pr->id) }}">
                         @if (isset($pr->porcent_program))
                         <div class="container-porcent-expected ">
                           <div class="contain-letter pr-1" style="float: left">
-                            <strong>P</strong> 
+                            <strong>P</strong>
                           </div>
-                          <div class="contains-progress-bar">                          
+                          <div class="contains-progress-bar">
                             <div class="progress" style="height: 30px; background:#575656; text-color">
                               <div
                                   class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
@@ -175,7 +198,7 @@
                                         @elseif ($pr->estado == 1)
                                             class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                         @else
-                                            class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                            class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                         @endif
                                         role="progressbar" style="width: {{$pr->progreso}}%" aria-valuenow="25"
                                         aria-valuemin="0" aria-valuemax="100" id="barra">
@@ -195,7 +218,7 @@
                                         @elseif ($pr->estado == 1)
                                             class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                         @else
-                                            class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                            class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                         @endif
                                         role="progressbar" style="width: {{$pr->progreso}}%" aria-valuenow="25"
                                         aria-valuemin="0" aria-valuemax="100" id="barra">
@@ -216,7 +239,7 @@
                                             @elseif ($pr->estado == 1)
                                                 class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                             @else
-                                                class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                                class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                             @endif
                                             role="progressbar" style="width:98%" aria-valuenow="25"
                                             aria-valuemin="0" aria-valuemax="100" id="barra">
@@ -227,7 +250,7 @@
                                     @else
                                         <?php
                                             $pgreal = $pr->progreso;
-                                            $comp = 98;
+                                            $comp = 100;
                                             $mult = ($comp*$pgreal);
                                             $div = ($mult/100);
                                             $psinp = round($div,0);
@@ -243,7 +266,7 @@
                                             @elseif ($pr->estado == 1)
                                                 class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                             @else
-                                                class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                                class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                             @endif
                                             role="progressbar" style="width: {{$psinp}}%" aria-valuenow="25"
                                             aria-valuemin="0" aria-valuemax="100" id="barra">
@@ -265,7 +288,7 @@
                                     @elseif ($pr->estado == 1)
                                         class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                     @else
-                                        class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                        class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                                     @endif
                                     role="progressbar" style="width: {{$pr->progreso}}%" aria-valuenow="25"
                                     aria-valuemin="0" aria-valuemax="100" id="barra">
@@ -277,7 +300,7 @@
                           </div>
 
                         </div>
-
+                      </a>
                       </div>
                   </td>
                   <td>
@@ -285,7 +308,7 @@
                     <label class="form-label" style="color: {{$pr->label_color}};">
                       <label >{{$pr->label_status}}</label>
                       <!---se muestra estado de negociacion del proyecto--->
-                      @if(!empty($pr->label_negotiation)) 
+                      @if(!empty($pr->label_negotiation))
                         <label style="color: {{$pr->label_color}};">
                             ({{$pr->label_negotiation}})
                         </label>
@@ -299,7 +322,15 @@
                   <?php if ($pr->claven < 10) { echo "<td>$pr->clavea$pr->clavet-0$pr->claven/$pr->clavey</td>"; }
                     else{ echo "<td>$pr->clavea$pr->clavet-$pr->claven/$pr->clavey</td>"; }
                   ?>
-                  <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                  @if ($pr->completado == 1)
+                    <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                  @else
+                    @if($pr->estado != 4 && $pr->estado != 5)
+                      <td><a href="{{ route('proydatos', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                    @else
+                      <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                    @endif
+                  @endif
                   <td>{{$pr->fecha_inicio}}</td>
                   <td>{{$pr->fecha_fin}}</td>
                   <td>
@@ -313,13 +344,13 @@
                   <td>$ {{round($pr->costo,1)}}</td>
                   <td>
                     <div class="container-progress-bar space-between-vertical">
-
+                      <a class="popup-link" href="{{ route('resumenMensual', $pr->id) }}">
                         @if (isset($pr->porcent_program))
                         <div class="container-porcent-expected ">
                           <div class="contain-letter pr-1" style="float: left">
-                            <strong>P</strong> 
+                            <strong>P</strong>
                           </div>
-                          <div class="contains-progress-bar">                          
+                          <div class="contains-progress-bar">
                             <div class="progress" style="height: 30px; background:#575656; text-color">
                               <div
                                   class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
@@ -404,7 +435,7 @@
                                     @else
                                         <?php
                                             $pgreal = $pr->progreso;
-                                            $comp = 98;
+                                            $comp = 100;
                                             $mult = ($comp*$pgreal);
                                             $div = ($mult/100);
                                             $psinp = round($div,0);
@@ -454,7 +485,7 @@
                           </div>
 
                         </div>
-
+                      </a>
                       </div>
                   </td>
                   <td>
@@ -474,11 +505,11 @@
           </tbody>
       </table>
       <div>
-        <form action="newp" method="get">
-            <button type="submit" class="btn btn-success" id="redondb">
-              <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i>
-              Nuevo
-            </button>
+        <form action="claveproy" method="get">
+          <button type="submit" class="btn btn-success" id="redondb">
+            <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i>
+            Nuevo
+          </button>
         </form>
       </div>
 
@@ -489,4 +520,15 @@
   team = document.getElementById('team').value;
   ref = document.getElementById('ref').value;
 </script>
+
+<script>
+  document.querySelectorAll(".popup-link").forEach(function(el) {
+    el.addEventListener("click", function(e) {
+      e.preventDefault();
+      const url = el.getAttribute("href");
+      window.open(url, "_popupResumen", "width=1040,height=350,scrollbars=yes, resizable=yes");  // Ajusta el tamaño
+    });
+  });
+</script>
+
 @endpush

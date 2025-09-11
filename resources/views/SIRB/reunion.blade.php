@@ -56,7 +56,7 @@
                 </div>
 
 
-                <div class="col-md-6">
+                <div class="col">
                     <div class="mb-3">
                     <label class="form-label" for="tipo_reunion">Tipo</label>
                     <select name="tipo_reunion" id="tipo_reunion" class="form-control" required>
@@ -92,24 +92,19 @@
                 </div>
 
                 <div class="row">
-                <div class="col-md-6">
+                <div class="col">
                     <div class="mb-3">
                     <label class="form-label">Lugar</label>
                     <input id="lugar_reunion" type="text" class="form-control" name="lugar_reunion" placeholder="Lugar" required>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                    <label class="form-label">Dependencia de vinculación</label>
-                    <select name="D_perteneciente" id="D_perteneciente" class="form-control" required>
-                        @foreach ($Cliente as $Clientes)
-                        <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                            {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                        </option>
-                        @endforeach
-                    </select>
-                    </div>
                 </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <x-select-client label="Dependencia de vinculación" nameField='D_perteneciente' 
+                        :categories="$categoriesN1" filterN2='{{false}}'/>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -243,24 +238,26 @@
                 </div>
 
                 <div class="row">
-                <div class="col-md-6">
+                <div class="col">
                     <div class="mb-3">
                     <label class="form-label">Lugar</label>
                     <input id="lugar_reunionedit" type="text" class="form-control" name="lugar_reunion" placeholder="Lugar">
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                    <label class="form-label">Dependencia de vinculación</label>
-                    <select name="D_perteneciente" id="D_pertenecienteedit" class="form-control">
-                        @foreach ($Cliente as $Clientes)
-                        <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                            {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                        </option>
-                        @endforeach
-                    </select>
-                    </div>
                 </div>
+
+                <div class="row pb-3">
+                    <div class="col">
+                      <label class="form-label">Dependencia de vinculación actual</label>
+                      <input type="text" class="form-control" id="D_pertenecienteedit" readonly/>
+                    </div>
+                  </div>
+
+                <div class="row">
+                    <div class="col">
+                        <x-select-client label="Cambiar dependencia" nameField='D_perteneciente' 
+                        :categories="$categoriesN1" filterN2='{{false}}'/>
+                    </div>
                 </div>
 
                 <input id="nombre_personaedit" type="hidden" class="form-control" name="nombre_persona" value="{{ $LoggedUserInfo['usuario']}}">

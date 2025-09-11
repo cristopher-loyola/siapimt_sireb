@@ -34,7 +34,7 @@
                 left: 0;
                 height: 100%;
                 width: 78px;
-                z-index: 1;
+                z-index: 2;
                 background: #1A2C6E;
                 padding: 6px 14px;
                 transition: all 0.5s ease
@@ -215,6 +215,21 @@
                 -webkit-transition: left 0.7s;
             }
             /*color de fonfo*/
+            footer {
+                color: #5C5C69;
+                font-size: .8em;
+                text-align: center;
+                padding: 10px 0;
+                background-color: #FFFFFF;
+                border-top: 1px solid #ddd;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 1;
+                margin-top: 24px;
+            }
         </style>
     </head>
     <body>
@@ -341,6 +356,7 @@
         <div id="notifDiv"></div>
 
                 @yield('contenido')
+                <div style="height:50px"></div>
 
         </div>
 
@@ -351,5 +367,8 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kQtW33rZJAHjgefvhyyzcGF3C5TFyBQBA13V1RKPf4uH+bwyzQxZ6CmMZHmNBEfJ" crossorigin="anonymous"></script>
         @stack('scripts')
     </div>
+    <footer>
+        2025 © Desarrollado por la División de Telemática
+    </footer>
     </body>
 </html>

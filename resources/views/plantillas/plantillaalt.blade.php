@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
         <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         <link rel="icon" href="../img/Logo_IMT_mini.png" type="image/png" />
         <style>
@@ -23,174 +24,6 @@
                 overflow: hidden;
                 height: 100vh;
                 overflow-y:auto;
-            }
-            .sidebar{
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100%;
-                width: 90px;
-                z-index: 1;
-                background: #001F5B;
-                padding: 6px 14px;
-                transition: all 0.5s ease;
-            }
-            /*Da tamaño al navbar deplejsafo*/
-            .sidebar.active{
-                width: 300px;
-                background: #001F5B;
-            }
-             /*Define los elementos de la navbar de manera que se pueda manerja*/
-            .sidebar .logo_content .logo{
-                color: #fff;
-                display: flex;
-                height: 50px;
-                width: 100%;
-                align-items: center;
-            }
-            .sidebar.active .logo_content .logo{
-                opacity: 1;
-                pointer-events: none;
-            }
-            /*Oculta el logo y lo muestra al desplegar*/
-            .sidebar #blanco{
-                opacity: 0;
-                pointer-events: none;
-            }
-            .sidebar.sidebar.active #blanco{
-                opacity: 1;
-                pointer-events: none;
-            }
-            /*Define el tamaño de los div mencionados*/
-            .logo_content .logo{
-                font-size: 28px;
-                margin-right: 5px;
-            }
-            .logo_content .logo .logo_name{
-                font-size: 28px;
-                margin-right: 400;
-            }
-            .sidebar #btn{
-                color: #fff;
-                position: absolute;
-                left: 50%;
-                top: 6px;
-                font-size: 20px;
-                height: 50px;
-                width: 50px;
-                text-align: center;
-                line-height: 50px;
-                transform: translateX(-50%);
-            }
-             /*Activa la navbar para desplegarla*/
-            .sidebar.active #btn{
-                left: 90%;
-            }
-            /*Parametros de los elementos de la navbar*/
-            .sidebar ul{
-                margin-top: 20px;   
-            }
-            .sidebar ul li{
-                position: relative;
-                height: 50px;
-                width: 100%;
-                margin: 0 5px;
-                list-style: none;
-                line-height: 50px;
-            }
-            .sidebar ul li .tooltip{
-                position: absolute;
-                left: 122px;
-                top: 50%;
-                transform: translate(-50%,-50%);
-                border-radius:6px; 
-                height: 35px;
-                width: 122px;
-                background: #fff;
-                line-height: 35px;
-                text-align: center;
-                box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-                transition: 0s;
-                opacity: 0;
-                pointer-events:none;
-                display: block;
-            }
-            /* .sidebar ul li .tooltipalt{
-                position: absolute;
-                left: 122px;
-                top: 50%;
-                transform: translate(-50%,-50%);
-                border-radius:6px; 
-                height: 35px;
-                width: 122px;
-                background: rgb(42, 218, 26);
-                line-height: 35px;
-                text-align: center;
-                box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-                transition: 0s;
-                opacity: 0;
-                pointer-events:none;
-                display: block;
-            } */
-            /*Actica la navbar con el efecto ocultando los tooltip*/
-            .sidebar.active ul li:hover .tooltip{
-                opacity: 0;
-                display: block;
-            }
-            /* .sidebar.active ul li:hover .tooltipalt{
-                opacity: 0;
-                display: block;
-            } */
-            /*Muesta los tooltips al pasar por encima y solo sin estar acticva la navbar*/
-            .sidebar ul li:hover .tooltip{
-                top: 50%;
-                opacity: 1;
-                transition: all 0.5s ease;
-            }
-            /* .sidebar ul li:hover .tooltipalt{
-                top: 50%;
-                opacity: 1;
-                transition: all 0.5s ease;
-            } */
-             /*Da efectos a los botones*/
-            .sidebar ul li a{
-                color: #fff;
-                display: flex;
-                align-items: center;
-                text-decoration: none;
-                transition: all 0.5s ease;
-                border-radius: 12px; 
-                white-space: nowrap;
-            }
-            .sidebar ul li a:hover{
-                color: #11101d;
-                background: #fff;
-            }
-            .sidebar ul li i{
-                height: 50px;
-                min-width: 50px;
-                border-radius: 12px;
-                line-height: 50px;
-                text-align: center;
-            }
-            /*Ocultan los links de los botones de la nav*/
-            .sidebar .links_namealt{
-                opacity: 0;
-                pointer-events: none;  
-            }
-            .sidebar.active .links_namealt{
-                opacity: 1;
-                pointer-events: auto;
-                transition: all 0.5s ease;
-            }
-            .sidebar .links_name{
-                opacity: 0;
-                pointer-events: none;
-            }
-            .sidebar.active .links_name{
-                opacity: 1;
-                pointer-events: auto;
-                transition: all 0.5s ease;
             }
             /*redondea los botones*/
             #redond{
@@ -296,6 +129,21 @@
                 color: #000000;
                 text-align: center;
             }
+            footer {
+                color: #5C5C69;
+                font-size: .8em;
+                text-align: center;
+                padding: 10px 0;
+                background-color: #FFFFFF;
+                border-top: 1px solid #ddd;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 1;
+                margin-top: 24px;
+            }
             </style>
     </head>
     <body>
@@ -387,6 +235,9 @@
                 </script></label>
             </div>
                 @yield('contenido')
+                
+                <div style="height:50px"></div>
+
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js" integrity="sha512-F636MAkMAhtTplahL9F6KmTfxTmYcAcjcCkyu0f0voT3N/6vzAuJ4Num55a0gEJ+hRLHhdz3vDvZpf6kqgEa5w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
@@ -394,5 +245,8 @@
         <!-- JavaScript Bundle with Popper -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kQtW33rZJAHjgefvhyyzcGF3C5TFyBQBA13V1RKPf4uH+bwyzQxZ6CmMZHmNBEfJ" crossorigin="anonymous"></script>
         @stack('scripts')
+        <footer>
+            2025 © Desarrollado por la División de Telemática
+        </footer>
     </body>
 </html>

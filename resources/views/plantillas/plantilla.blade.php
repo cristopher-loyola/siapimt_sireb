@@ -3,10 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="icon" href="img/Logo_IMT_mini.png" type="image/png" />
+        
         <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
         <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-        <link rel="icon" href="img/Logo_IMT_mini.png" type="image/png" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js" integrity="sha512-F636MAkMAhtTplahL9F6KmTfxTmYcAcjcCkyu0f0voT3N/6vzAuJ4Num55a0gEJ+hRLHhdz3vDvZpf6kqgEa5w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
@@ -35,7 +36,7 @@
                 left: 0;
                 height: 100%;
                 width: 90px;
-                z-index: 1;
+                z-index: 2;
                 background: #001F5B;
                 padding: 6px 14px;
                 transition: all 0.5s ease;
@@ -323,6 +324,21 @@
                 color: #000000;
                 text-align: center;
             }
+            footer {
+                color: #5C5C69;
+                font-size: .8em;
+                text-align: center;
+                padding: 10px 0;
+                background-color: #FFFFFF;
+                border-top: 1px solid #ddd;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 1;
+                margin-top: 24px;
+            }
         </style>
     </head>
     <body>
@@ -362,32 +378,25 @@
                     <span class="tooltip">Catálogos</span>
                     <ul class="dropdown-menu" id="menu">
                         <li>
-                            <a href="comitesAdmin">
-                                <i class="bi bi-archive-fill"></i>
-                                <span class="links_name">Comités</span>
-                            </a>
-                            <span class="tooltip">Comités</span>
-                        </li>
-                        <li>
-                            <a href="serviciosAdmin">
-                                <i class="bi bi-file-earmark-medical-fill"></i>
-                                <span class="links_name">Servicios</span>
-                            </a>
-                            <span class="tooltip">Servicios</span>
-                        </li>
-                        <li>
-                            <a href="modt">
-                                <i class='bx bxs-truck'></i>
-                                <span class="links_name">Modo de transporte</span>
-                            </a>
-                            <span class="tooltip">Modo transporte</span>
-                        </li>
-                        <li>
                             <a href="moda">
                                 <i class='bx bxs-area'></i>
                                 <span class="links_name">Area de adscripción</span>
                             </a>
                             <span class="tooltip">Área adscripción</span>
+                        </li>
+                        <li>
+                            <a href="indexcliente">
+                                <i class='bx bx-body'></i>
+                                <span class="links_name">Clientes</span>
+                            </a>
+                            <span class="tooltip">Clientes</span>
+                        </li>
+                        <li>
+                            <a href="comitesAdmin">
+                                <i class="bi bi-archive-fill"></i>
+                                <span class="links_name">Comités</span>
+                            </a>
+                            <span class="tooltip">Comités</span>
                         </li>
                         <li>
                             <a href="contri">
@@ -404,6 +413,13 @@
                             <span class="tooltip">Línea investigación</span>
                         </li>
                         <li>
+                            <a href="modt">
+                                <i class='bx bxs-truck'></i>
+                                <span class="links_name">Modo de transporte</span>
+                            </a>
+                            <span class="tooltip">Modo transporte</span>
+                        </li>
+                        <li>
                             <a href="modo">
                                 <i class='bx bx-intersect'></i>
                                 <span class="links_name">Objetivos Sectorial</span>
@@ -411,18 +427,18 @@
                             <span class="tooltip">Objetivo sectorial</span>
                         </li>
                         <li>
+                            <a href="ocurrencia">
+                                <i class='bx bxs-calendar-alt'></i>
+                                <span class="links_name">Ocurrencias</span>
+                            </a>
+                            <span class="tooltip">Ocurrencias</span>
+                        </li>
+                        <li>
                             <a href="modlin">
                                 <i class='bx bxs-paper-plane'></i>
                                 <span class="links_name">Prog. Sectorial</span>
                             </a>
                             <span class="tooltip">Programa sectorial</span>
-                        </li>
-                        <li>
-                            <a href="indexcliente">
-                                <i class='bx bx-body'></i>
-                                <span class="links_name">Clientes</span>
-                            </a>
-                            <span class="tooltip">Clientes</span>
                         </li>
                         <li>
                             <a href="puesto">
@@ -437,6 +453,20 @@
                                 <span class="links_name">Recursos</span>
                             </a>
                             <span class="tooltip">Recursos</span>
+                        </li>
+                        <li>
+                            <a href="riesgos">
+                                <i class='bx bxs-analyse'></i>
+                                <span class="links_name">Riesgo</span>
+                            </a>
+                            <span class="tooltip">Riesgo</span>
+                        </li>
+                        <li>
+                            <a href="serviciosAdmin">
+                                <i class="bi bi-file-earmark-medical-fill"></i>
+                                <span class="links_name">Servicios</span>
+                            </a>
+                            <span class="tooltip">Servicios</span>
                         </li>
                     </ul>
                 </li>
@@ -572,6 +602,7 @@
                     </div> --}}
             {{-- Fin de fecha --}}
                 @yield('contenido')
+                <div style="height:50px"></div>
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js" integrity="sha512-F636MAkMAhtTplahL9F6KmTfxTmYcAcjcCkyu0f0voT3N/6vzAuJ4Num55a0gEJ+hRLHhdz3vDvZpf6kqgEa5w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js" integrity="sha512-F636MAkMAhtTplahL9F6KmTfxTmYcAcjcCkyu0f0voT3N/6vzAuJ4Num55a0gEJ+hRLHhdz3vDvZpf6kqgEa5w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -580,5 +611,8 @@
         <!-- JavaScript Bundle with Popper -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kQtW33rZJAHjgefvhyyzcGF3C5TFyBQBA13V1RKPf4uH+bwyzQxZ6CmMZHmNBEfJ" crossorigin="anonymous"></script>
         @stack('scripts')
+        <footer>
+            2025 © Desarrollado por la División de Telemática
+        </footer>
     </body>
 </html>

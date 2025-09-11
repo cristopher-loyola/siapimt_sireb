@@ -39,7 +39,7 @@ class StatusController extends Controller
         6 => [
             'label'=>'No aceptado',
             'color' => '#FF1C0E'
-            ]
+        ]
     ];
 
     protected $labelsValues = [

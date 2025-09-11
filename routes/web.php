@@ -4,6 +4,7 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\dbcontroller;
 use App\Http\Controllers\reporteBimestral;
 use App\Http\Controllers\SearchClientController;
+use App\Http\Controllers\PDFController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('phpinfo', function () {
@@ -38,14 +39,63 @@ Route::get('phpinfo', function () {
     ->middleware('isLogged','preventBackHistory')->name('cancelcrud2');
     Route::get('cancelcrudafect', [dbcontroller::class, 'cancelcrudafect'])
     ->middleware('isLogged','preventBackHistory')->name('cancelcrudafect');
+    // RUTAS PARA QUILL - GUARDAR Y BORRAR IMAGENES 
+        Route::post('/quill/imagenesQuill', [dbcontroller::class, 'imagenesQuill'])->name('imagenesQuill');
+        Route::post('/quill/imagenesQuillBase64', [dbcontroller::class, 'imagenesQuillBase64'])->name('imagenesQuillBase64');
+    // TERMINAN RUTAS
 /* Login y Aceccesos Fin*/
 Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
 {
+    Route::get('pruebas',[dbcontroller::class, 'pruebas'])->name('pruebas');
 /* Proyectos CRUD Inicio*/
+    
+    Route::get('resumenMensual/{id}', [dbcontroller::class, 'resumenMensual'])->name('resumenMensual'); 
     Route::get('infotec/{id}',[dbcontroller::class, 'infotec'])->name('infotec'); //Nuevo
     Route::get('ppindex',[dbcontroller::class, 'ppindex'])->name('ppindex');
     Route::get('newp',[dbcontroller::class, 'newp'])->name('newp');
     Route::post('addnewp',[dbcontroller::class, 'addnewp'])->name('addnewp');
+
+    Route::get('claveproy',[dbcontroller::class, 'claveproy'])->name('claveproy'); //generar clave de nuevo proyecto
+    Route::post('addclave',[dbcontroller::class, 'addclave'])->name('addclave');
+
+    // Route::get('upgradecliente/{id}',[dbcontroller::class,'upgradecliente'])->name('upgradecliente');//
+    // Route::post('upgradeclient/{id}',[dbcontroller::class,'upgradeclient'])->name('upgradeclient');
+
+    Route::get('cambiarcliente/{id}',[dbcontroller::class, 'cambiarcliente'])->name('cambiarcliente');
+    Route::post('changeclien/{id}',[dbcontroller::class, 'changeclien'])->name('changeclien');
+
+    //RUTAS PARA APARTADO DE IMPACTO SOCIOECONOMICO
+        Route::get('impactoproy/{id}',[dbcontroller::class,'impactoproy'])->name('impactoproy');
+        Route::get('impactoproy1/{id}',[dbcontroller::class,'impactoproy1'])->name('impactoproy1');
+        Route::get('impactoproy2/{id}',[dbcontroller::class,'impactoproy2'])->name('impactoproy2');
+
+        Route::post('upimpactoproy/{id}',[dbcontroller::class,'upimpactoproy'])->name('upimpactoproy');
+        Route::post('upimpactoproy1/{id}',[dbcontroller::class,'upimpactoproy1'])->name('upimpactoproy1');
+        Route::post('upimpactoproy2/{id}',[dbcontroller::class,'upimpactoproy2'])->name('upimpactoproy2');
+    // TERMINAN RUTAS
+
+    Route::get('proydatos/{id}',[dbcontroller::class, 'proydatos'])->name('proydatos');
+    Route::get('proydatos1/{id}',[dbcontroller::class, 'proydatos1'])->name('proydatos1');
+    Route::get('proydatos2/{id}',[dbcontroller::class, 'proydatos2'])->name('proydatos2');
+    Route::get('proydatos3/{id}',[dbcontroller::class, 'proydatos3'])->name('proydatos3');
+    Route::get('proydatos4/{id}',[dbcontroller::class, 'proydatos4'])->name('proydatos4');
+
+    Route::get('generalimpacto/{id}',[dbcontroller::class, 'generalimpacto'])->name('generalimpacto'); //Nuevo General Impacto
+
+    Route::post('actulizarproyecto/{id}',[dbcontroller::class, 'actulizarproyecto'])->name('actulizarproyecto');
+    Route::post('actulizarproyecto1/{id}',[dbcontroller::class, 'actulizarproyecto1'])->name('actulizarproyecto1');
+    Route::post('actulizarproyecto2/{id}',[dbcontroller::class, 'actulizarproyecto2'])->name('actulizarproyecto2');
+    Route::post('actulizarproyecto3/{id}',[dbcontroller::class, 'actulizarproyecto3'])->name('actulizarproyecto3');
+    Route::post('actulizarproyecto4/{id}',[dbcontroller::class, 'actulizarproyecto4'])->name('actulizarproyecto4');
+
+    Route::post('notificarreporte/{id}',[dbcontroller::class, 'notificarreporte'])->name('notificarreporte');
+    Route::post('notificarprotocoloaceptado/{id}',[dbcontroller::class, 'notificarprotocoloaceptado'])->name('notificarprotocoloaceptado');
+    Route::post('notificarprotocolorevision/{id}/{ida}',[dbcontroller::class, 'notificarprotocolorevision'])->name('notificarprotocolorevision');
+    Route::post('previsadoaprobado/{id}/{ida}',[dbcontroller::class, 'previsadoaprobado'])->name('previsadoaprobado');
+
+    Route::get('gprotocolo/{id}', [dbcontroller::class, 'gprotocolo'])->name('gprotocolo');
+    Route::get('gprotocolo2/{id}', [dbcontroller::class, 'gprotocolo2'])->name('gprotocolo2');
+
     Route::get('adpindex',[dbcontroller::class, 'adpindex'])->name('adpindex');
     Route::get('changestatuspro',[dbcontroller::class, 'changestatuspro'])->name('changestatuspro');
     /* la ruta para actualizar mediante la funcion de ajax con json se define de la sig. manera
@@ -58,6 +108,30 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
     Route::get('tareag/{id}',[dbcontroller::class,'tareag'])->name('tareag');
     Route::get('tareas/{id}',[dbcontroller::class,'tareas'])->name('tareas');
     Route::post('tarea/{id}',[dbcontroller::class,'tarea'])->name('tarea');
+
+    Route::get('riesgos',[dbcontroller::class,'riesgos'])->name('riesgos');
+    Route::get('changestatusrisk',[dbcontroller::class, 'changestatusrisk'])->name('changestatusrisk');
+    Route::get('addlriesgo',['as'=>'addlriesgo',function () {
+        return view('addlriesgo');
+    }]);
+    Route::post('addlriesgos',[dbcontroller::class, 'addlriesgos'])->name('addlriesgos');
+    Route::get('uplrisk/{id}',[dbcontroller::class, 'uplrisk'])->name('uplrisk');
+    Route::post('uplrisks/{id}',[dbcontroller::class, 'uplrisks'])->name('uplrisks');
+
+    Route::get('ariesgo/{id}',[dbcontroller::class,'ariesgo'])->name('ariesgo');
+    Route::get('addriesgo/{id}/{idt}',[dbcontroller::class,'addriesgo'])->name('addriesgo');
+    Route::post('addriesgosave/{id}',[dbcontroller::class,'addriesgosave'])->name('addriesgosave');
+    Route::get('upriesgo/{id}',[dbcontroller::class,'upriesgo'])->name('upriesgo');
+    Route::post('upriesgosave/{id}',[dbcontroller::class,'upriesgosave'])->name('upriesgosave');
+    Route::delete('destroyriesgo/{id}/{ida}', [dbcontroller::class, 'destroyriesgo'])-> name('destroyriesgo');
+
+    Route::get('firnaralldg',[dbcontroller::class,'firnaralldg'])->name('firnaralldg');
+    Route::post('firmartodosdg', [dbcontroller::class, 'firmartodosdg'])->name('firmartodosdg');
+    Route::post('firmardgprotocolo/{id}/{ida}', [dbcontroller::class, 'firmardgprotocolo'])->name('firmardgprotocolo');
+
+    Route::get('firmarcospiii',[dbcontroller::class,'firmarcospiii'])->name('firmarcospiii');
+    Route::post('aprobarcospiii', [dbcontroller::class, 'aprobarcospiii'])->name('aprobarcospiii');
+
     Route::delete('destroytarea/{id}/{ida}', [dbcontroller::class, 'destroytarea'])-> name('destroytarea');
     Route::get('uptareas/{id}/{idt}',[dbcontroller::class,'uptareas'])->name('uptareas');
     Route::post('uptarea/{id}/{idt}',[dbcontroller::class,'uptarea'])->name('uptarea');
@@ -69,6 +143,7 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
     //Funcion de cambio de estados fin
 
     Route::get('Equipo/{id}',[dbcontroller::class,'Equipo'])->name('Equipo');
+    Route::get('sinColab',[dbcontroller::class, 'sinColab'])->name('sinColab');
     Route::get('addequipos/{id}',[dbcontroller::class,'addequipos'])->name('addequipos');
     Route::post('addequipo/{id}',[dbcontroller::class,'addequipo'])->name('addequipo');
     Route::delete('destroyequipo/{id}/{ida}', [dbcontroller::class, 'destroyequipo'])-> name('destroyequipo');
@@ -86,6 +161,14 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
         Route::post('rechazoreprogram/{id}/{ida}', [dbcontroller::class, 'rechazoreprogram'])-> name('rechazoreprogram');
         Route::post('rechazocancel/{id}/{ida}', [dbcontroller::class, 'rechazocancel'])-> name('rechazocancel');
         Route::get('reporteaceptado/{id}/{ida}', [dbcontroller::class, 'reporteaceptado'])-> name('reporteaceptado');
+
+        Route::post('rechazarprotocolopte/{id}/{ida}', [dbcontroller::class, 'rechazarprotocolopte'])-> name('rechazarprotocolopte');
+
+        Route::post('aceptarprotocolo/{id}/{ida}', [dbcontroller::class, 'aceptarprotocolo'])-> name('aceptarprotocolo');
+        Route::get('firmaresponsable/{id}/{ida}', [dbcontroller::class, 'firmaresponsable'])-> name('firmaresponsable');
+        Route::post('firmarprotocolo/{id}/{ida}', [dbcontroller::class, 'firmarprotocolo'])-> name('firmarprotocolo');
+
+
     // Nuevo
     Route::get('recursosproy/{id}',[dbcontroller::class,'recursosproy'])->name('recursosproy');
     Route::get('addrecursosproyf/{id}',[dbcontroller::class,'addrecursosproyf'])->name('addrecursosproyf');
@@ -95,6 +178,7 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
     Route::get('addrecursosproyo/{id}',[dbcontroller::class,'addrecursosproyo'])->name('addrecursosproyo');
     Route::post('addrecursoproy/{id}',[dbcontroller::class,'addrecursoproy'])->name('addrecursoproy');
     Route::delete('destroyrecurso/{id}/{ida}', [dbcontroller::class, 'destroyrecurso'])-> name('destroyrecurso');
+    Route::post('addnotapresupuesto',[dbcontroller::class,'addnotapresupuesto'])->name('addnotapresupuesto');
 
     Route::get('solicitud/{id}',[dbcontroller::class,'solicitud'])->name('solicitud');
     Route::get('soldcan/{id}',[dbcontroller::class,'soldcan'])->name('soldcan');
@@ -110,6 +194,17 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
     Route::post('upuser/{id}',[dbcontroller::class, 'upuser'])->name('upuser');
     Route::get('changestatuuser',[dbcontroller::class, 'changestatuuser'])->name('changestatuuser');
 /* Usuarios CRUD Fin*/
+/* Ocurrencias CRUD Inicio*/
+    Route::get('ocurrencia',[dbcontroller::class, 'ocurrencia'])->name('ocurrencia');
+    // Route::get('addocurrencia',[dbcontroller::class, 'addocurrencia'])->name('addocurrencia');
+    Route::get('addocurrencia',['as'=>'addocurrencia',function () {
+        return view('addocurrencia');
+    }]);
+    Route::post('addcurrent',[dbcontroller::class, 'addcurrent'])->name('addcurrent');
+    Route::get('upocurrencia/{id}',[dbcontroller::class, 'upocurrencia'])->name('upocurrencia');
+    Route::post('upcurrent/{id}',[dbcontroller::class, 'upcurrent'])->name('upcurrent');
+    Route::get('changestatuocurrencia',[dbcontroller::class, 'changestatuocurrencia'])->name('changestatuocurrencia');
+/* Ocurrencias CRUD Fin*/
 /* Recursos Inicio */
     Route::get('Recursos',[dbcontroller::class, 'Recursos'])->name('Recursos');
     Route::get('addrecus',[dbcontroller::class, 'addrecus'])->name('addrecus');
@@ -238,14 +333,15 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
 /*Exceles Alternativa Inicio*/
     Route::get('vistareportes', [dbcontroller::class,'vistareportes'])->name('vistareportes');
     Route::get('vistareportesglobal', [dbcontroller::class,'vistareportesglobal'])->name('vistareportesglobal');
-    Route::post('excelporfecha', [dbcontroller::class,'excelporfecha'])->name('excelporfecha');
-    Route::post('excelporresponsable', [dbcontroller::class,'excelporresponsable'])->name('excelporresponsable');
+    Route::post('excelporfecha', [\App\Http\Controllers\reportes\DateReportController::class,'getReport'])->name('report.date');
+    Route::post('excelporresponsable', [\App\Http\Controllers\reportes\AreaReportController::class,'getReport'])->name('report.area');
     Route::post('f6gs001', [dbcontroller::class,'f6gs001'])->name('f6gs001');
-    Route::get('exceltodos', [dbcontroller::class,'exceltodos'])->name('exceltodos');
+    Route::get('exceltodos', [\App\Http\Controllers\reportes\GeneralReportController::class,'getReport'])->name('general.report');
     Route::get('exceltodosglobal', [dbcontroller::class,'exceltodosglobal'])->name('exceltodosglobal');
     Route::get('exceltodosuser', [dbcontroller::class,'exceltodosuser'])->name('exceltodosuser');
     Route::get('excelinfoproyecto/{id}', [dbcontroller::class,'excelinfoproyecto'])->name('excelinfoproyecto');
     Route::get('excelinfoactividades/{id}', [dbcontroller::class,'excelinfoactividades'])->name('excelinfoactividades');
+    Route::post('excelriesgos/', [dbcontroller::class,'excelriesgos'])->name('excelriesgos');
 /*Exceles Alternativa Fin  */
 /*Excel Financiero Incicio */
     Route::get('exportExcel1/{id}', [dbcontroller::class,'exportExcel1'])->name('exportExcel1');
@@ -404,6 +500,7 @@ Route::get('indicadoresrendimiento', [reporteBimestral::class, 'indicadoresrendi
 // Route::get('insertarRegistros20102030', [reporteBimestral::class, 'insertarRegistros20102030'])->name('insertarRegistros20102030');
 //////////////////////Tablas de indicadores//////////////////////////
 Route::get('indicadorProyectosInternosTablas', [reporteBimestral::class, 'indicadorProyectosInternosTablas'])->name('indicadorProyectosInternosTablas');
+Route::get('indicadorProyectosITodosTablas', [reporteBimestral::class, 'indicadorProyectosITodosTablas'])->name('indicadorProyectosITodosTablas');
 Route::get('indicadorProyectosExternosTablas', [reporteBimestral::class, 'indicadorProyectosExternosTablas'])->name('indicadorProyectosExternosTablas');
 Route::get('indicadorServiciosTablas', [reporteBimestral::class, 'indicadorServiciosTablas'])->name('indicadorServiciosTablas');
 Route::get('indicadoresRevistasMemoriasNacionalestabla', [reporteBimestral::class, 'indicadoresRevistasMemoriasNacionalestabla'])->name('indicadoresRevistasMemoriasNacionalestabla');
@@ -418,6 +515,7 @@ Route::get('indicadoresDocenciatabla1', [reporteBimestral::class, 'indicadoresDo
 Route::get('indicadoresTesisCursostabla', [reporteBimestral::class, 'indicadoresTesisCursostabla'])->name('indicadoresTesisCursostabla');
 //////////////////////Graficas de indicadores por bimestre//////////////////////////
 Route::get('indicadorProyectosInternosGrafica', [reporteBimestral::class, 'indicadorProyectosInternosGrafica'])->name('indicadorProyectosInternosGrafica');
+Route::get('indicadorProyectosIntExtGrafica', [reporteBimestral::class, 'indicadorProyectosIntExtGrafica'])->name('indicadorProyectosIntExtGrafica');
 Route::get('indicadorProyectosExternosGrafica', [reporteBimestral::class, 'indicadorProyectosExternosGrafica'])->name('indicadorProyectosExternosGrafica');
 Route::get('indicadorServiciosGrafica', [reporteBimestral::class, 'indicadorServiciosGrafica'])->name('indicadorServiciosGrafica');
 Route::get('indicadoresRevistasMemoriasNacionalesGrafica', [reporteBimestral::class, 'indicadoresRevistasMemoriasNacionalesGrafica'])->name('indicadoresRevistasMemoriasNacionalesGrafica');
@@ -454,6 +552,9 @@ Route::get('indicadorTesisCursosRecGraficaAños', [reporteBimestral::class, 'ind
 Route::prefix('/clients')->middleware(['isLogged','preventBackHistory'])->group(function(){
     Route::get('/nivel3/{category_name_1}/{category_name_2}',[dbcontroller::class,'getCategoriesListN3ByJSON'])->name('clients.n3.get');
 
+    //retorna todas las categorias nivel 2 sin excluir ninguna
+    Route::get('/nivel2/all/{category_name_1}',[dbcontroller::class,'getCategoriesListN2All'])->name('clients.n2.all');
+    
     Route::get('/nivel2/{category_name}',[dbcontroller::class,'getCategoriesListN2ByJSON'])->name('clients.n2.get');
 
     Route::get('/nivel2/{category_name}/{exclude}',[dbcontroller::class,'getClientsExcludeByDepartamento'])->name('clients.n2.get.exclude');
@@ -486,3 +587,4 @@ Route::prefix('/projects')->middleware(['isLogged','preventBackHistory'])->group
 Route::prefix('/reportes')->middleware(['isLogged','preventBackHistory'])->group(function(){
     Route::post('/format-f2_gs_001',[\App\Http\Controllers\reportes\F2GS001Controller::class,'getF2GS001Report'])->name('reports.format.f2gs001');
 });
+

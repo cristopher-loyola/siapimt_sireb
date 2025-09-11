@@ -164,7 +164,7 @@ class PorcentTasksController extends Controller
         return $progressMonths;
     }
 
-    //retorna el porcentaje programado para el proyecto 
+    //retorna el porcentaje programado para el proyecto
     public function getPorcentProgrammedForTasks($idProject){
 
         /*si la duracion total es 0 quiere decir que no se han establecido tareas para el proyecto,
@@ -175,14 +175,57 @@ class PorcentTasksController extends Controller
             return 0;
         }
 
-        $porcentProgrammed = $this->getTotalMonthsProgressForTasks($idProject) * 
-        $this->getAveragePorcentForMonthByTasks($idProject);
+        //mivariante modificada
+        $tareasproy = Tarea::where('idproyecto',$idProject)->get();
+        $tareasum = Tarea::where('idproyecto',$idProject)->get()->sum('duracion');
+        $aprox = 0;
+
+        foreach ($tareasproy as $tar) {
+            $in = $tar->fecha_inicio;
+            $fin = $tar->fecha_fin;
+            $dur = $tar->duracion;
+            $tar = 100 / $tareasum;
+                                    
+            $inicio = explode('-', $in);
+            $fin = explode('-', $fin);
+            $fhoyog = explode('-', date("Y-m-d"));
+
+            $fecha1 = new \DateTime($inicio[0].'-'.$inicio[1].'-'.$inicio[2]);
+            $fecha2 = new \DateTime($fin[0].'-'.$fin[1].'-'.$fin[2]);
+            $fhoy = new \DateTime($fhoyog[0].'-'.$fhoyog[1].'-'.$fhoyog[2]);
+
+            // Calcular la diferencia entre las dos fechas
+            // $diferencia = $fecha1->diff($fecha2);
+            $diferencia = $fecha1->diff($fhoy);
+
+            // Obtener el número total de meses
+            $meses = (($diferencia->y * 12) + $diferencia->m)+1;
+
+            // diferencia cuantos meses de avance tiene, si ya se completa el valor
+            // se reempleza por la duracion de la tarea
+
+            if ($fecha1 < $fhoy) {
+                if ($meses >= $dur) {
+                    $previsto = $tar*$dur;
+                } else {
+                    $previsto = $tar*$meses;
+                };
+            } else {
+                $previsto = $tar*0;
+            };
+            $aprox = $aprox+$previsto;
+        };
+
+        $porcentProgrammed = round($aprox,0);
+
+        // $porcentProgrammed = $this->getTotalMonthsProgressForTasks($idProject) *
+        // $this->getAveragePorcentForMonthByTasks($idProject);
 
         //en caso de que se pase una decimas del 100 o que falten algunas decimas para completar el 100, regresamos el 100
         if(($porcentProgrammed > 99 && $porcentProgrammed < 100) || ($porcentProgrammed > 100)){
             return 100;
         }
-        return round($porcentProgrammed);
+        return round($porcentProgrammed,0);
     }
 
 }

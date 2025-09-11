@@ -202,7 +202,8 @@ $documento->getActiveSheet()->setTitle('F6 GS-001');
             }
           	else{
                 $portada->setCellValue('B'.$valor, $pr->clavea.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey);
-            }  
+            }
+            
             $portada->setCellValue('C'.$valor, $pr->clavet);
             $portada->setCellValue('D'.$valor, $pr->nomproy);
             $portada->setCellValue('E'.$valor, $pr->nivel3);
@@ -221,7 +222,7 @@ $documento->getActiveSheet()->setTitle('F6 GS-001');
                         $portada->setCellValue('J'.$valor, '98');
                     }else{
                         $pgreal = $pr->progreso;
-                        $comp = 98;
+                        $comp = 100;
                         $mult = ($comp*$pgreal);
                         $div = ($mult/100);
                         $psinp = round($div,0);
@@ -294,7 +295,29 @@ $documento->getActiveSheet()->setTitle('F6 GS-001');
             $portada->setCellValue('G'.$valor2, $pr2->fecha_inicio);
             $portada->setCellValue('H'.$valor2, $pr2->fecha_fin);
             $portada->setCellValue('I'.$valor2, $pr2->costo);
-            $portada->setCellValue('J'.$valor2, $pr2->progreso);
+
+            if ($pr2->clavet == 'I'){
+                if ($pr2->publicacion == 1){
+                    $portada->setCellValue('J'.$valor2, $pr2->progreso);
+                }elseif ($pr2->publicacion == 2){
+                    $portada->setCellValue('J'.$valor2, $pr2->progreso);
+                }else{
+                    if ($pr2->progreso == 100){
+                        $portada->setCellValue('J'.$valor2, '98');
+                    }else{
+                        $pgreal = $pr2->progreso;
+                        $comp = 100;
+                        $mult = ($comp*$pgreal);
+                        $div = ($mult/100);
+                        $psinp = round($div,0);
+                        $portada->setCellValue('J'.$valor2, $psinp);
+                    }
+                }
+            }else{
+                $portada->setCellValue('J'.$valor2, $pr2->progreso);
+            }
+
+            // $portada->setCellValue('J'.$valor2, $pr2->progreso);
             $portada->setCellValue('K'.$valor2, $pr2->Nombre.' '.$pr2->Apellido_Paterno.' '.$pr2->Apellido_Materno);
             switch ($pr2->estado) {
                 case 00:

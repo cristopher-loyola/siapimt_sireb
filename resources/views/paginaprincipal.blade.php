@@ -273,7 +273,7 @@
     <script type="module">
       document.getElementById('btn-toogle-dialog-modal').click();
     </script>
-      <div class="container-dialog-message">       
+      <div class="container-dialog-message">
       <div class="modal" tabindex="-1" id="modal-dialog-message" >
           <div class="modal-dialog">
             <div class="modal-content">
@@ -301,12 +301,20 @@
         <br>
             <h2 class="text-center" id="title"> Proyectos</h2>
         <div>
-          <form action="newp" method="get">
-              <button type="submit" class="btn btn-success" id="redondb">
-                <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i> 
-                Nuevo 
-              </button>
+          <form action="claveproy" method="get">
+            <button type="submit" class="btn btn-success" id="redondb">
+              <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i>
+              Nuevo
+            </button>
           </form>
+          @if ($LoggedUserInfo['pcospii'] == 1)
+            <form action="firmarcospiii" method="GET">
+              <button type="submit" class="btn" id="redondb" style="background: #1373c1; color: white;">
+                <img src="{{asset('/img/signature.png')}}" alt="" width="20px" height="20px" style="margin-bottom: 5px;">
+                COSPIII
+              </button>
+            </form>
+          @endif
         </div>
         <div class="container justify-content-center align-items-center mt-3">
                 <div class="mb-0 input-group">
@@ -341,6 +349,7 @@
                   <th scope="col" style="width: 7rem;" class="text-center">Costo</th>
                   <th scope="col" class="text-center" style="width: 7rem;">Progreso</th>
                   <th scope="col" style="width: 10rem;" class="text-center"> Estado</th>
+                  <th scope="col">Reprogramado</th>
               </tr>
           </thead>
           <tbody id="projects-list">
@@ -351,7 +360,15 @@
 	     <?php if ($pr->claven < 10) { echo "<td>$pr->clavea$pr->clavet-0$pr->claven/$pr->clavey</td>"; }
           else{ echo "<td>$pr->clavea$pr->clavet-$pr->claven/$pr->clavey</td>"; }
             ?>
-                  <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                  @if ($pr->completado == 1)
+                    <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                  @else
+                    @if($pr->estado != 4 && $pr->estado != 5)
+                      <td><a href="{{ route('proydatos', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                    @else
+                      <td><a href="{{ route('infoproys', $pr->id)}}">{{$pr->nomproy}}</a></td>
+                    @endif
+                  @endif
                   <td>{{$pr->fecha_inicio}}</td>
                   <td>{{$pr->fecha_fin}}</td>
                   <td>{{$pr->Nombre.' '.$pr->Apellido_Paterno.' '.$pr->Apellido_Materno}}</td>
@@ -365,7 +382,7 @@
                   <td>$ {{round($pr->costo,1)}}</td>
                   <td>
                     <div class="container-progress-bar space-between-vertical">
-
+                      <a class="popup-link" href="{{ route('resumenMensual', $pr->id) }}">
                         @if (isset($pr->porcent_program))
                         <div class="container-porcent-expected ">
                           <div class="contain-letter pr-1" style="float: left">
@@ -456,7 +473,7 @@
                                     @else
                                         <?php
                                             $pgreal = $pr->progreso;
-                                            $comp = 98;
+                                            $comp = 100;
                                             $mult = ($comp*$pgreal);
                                             $div = ($mult/100);
                                             $psinp = round($div,0);
@@ -506,8 +523,8 @@
                           </div>
 
                         </div>
-
-                      </div>
+                      </a>
+                    </div>
                   </td>
                   <td>
                     <!-- se muestra la etiqueta del estado del proyecto, color y estado de negociacion -->
@@ -521,20 +538,42 @@
                       @endif
                     </label>
                   </td>
+                  <td>
+                    <?php
+                      $contador = 0;
+                      foreach ($tienerepro as $tmr) {
+                        if ($tmr->idproyecto == $pr->id && $tmr->revisado == 1){
+                          $contador++;
+                        }
+                      }
+                    ?>
+                    @if ($contador != 0)
+                      REPROGRAMDO
+                    @endif
+                  </td>
               </tr>
             @endforeach
           </tbody>
       </table>
       <br>
       <div>
-        <form action="newp" method="get">
+        <form action="claveproy" method="get">
             <button type="submit" class="btn btn-success" id="redondb">
-              <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i> 
+              <i class="bx bx-plus-circle bx-fw bx-flashing-hover"></i>
               Nuevo
             </button>
         </form>
       </div>
       <div>
     </div>
+    <script>
+      document.querySelectorAll(".popup-link").forEach(function(el) {
+        el.addEventListener("click", function(e) {
+          e.preventDefault();
+          const url = el.getAttribute("href");
+          window.open(url, "_popupResumen", "width=1040,height=350,scrollbars=yes, resizable=yes");  // Ajusta el tamaño
+        });
+      });
+    </script>
     {{-- Fin de la tabla de proyectos --}}
 @stop

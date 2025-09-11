@@ -10,6 +10,23 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js" integrity="sha512-F636MAkMAhtTplahL9F6KmTfxTmYcAcjcCkyu0f0voT3N/6vzAuJ4Num55a0gEJ+hRLHhdz3vDvZpf6kqgEa5w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.0/font/bootstrap-icons.css">
         <link rel="stylesheet" href="{{ asset('css/mlat.css') }}">
+        <style>
+            footer {
+                color: #5C5C69;
+                font-size: .8em;
+                text-align: center;
+                padding: 10px 0;
+                background-color: #FFFFFF;
+                border-top: 1px solid #ddd;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 1;
+                margin-top: 24px;
+            }
+        </style>
 
     </head>
 
@@ -512,5 +529,8 @@
         <!-- JavaScript Bundle with Popper -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kQtW33rZJAHjgefvhyyzcGF3C5TFyBQBA13V1RKPf4uH+bwyzQxZ6CmMZHmNBEfJ" crossorigin="anonymous"></script>
         @stack('scripts')
+        <footer>
+            2025 © Desarrollado por la División de Telemática
+        </footer>
     </body>
 </html>

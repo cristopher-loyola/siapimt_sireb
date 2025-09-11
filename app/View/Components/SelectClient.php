@@ -36,7 +36,9 @@ class SelectClient extends Component
     //categoriesN3: Array
     public $categoriesN3;
 
-    public function __construct($label,$nameField='cliente_usuario',$categories,$cliente = [], $categoriesN2 = [], $categoriesN3 = [])
+    public $filterN2;
+
+    public function __construct($label,$nameField='cliente_usuario',$categories,$cliente = [], $categoriesN2 = [], $categoriesN3 = [], $filterN2 = true)
     {
         $this->label = $label;
         $this->nameField = $nameField;
@@ -44,6 +46,7 @@ class SelectClient extends Component
         $this->categoriesN2 = $categoriesN2;
         $this->categoriesN3 = $categoriesN3;
         $this->cliente = $cliente;
+        $this->filterN2 = $filterN2;
     }
 
     /**

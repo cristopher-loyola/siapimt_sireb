@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link href='https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css' rel='stylesheet'>
         <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         <link rel="icon" href="../img/Logo_IMT_mini.png" type="image/png" />
         <style>
@@ -280,7 +281,14 @@
                 text-align: center;
             }
         </style>
-
+        <script>
+            $(document).ready(function() {
+                setTimeout(function() {
+                    $("#exito").fadeOut(1500);
+                    $("#fallo").fadeOut(1500);
+                },3000);
+            });
+        </script>
     </head>
     <body>
       {{-- Barra de navegacion lateral principio --}}
@@ -347,7 +355,7 @@
                 </script>
         <div class="container w-75 bg-white mt-5 roundedshadow p-3 mb-5 bg-body rounded font-weight-ligth col-xs-12 col-sm-6 col-md-8" >
             <div>
-                <img src="../img/Logo_IMT.png" alt="65" width="100"><label id="titulo">Instituto Mexicano del Transporte</label>
+                <img src="{{asset('/img/Logo_IMT.png')}}" alt="65" width="100"><label id="titulo">Instituto Mexicano del Transporte</label>
                 <label id="subtitulo"> Sistema Informático de Administración de Proyectos </label>
                 <label id="dia"><script type="text/javascript">
                 var d = new Date();

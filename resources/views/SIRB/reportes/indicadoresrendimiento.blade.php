@@ -149,20 +149,20 @@
   </tr>
   <tr>
     <td><strong>R</strong></td>
-    @foreach ($ProyectosIEPorAño as $año => $conteoProyectosI)
+    @foreach ($ProyectosIEPorAño as $año => $conteoProys)
       <td class="expandable-cell">
-            @if ($conteoProyectosI != 0)
+            @if ($conteoProys != 0)
                 <div class="details-container">
-                    <button onclick="OpenGrafics('{{ route('indicadorProyectosInternosGrafica', ['año' => $año, 'sexenio' => $sexenio]) }}')" type="button" class="option-button">
+                    <button onclick="OpenGrafics('{{ route('indicadorProyectosIntExtGrafica', ['año' => $año, 'sexenio' => $sexenio]) }}')" type="button" class="option-button">
                         <i class="bi bi-bar-chart-line"></i>
                     </button>
-                    <button onclick="OpenTables('{{ route('indicadorProyectosInternosTablas', ['año' => $año, 'sexenio' => $sexenio]) }}')" type="button" class="option-button">
+                    <button onclick="OpenTables('{{ route('indicadorProyectosITodosTablas', ['año' => $año, 'sexenio' => $sexenio]) }}')" type="button" class="option-button">
                       <i class="bi bi-card-list"></i>
                     </button>
                 </div>
             @endif
             <div class="conteo-container">
-                <span id="MIPC3conteo{{ $año }}" name="MIPC3conteo{{ $año }}">{{ $conteoProyectosI }}</span>
+                <span id="MIPC3conteo{{ $año }}" name="MIPC3conteo{{ $año }}">{{ $conteoProys }}</span>
             </div>
       </td>
     @endforeach

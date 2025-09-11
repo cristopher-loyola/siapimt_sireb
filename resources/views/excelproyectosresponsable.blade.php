@@ -35,7 +35,7 @@
           <th scope="col">Linea de investigación</th>
           <th scope="col">Objetivo Sectorial </th>
           <th scope="col">Orientación</th>
-          <th scope="col">Nivel de impacto social o Económico</th>
+          <th scope="col">Impacto social o Económico</th>
           <th scope="col">Materia</th>
           <th scope="col">Duración (Meses)</th>
           <th scope="col">Inicio</th>

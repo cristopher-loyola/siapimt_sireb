@@ -63,26 +63,22 @@
                 </div>
               </div>
             </div>
+
             <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Dependencia de vinculación</label>
-                  <select name="dependencia_V" id="dependencia_V" class="form-control" style="height: 47px;" required>
-                    @foreach ($Cliente as $Clientes)
-                    <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                        {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                    </option>
-                    @endforeach
-                  </select>
-                </div>
+              <div class="col">
+                  <x-select-client label="Dependencia de vinculación" nameField='dependencia_V' :categories="$categoriesN1" filterN2='{{false}}'/>
               </div>
-              <div class="col-md-6">
+            </div>
+
+            <div class="row">
+              <div class="col">
                 <div class="mb-3">
                   <label class="form-label">Cargo</label>
                   <input id="cargo_comite" type="text" class="form-control" name="cargo_comite" placeholder="Cargo" required>
                 </div>
               </div>
             </div>
+
             <div class="row">
               <div class="col-md-12">
                 <div class="mb-3">
@@ -189,27 +185,26 @@
                 </div>
 
                 <div class="row">
-
-                <div class="col-md-6">
-                    <div class="mb-3">
-                    <label class="form-label">Dependencia de vinculación</label>
-                    <select name="dependencia_V" id="dependenciaedit" class="form-control" style="height: 47px;" required>
-                        <option value="" hidden>Seleccione una dependencia de vinculación</option>
-                        @foreach ($Cliente as $Clientes)
-                        <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                            {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                        </option>
-                        @endforeach
-                    </select>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
+                <div class="col">
                     <div class="mb-3">
                     <label class="form-label">Cargo</label>
                     <input id="cargoedit" type="text" class="form-control" name="cargo_comite" placeholder="Cargo" required>
                     </div>
                 </div>
+                </div>
+
+                <div class="row pb-3">
+                  <div class="col">
+                    <label class="form-label">Nombre del cliente actual</label>
+                    <input type="text" class="form-control" value="" id="dependenciaedit" readonly/>
+                  </div>
+                </div>
+    
+    
+                <div class="row">
+                  <div class="col">
+                    <x-select-client label="Cambiar cliente" nameField='dependencia_V' :categories="$categoriesN1" filterN2='{{false}}'/>
+                  </div>
                 </div>
 
 

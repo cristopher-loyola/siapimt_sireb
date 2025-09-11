@@ -37,7 +37,7 @@
     </form>
     <br>
     <div>
-        <a href="{{ route('infoproys', $proyt->id)}}">
+        <a href="{{ route('observaciones', $proyt->id)}}">
         <button type="submit" class="btn btn-dark btn-sm" id="redondb"
         style="font-weight:500">
             <img src="../img/back.png" alt="" height="24em" width="24em">

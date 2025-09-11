@@ -4,7 +4,6 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title> Proyecto</title>
 <style>
-
     .modal {
       display: none;
       justify-content: center;
@@ -63,21 +62,27 @@
         flex-direction: row;
     }
 
-  </style>
+    #exito{
+        width: 100%;
+        background: #1a831ade;
+        color: #fff;
+        font-size: 1.2em;
+        border-radius: 5px;
+        text-align: center;
+        vertical-align: middle;
+        padding: 10px;
+    }
+</style>
 <div>
     <h3 class="fw-bold text-center py-5" id="tituloform">Información del Proyecto </h3>
 <div>
     <div class="mb-4">
-        <div class="mb-1 input-group">
-            <div>
-                <a href="{{ route('cancelcrud')}}">
-                    <button type="submit" class="btn btn-dark btn-lg" id="redondb">
-                        <i class='bx bxs-chevron-left-circle bx-sm bx-flashing-hover'></i>
-			<i class='bx  bxs-home bx-sm bx-flashing-hover'></i>
-                    </button>
-                </a>
-            </div>
-            <div class="mb-2">
+        @if (Session::has('success'))
+            <div id="exito">{{Session::get('success')}}</div>
+            <br>
+        @endif
+        {{-- <div class="mb-1 input-group"> --}}
+            {{-- <div class="mb-2">
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </div>
             <div>
@@ -120,7 +125,7 @@
                         Participantes
                     </button>
                 </form>
-            </div>
+            </div> --}}
             {{-- <div class="mb-2">
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </div>
@@ -133,46 +138,86 @@
                     </button>
                 </form>
             </div> --}}
-        </div>
+        {{-- </div> --}}
     </div>
 
     <div class="mb-1 input-group">
-        @if ($proyt->estado == 1 || $proyt->estado == 0 || $proyt->estado == 4)
+        @if ($proyt->estado == 1 || $proyt->estado == 0 || $proyt->estado == 4 )
         <div>
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            @if ($LoggedUserInfo['pcospii'] == 1 && $LoggedUserInfo['id'] != $proyt->idusuarior )
+                <a href="{{ route('firmarcospiii')}}">
+                    <button type="submit" class="btn btn-dark" id="redondb" >
+                        <img src="../img/back.png" width="25em" height="25em" alt="" style="margin-bottom: .1em">
+                        <img src="../img/homeb.png" width="25em" height="25em" alt="" style="margin-bottom: .1em">
+                    </button>
+                </a>
+            @else
+                <a href="{{ route('cancelcrud')}}">
+                    <button type="submit" class="btn btn-dark" id="redondb">
+                        <img src="../img/back.png" width="25em" height="25em" alt="" style="margin-bottom: .1em">
+                        <img src="../img/homeb.png" width="25em" height="25em" alt="" style="margin-bottom: .1em">
+                    </button>
+                </a>
+            @endif
+        </div>
+        <div class="mb-2">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         </div>
         <div>
-        <form action="{{route('upproys', $proyt->id)}}" method="get">
-            <button type="submit" class="btn btn-success" id="redondb">
+        {{-- <form action="{{route('proydatos', $proyt->id)}}" method="get"> --}}
+        <form action="" method="GET">
+            <button type="submit" class="btn btn-success" id="redondb" value="1" name="crear">
                 <i class='bx bxs-edit-alt bx-sm bx-fw bx-flashing-hover'></i>
                 Editar
             </button>
         </form>
         </div>
+            @if($proyt->completado == 1)
+                {{-- @if ($proyt->gprotocolo == 2) --}}
+                    <div class="mb-2">
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    </div>
+                    <div>
+                        <form action="{{route('gprotocolo2', $proyt->id)}}" method="GET">
+                            @csrf
+                            <button type="submit" class="btn btn-warning" id="redondb">
+                                <img src="../img/export.png" width="32em" height="32em"
+                                alt="" style="margin-bottom: .1em">
+                                Protocolo
+                            </button>
+                        </form>
+                    </div>
+                {{-- @endif --}}
+            @endif
         {{-- <div >
             <form action="{{route('excelinfoproyecto', $proyt->id)}}" method="get">
                 <button type="submit" class="btn btn-warning" tabindex="5" id="redondb">
                         <i class="bx bxs-file-export bx-sm bx-fw bx-flashing-hover"></i>
-                        Exportar F1 RI-002
+                        Exportar Cronograma
                 </button>
             </form>
         </div> --}}
-        @elseif ($proyt->estado == 2 || $proyt->estado == 5)
+        @elseif ($proyt->estado == 2 || $proyt->estado == 5 || $proyt->estado == 6)
             <div>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="{{ route('cancelcrud')}}">
+                    <button type="submit" class="btn btn-dark btn-lg" id="redondb">
+                        <img src="../img/back.png" width="25em" height="25em" alt="" style="margin-bottom: .1em">
+                        <img src="../img/homeb.png" width="25em" height="25em" alt="" style="margin-bottom: .1em">
+                    </button>
+                </a>
             </div>
-            {{--<div>
-                 <form action="{{route('excelinfoproyecto', $proyt->id)}}" method="get">
-                    <button type="submit" class="btn btn-warning" tabindex="5" id="redondb">
-                            <i class="bx bxs-file-export bx-sm bx-fw bx-flashing-hover"></i>
-                            Exportar F1 RI-002
+            @if ($proyt->actimpacto == 1)
+                <div class="mb-2">
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+                <form action="{{route('generalimpacto', $proyt->id)}}" method="get">
+                    @csrf
+                    <button type="submit" class="btn btn-success" id="redondb">
+                        <i class='bx bxs-edit-alt bx-sm bx-fw bx-flashing-hover'></i>
+                        Editar
                     </button>
                 </form>
-            </div>--}}
+            @endif
         @endif
 
         @if ($LoggedUserInfo['acceso'] == 1)
@@ -181,70 +226,45 @@
         </div>
         @endif
 
-        @if ($responsable == 1 || $LoggedUserInfo['acceso'] == 2)
-            @if ($proyt->cam_estado == 0)
-                @if ($proyt->estado == 1 || $proyt->estado == 3)
-                    @if ($proyt->estado == 3)
-                        @if($reanudar == 1)
-                            <a href="{{ url('change-status-proy/'.$proyt->id)}}" class="btn btn-primary" id="redondb"
-                                style="background: #1373c1; color:#ffffff">
-                                <img src="../img/play.png" width="32em" height="32em"
-                                alt="" style="margin-bottom: .1em">
-                                &nbsp;Reanudar&nbsp;
-                            </a>
-                        @endif
-                    @else
-                        <div class="mb-2">
-                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        </div>
-                        <div>
-                            <form action="{{route('solicitud', $proyt->id)}}" method="get">
-                                <button type="submit" class="btn" id="redondb"
-                                style="background: #1373c1; color:#ffffff">
-                                    <img src="../img/reprogramar.png" alt="" height="24em" width="24em">
-                                    &nbsp;Reprogramar&nbsp;
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-                @endif
-
-                @if ($proyt->estado == 1 || $proyt->estado == 3 || $proyt->estado == 4)
-                    <div class="mb-2">
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    </div>
-                    <div>
-                        <form action="{{route('soldcan', $proyt->id)}}" method="get">
-                            <button type="submit" class="btn" tabindex="5" id="redondb" style="background: #de2626; color:#ffffff">
-                                <img src="../img/cancelar.png" alt="" height="26em" width="26em">
-                                &nbsp;Cancelar&nbsp;
-                            </button>
-                        </form>
-                    </div>
-                @endif
-            @endif
-        @endif
         @if ($LoggedUserInfo['acceso'] == 1)
             <form action="{{route('excelinfoproyecto', $proyt->id)}}" method="get">
-                <button type="submit" class="btn btn-warning" tabindex="5" id="redondb">
-                        <i class="bx bxs-file-export bx-sm bx-fw bx-flashing-hover"></i>
-                        Exportar F1 RI-002
+                <button type="submit" class="btn" tabindex="5" id="redondb" style="background: #fd8700">
+                    <img src="{{URL::asset('/img/cronograma.png')}}" width="25em" height="25em"
+                    alt="" style="margin-bottom: .1em">
+                    {{-- Exportar --}}
+                    Cronograma
                 </button>
             </form>
         @endif
+        {{-- @if ($LoggedUserInfo['acceso'] == 1)
+        <div class="mb-2">
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </div>
+            <form action="{{route('protocolocrono', $proyt->id)}}" method="get">
+                <button type="submit" class="btn" tabindex="5" id="redondb" style="background: red">
+                    <img src="{{URL::asset('/img/cronograma.png')}}" width="25em" height="25em"
+                    alt="" style="margin-bottom: .1em">
+                    Exportar
+                    PruebaCronos
+                </button>
+            </form>
+        @endif --}}
         @if ($LoggedUserInfo['acceso'] != 1)
         <div class="mb-2">
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         </div>
         <div >
             <form action="{{route('excelinfoproyecto', $proyt->id)}}" method="get">
-                <button type="submit" class="btn btn-warning" tabindex="5" id="redondb">
-                        <i class="bx bxs-file-export bx-sm bx-fw bx-flashing-hover"></i>
-                        Exportar F1 RI-002
+                <button type="submit" class="btn" tabindex="5" id="redondb" style="background: #fd8700">
+                    <img src="{{URL::asset('/img/cronograma.png')}}" width="25em" height="25em"
+                    alt="" style="margin-bottom: .1em">
+                    {{-- Exportar --}}
+                    Cronograma
                 </button>
             </form>
         </div>
         @endif
+
         @if ($LoggedUserInfo['acceso'] == 2 || $LoggedUserInfo['acceso'] == 1 || $LoggedUserInfo['acceso'] == 3)
         <div class="mb-2">
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -277,20 +297,17 @@
         @endif
         <div>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            
         </div>
-
         {{---mostramos el boton solo en caso de que no este iniciado y el usuario se el responsable----}}
         @if($proyt->estado == 0 && $proyt->idusuarior == $LoggedUserInfo->id)
             <div class="container-btn-no-approbe" id="abrirModal">
                     <button type="button" class="redondb btn btn-danger "
                     style="border-radius:25px;height:40px" data-id="{{$proyt->id}}" data-status="6">
                     <i class='bx bx-minus-circle bx-sm bx-fw bx-flashing-hover'></i>
-                    No aceptado 
+                    No aceptado
                 </button>
             </div>
         @endif
-
     </div>
     {{---- Modal para confirmar no aceptacion del proyecto -----}}
     <div id="ventanaModal" class="modal">
@@ -341,11 +358,11 @@
                         <label class="form-label"><strong>Avance Total del Proyecto</strong></label>
                     </div>
                     <div class="col ">
-                        <label  
-                        @if(isset($proyt->porcent_program)) 
+                        <label
+                        @if(isset($proyt->porcent_program))
                             class="form-label centrar"
                         @else
-                            class="form-label"     
+                            class="form-label"
                         @endif>
                         <strong>Estado</strong></label>
                     </div>
@@ -354,7 +371,7 @@
                 <div class="row">
                     <div class="col-10">
                         {{------ se muestra barra de progreso programado o esperado-------}}
-                        @if(isset($proyt->porcent_program))
+                        {{-- @if($LoggedUserInfo['acceso'] == 1) --}}
                             <div class="row pb-1">
                                 <div class="col">
                                     <div class="row centrar">
@@ -365,17 +382,17 @@
                                             <div class="progress" style="height: 35px; background:#575656;">
                                                 <div
                                                     class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                                                role="progressbar" style="width: {{$proyt->porcent_program}}%" aria-valuenow="25"
-                                                aria-valuemin="0" aria-valuemax="100" id="barra">
-                                                <strong>{{$proyt->porcent_program}}%</strong>
-                                                <input type="text" value="{{$proyt->porcent_program}}" id="progreso" name="progreso" hidden>
+                                                    role="progressbar" style="width: {{$aprox}}%" aria-valuenow="25"
+                                                    aria-valuemin="0" aria-valuemax="100" id="barra">
+                                                    <strong>{{round($aprox, 0)}}%</strong>
+                                                    <input type="text" value="{{$aprox}}" id="progreso" name="progreso" hidden>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        @endif
+                        {{-- @endif --}}
 
                         {{------ se muestra barra de progreso real o actual -------}}
                         <div class="row ">
@@ -452,7 +469,7 @@
                                                 @else
                                                     <?php
                                                         $pgreal = $proyt->progreso;
-                                                        $comp = 98;
+                                                        $comp = 100;
                                                         $mult = ($comp*$pgreal);
                                                         $div = ($mult/100);
                                                         $psinp = round($div,0);
@@ -545,7 +562,7 @@
                                 <div class="mb-4 col-2">
                                     <label class="form-label"> Publicación </label>
                                     <input name="respon" id="respon" class="form-control"
-                                    value="MV {{$publicacion->NoPublicacion }}" disabled>
+                                    value="MN {{$publicacion->NoPublicacion }}" disabled>
                                 </div>
                             @elseif($publicacion->ID_PUB_TipoPublicacion == 3)
                                 <div class="mb-4 col-2">
@@ -576,15 +593,148 @@
                     </div>
                 @endif
             @endif
+
+            {{-- Codigo para validar el ptogereso real Inicio --}}
+            {{-- @if( !empty($proyt->fecha_inicio) && $LoggedUserInfo['acceso'] == 1)
+            <div class="mb-1 input-group">
+                <table class="table table-hover table-sm table-responsive-sm">
+                    <caption></caption>
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Duración</th>
+                            <th>Duración Cumplida</th>
+                        </tr>
+                    </thead>
+                    <?php
+                        $aprox = 0;
+                    ?>
+                    <tbody>
+                        
+                        @foreach ($tareasproy as $tar)
+                        <tr>
+                            
+                            <td>{{$in = $tar->fecha_inicio}}</td>
+                            <td>{{$fin = $tar->fecha_fin}}</td>
+                            <td>{{$dur = $tar->duracion}}</td>
+                            <?php
+                                $tar = 100 / $tareasum;
+                                
+                                $inicio = explode('-', $in);
+                                $fin = explode('-', $fin);
+                                $fhoyog = explode('-', date("Y-m-d"));
+
+                                $fecha1 = new DateTime($inicio[0].'-'.$inicio[1].'-'.$inicio[2]);
+                                $fecha2 = new DateTime($fin[0].'-'.$fin[1].'-'.$fin[2]);
+                                $fhoy = new DateTime($fhoyog[0].'-'.$fhoyog[1].'-'.$fhoyog[2]);
+
+                                // Calcular la diferencia entre las dos fechas
+                                // $diferencia = $fecha1->diff($fecha2);
+                                $diferencia = $fecha1->diff($fhoy);
+
+                                // Obtener el número total de meses
+                                $meses = (($diferencia->y * 12) + $diferencia->m)+1;
+
+                                // diferencia cuantos meses de avance tiene, si ya se completa el valor
+                                // se reempleza por la duracion de la tarea
+
+                                if ($fecha1 < $fhoy) {
+                                    if ($meses >= $dur) {
+                                        $previsto = $tar*$dur;
+                                    } else {
+                                        $previsto = $tar*$meses;
+                                    };
+                                } else {
+                                    $previsto = $tar*0;
+                                };
+                                $aprox = $aprox+$previsto;
+                            ?>
+                            @if ($fecha1 < $fhoy)
+                                @if ($meses >= $dur)
+                                    <td>{{$dur.' | '.number_format($previsto, 2)}}</td>
+                                @else
+                                    <td>{{$meses.' | '.number_format($previsto, 2)}}</td>
+                                @endif
+                            @else
+                                <td>{{'0 | '.number_format($previsto, 2)}}</td>
+                            @endif
+                        </tr>
+                        @endforeach
+                        <tr>
+                            <td></td>
+                            <td>{{number_format($tar,2)}} | {{($tar*$tareasum)}}</td>
+                            <td>{{$tareasum}}</td>
+                            <td>{{number_format($aprox,2)}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            @endif --}}
+            {{-- Codigo para validar el ptogereso real Fin --}}
+
             <div class="mb-1 input-group">
                 <div class="mb-4 col">
-                    <label class="form-label"> Responsable </label>
-                    <input name="respon" id="respon" class="form-control" 
-                    value="{{$user->Nombre.' '.$user->Apellido_Paterno.' '.$user->Apellido_Materno}}" disabled>
-                </div>
-                <div class="mb-2">
+                    <label class="form-label">Responsable</label>
+                    <input name="respon" id="respon" class="form-control" value="{{$user->Nombre.' '.$user->Apellido_Paterno.' '.$user->Apellido_Materno}}" disabled>
                 </div>
                 <div class="mb-4 col">
+                    <label class="form-label">Fecha de inicio</label>
+                    <input type="date" class="form-control" name="inicio" value="{{$proyt->fecha_inicio}}" disabled>
+                </div>
+                <div class="mb-4 col">
+                    <label class="form-label">Fecha de Fin</label>
+                    <input type="date" class="form-control" name="fin" value="{{$proyt->fecha_fin}}" disabled>
+                </div>
+            </div>
+
+            <div class="mb-1">
+                <div class="mb-4">
+                    <label class="form-label">Objetivo del proyecto</label>
+                    <textarea class="form-control" name="objetivo" id="objetivo" rows="3" disabled>{{strip_tags($proyt->objetivo)}}</textarea>
+                    {{-- <p>{!!$proyt->objetivo!!}</p> --}}
+                </div>
+            </div>
+
+            <div class="mb-1 input-group">
+                <div class="mb-4 col">
+                    <label class="form-label">Materia</label>
+                    @if ($proyt->materia == '')
+                        <input type="text" class="form-control" name="mate" id="mate" value="" disabled>
+                    @else
+                        <input type="text" class="form-control" name="mate" id="mate" value="{{$materia->descmateria}}" disabled>
+                    @endif
+                </div>
+                <div class="mb-4 col">
+                    <label class="form-label">Orientación</label>
+                    @if ($proyt->orientacion == '')
+                        <input type="text" class="form-control" name="orien" id="orien" value="" disabled>
+                    @else
+                        <input type="text" class="form-control" name="orien" id="orien" value="{{$orien->descorientacion}}" disabled>
+                    @endif
+                </div>
+                <div class="mb-4 col">
+                    <label class="form-label">Nivel de impacto social o Económico</label>
+                    @if ($proyt->nivel == '')
+                        <input type="text" class="form-control" name="nivel" id="nivel" value="" disabled>
+                    @else
+                        <input type="text" class="form-control" name="nivel" id="nivel" value="{{$nivel->nivel}}" disabled>
+                    @endif
+                </div>
+            </div>
+
+            <div class="mb-1 input-group">
+                <div class="mb-4 col-12"> 
+                    <label class="form-label">Investigadores participantes:</label>
+                    <textarea class="form-control" name="cont" id="cont" rows="5" disabled>
+                        @foreach ($team as $t)
+                            {{$t->Apellido_Paterno.' '.$t->Apellido_Materno.' '.$t->nombre}}
+                        @endforeach
+                    </textarea> 
+                </div>
+            </div>
+
+                {{--<div class="mb-4 col">
                     <label class="form-label"> Área de adscripción &nbsp;&nbsp;</label>
                     <input type="text" class="form-control" name="areas" id="areas"
                     value="{{$areas->nombre_area}}" disabled>
@@ -604,70 +754,58 @@
                         <input name="tipo" id="tipo" class="form-control" value="{{$proyt->Tipo}}" disabled>
                         <br>
                         <input id="atipo" name="atipo" class="form-control" value="{{$proyt->ncontratos}}" disabled>
-                    </div>
-                    <div class="mb-2">
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    </div>
-                    <div class="mb-4 col">
-                        <label class="form-label"> Fecha de inicio</label>
-                        <input type="date" class="form-control"
-                        name="inicio" value="{{$proyt->fecha_inicio}}" disabled>
-                    </div>
-                    <div class="mb-2">
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    </div>
-                    <div class="mb-4 col">
-                        <label class="form-label"> Fecha de Fin</label>
-                        <input type="date" class="form-control"
-                        name="fin" value="{{$proyt->fecha_fin}}" disabled>
-                    </div>
-                </div>
-                
-                <div class="mb-1">
-                    <div class="mb-2">
-                        <label class="form-label"> Objetivo del proyecto </label>
-                        <textarea class="form-control" name="objetivo" id="objetivo"
-                        rows="3" disabled>{{$proyt->objetivo}}</textarea>
-                    </div>
-                </div>
-                <br>
-                <div class="mb-1">
+                    </div>--}}
+                {{--<div class="mb-1">
                     <div class="mb-2">
                         <label class="form-label"> Producto por obtener</label>
                         <textarea class="form-control" name="prodobt"
                         id="prodobt" rows="3" disabled>{{$proyt->producto}}</textarea>
                     </div>
-                </div> 
+                </div>
                 <div class="mb-1 input-group">
                     <div class="mb-4 col">
                         <label class="form-label"> Línea de investigación  </label>
-                        <textarea class="form-control" name="lins" id="lins" 
-                        rows="3" disabled>{{$linea->nombre_linea}}</textarea>
+                        @if ($proyt->idlinea == '')
+                            <textarea class="form-control" name="lins" id="lins"
+                            rows="3" disabled></textarea>
+                        @else
+                            <textarea class="form-control" name="lins" id="lins"
+                            rows="3" disabled>{{$linea->nombre_linea}}</textarea>
+                        @endif
+                        
                     </div>
                 </div>
                 <div class="mb-1 input-group">
                     <div class="mb-4 col">
                         <label class="form-label"> Cliente o Usuario Potencial</label>
-                        <input name="userpot" id="userpot" class="form-control" 
+                        <input name="userpot" id="userpot" class="form-control"
                         value="{{$cli->nivel1.' | '.$cli->nivel2.' | '.$cli->nivel3}}" disabled>
                     </div>
                 </div>
                 <div class="mb-1 input-group">
                     <div class="mb-4 col">
                         <label class="form-label"> Objetivo sectorial</label>
-                        <textarea class="form-control" name="objs" id="objs" rows="3" disabled>{{$obj->nombre_objetivosec}}</textarea>   
+                        @if ($proyt->idobjt == '')
+                            <textarea class="form-control" name="objs" id="objs" rows="3" disabled></textarea>
+                        @else
+                            <textarea class="form-control" name="objs" id="objs" rows="3" disabled>{{$obj->nombre_objetivosec}}</textarea>
+                        @endif
                     </div>
                 </div>
                 <div class="mb-4">
                     <div class="mb-1 input-group">
                         <div class="mb-4 col">
                             <label class="form-label"> Alineación al programa sectorial</label>
-                            <input type="text" class="form-control" name="alin" id="alin" value="{{$alin->nombre}}" disabled>
+                            @if ($proyt->idalin == '')
+                                <input type="text" class="form-control" name="alin" id="alin" value="" disabled>
+                            @else
+                                <input type="text" class="form-control" name="alin" id="alin" value="{{$alin->nombre}}" disabled>
+                            @endif
                         </div>
                         <div class="mb-1 col">
                         </div>
                     </div>
-                </div>
+                </div>--}}
                 {{-- <div class="mb-1 input-group">
                     <div class="mb-4 col">
                     <label class="form-label"> Materia: </label>
@@ -681,62 +819,8 @@
                         <span></span>
                     </div>
                 </div> --}}
-                <div class="mb-4">
-                    <div class="mb-1 input-group">
-                        <div class="mb-4 col">
-                            <label class="form-label"> Materia </label>
-                            @if ($proyt->materia == '')
-                                <input type="text" class="form-control" name="mate" id="mate" value="" disabled>
-                            @else
-                                <input type="text" class="form-control" name="mate" id="mate" value="{{$materia->descmateria}}" disabled>
-                            @endif
-                        </div>
-                        <div class="mb-1 col">
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <div class="mb-1 input-group">
-                        <div class="mb-4 col">
-                            <label class="form-label"> Orientación </label>
-                            @if ($proyt->orientacion == '')
-                                <input type="text" class="form-control" name="orien" id="orien" value="" disabled>
-                            @else
-                                <input type="text" class="form-control" name="orien" id="orien" value="{{$orien->descorientacion}}" disabled>
-                            @endif
-                        </div>
-                        <div class="mb-1 col">
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-4">
-                    <div class="mb-1 input-group">
-                        <div class="mb-4 col">
-                            <label class="form-label"> Nivel de impacto social o Económico </label>
-                            @if ($proyt->nivel == '')
-                                <input type="text" class="form-control" name="nivel" id="nivel" value="" disabled>
-                            @else
-                                <input type="text" class="form-control" name="nivel" id="nivel" value="{{$nivel->nivel}}" disabled>
-                            @endif
-                        </div>
-                        <div class="mb-1 col">
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-1 input-group">
-                    <div class="mb-4 col">
-                    <label class="form-label"> Investigadores participantes: </label>
-                    <textarea class="form-control" name="cont" id="cont" rows="5" disabled>
-                        @foreach ($team as $t)
-                        {{$t->Apellido_Paterno.' '.$t->Apellido_Materno.' '.$t->nombre}}
-                        @endforeach
-                    </textarea> 
-                    </div>
-                    <div class="mb-4 col">
-                        <span></span>
-                    </div>
-                </div>
-                <div class="mb-1 input-group">
+                
+                {{--<div class="mb-1 input-group">
                     <div class="mb-4 col">
                     <label class="form-label"> Contribución a : </label>
                     <textarea class="form-control" name="cont" id="cont" rows="5" disabled>
@@ -752,11 +836,19 @@
                 <div class="mb-1 input-group">
                     <div class="mb-4 col">
                         <label class="form-label"> Modo de transporte </label>
-                        <input type='text' name="tran" id="tran" class="form-control" value="{{$tran->nombre_transporte}}" disabled>
-                        <input type='text' name="otrotra" id="otrotra" class="form-control" value="{{$tran->id}}" hidden>
-                        <br>
-                        <input id="altran" name="altran" class="form-control" value="{{$proyt->otrotrans}}" disabled>
-                    </div>
+                        @if ($proyt->idmodot  == '')
+                            <input type='text' name="tran" id="tran" class="form-control" value="" disabled>
+                            <input type='text' name="otrotra" id="otrotra" class="form-control" value="" hidden>
+                            <br>
+                            <input id="altran" name="altran" class="form-control" value="" disabled>
+                        @else
+                            <input type='text' name="tran" id="tran" class="form-control" value="{{$tran->nombre_transporte}}" disabled>
+                            <input type='text' name="otrotra" id="otrotra" class="form-control" value="{{$tran->id}}" hidden>
+                            <br>
+                            <input id="altran" name="altran" class="form-control" value="{{$proyt->otrotrans}}" disabled>
+                        @endif
+                        
+                    </div>--}}
                     <div class="mb-4 col">
                         <span></span>
                     </div>

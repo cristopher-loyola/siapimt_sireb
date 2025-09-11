@@ -27,6 +27,15 @@ use App\Models\Nivel; //nuevo
 use App\Models\Materia; //nuevo
 use App\Models\MateriaPr; //nuevo
 use App\Models\Observacion;
+use App\Models\Analisis;
+use App\Models\Riesgos;
+use App\Models\ContribucionEcono;
+use App\Models\ContribucionSocial;
+use App\Models\EficienciaTransp;
+use App\Models\EscalaImpacto;
+use App\Models\Impacto;
+use App\Models\ProblemSocial;
+use App\Models\ProductividadTransp;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use App\Exports\Afectacion_Export;
@@ -41,6 +50,14 @@ use App\Mail\Solicitudreprogramacionrechazada;
 use App\Mail\Solicitudcancelacion;
 use App\Mail\Solicitudcancelacionrechazada;
 use App\Mail\Solicitudcancelacionaceptada;
+use App\Mail\notificarprotocolo;
+use App\Mail\notificarpte;
+use App\Mail\notificarprotocoloaceptada;
+use App\Mail\notificarprotocolorevision;
+use App\Mail\notificarprotocolodirector;
+use App\Mail\notificarprotocolorechazopte;
+use App\Mail\notificarprotocololfirmasaprobado;
+use App\Mail\notificarcospiiiaprobados;
 //Nuevo
 use DB;
 use PDF;
@@ -51,10 +68,8 @@ use App\Http\Controllers\class\StatusController;
 use App\Http\Controllers\class\PorcentTasksController;
 use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\class\ProgressPublicaciontController;
-
-
-
-
+use App\Models\Ocurrencias;
+use Illuminate\Support\Facades\Storage;
 
 class dbcontroller extends Controller
 {
@@ -133,7 +148,7 @@ class dbcontroller extends Controller
                     'FullName' => $resp->Nombre,
                     'fechabimestre' => $fechabimestre,
                     'periodoConsultado' => $periodoConsultado,
-                    'fechabimestreP' => $fechabimestreP,                   
+                    'fechabimestreP' => $fechabimestreP,
                     'userID' => $userID
                 ];
                 return view('SIRB/newinicio4', $data);
@@ -225,7 +240,8 @@ class dbcontroller extends Controller
                 'proyectos.costo',
                 'proyectos.estado',
                 'proyectos.publicacion',
-                'proyectos.idpublicacion'
+                'proyectos.idpublicacion',
+                'proyectos.completado'
             ])
             //agregamos el campo con la etiqueta de acuerdo con su estado
             ->map(function($project) use ($statusController, $porcentProjectController){
@@ -234,21 +250,25 @@ class dbcontroller extends Controller
                 //$project->label_negotiation = $statusController->getLabelStatusNegotiation($project->estado,$project->clavet);
 
                 //si el proyecto tiene fecha de inicio y fecha de fin, independientemente del estado que tenga
-                if(!empty($porcentProjectController->getDateStartProject($project->id)) && 
+                if(!empty($porcentProjectController->getDateStartProject($project->id)) &&
                     !empty($porcentProjectController->getDateEndProject($project->id))){
+
                     $project->porcent_program = $porcentProjectController->getPorcentProgrammedForTasks($project->id);
+                    
                 }else{
                     //en caso de que no tenga fecha de inicio y fin,dejamos en 0 el porcentaje programado
                     $project->porcent_program = 0;
                 }
 
-                return $project;  
+                return $project;
             });
 
             $areasAdscripcion = $this->getAreasAdscripcion();
 
+            $tienerepro = Observacion::Where('tipo', 1)->get();
+
         }
-        return view('paginaprincipal', $data, compact('proy', 'areasAdscripcion'));
+        return view('paginaprincipal', $data, compact('proy', 'areasAdscripcion', 'tienerepro'));
     }
 
     /*
@@ -300,7 +320,7 @@ class dbcontroller extends Controller
             //instancia a clase de PorcentTasksController
             $porcentProjectController = new PorcentTasksController();
 
-            //recuperamos todos los proyectos del area del usuario donde es reponsable        
+            //recuperamos todos los proyectos del area del usuario donde es reponsable
             $allProjectsWhereImResponsable = $ejecutiveController->getProjectsMulticoordinacionIamResponsableInMyArea($this->getCurrentUserAuthDepto())
             ->concat($ejecutiveController->getProjectsIamResponsableInMyArea($this->getCurrentUserAuthDepto()))            //agregamos el campo con la etiqueta de acuerdo con su estado
             ->map(function($project) use ($statusController){
@@ -341,7 +361,37 @@ class dbcontroller extends Controller
             //embedimos los porcentajes programados o esperados para cada proyecto    
             $restProjects = $porcentProjectController->appendProgressProgram($restProjects);
 
-            return view('paginaprincipalejec', $data, compact('allProjectsWhereImResponsable','allProjectsWhereImMember','restProjects'));
+            $todosproj = Proyecto::join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+            ->where('proyectos.oculto', '=', '1')
+            ->orderBy('proyectos.clavea', 'ASC')
+            ->orderBy('proyectos.clavet', 'ASC')
+            ->orderBy('proyectos.claven', 'ASC')
+            ->orderBy('proyectos.clavey', 'ASC')
+            ->get([
+                'proyectos.id',
+                'proyectos.oculto',
+                'usuarios.Nombre',
+                'usuarios.Apellido_Paterno',
+                'usuarios.Apellido_Materno',
+                'proyectos.nomproy',
+                'proyectos.clavea',
+                'proyectos.clavet',
+                'proyectos.claven',
+                'proyectos.clavey',
+                'proyectos.fecha_inicio',
+                'proyectos.fecha_fin',
+                'proyectos.progreso',
+                'proyectos.duracionm',
+                'proyectos.costo',
+                'proyectos.estado',
+                'proyectos.publicacion',
+                'proyectos.idpublicacion',
+                'proyectos.completado',
+                'proyectos.gprotocolo',
+                'proyectos.fimradg'
+            ]);
+
+            return view('paginaprincipalejec', $data, compact('allProjectsWhereImResponsable','allProjectsWhereImMember','restProjects', 'todosproj'));
         }
     }
 
@@ -373,17 +423,18 @@ class dbcontroller extends Controller
                     'proyectos.costo',
                     'proyectos.estado',
                     'proyectos.publicacion',
-                    'proyectos.idpublicacion'
+                    'proyectos.idpublicacion',
+                    'proyectos.completado'
                 ])
                 //agregamos el campo con la etiqueta de acuerdo con su estado
                 ->map(function($project) use ($statusController){
                     $project->label_status = $statusController->getLabelStatus($project->estado);
                     $project->label_color = $statusController->getColorLabelStatus($project->estado);
                     //$project->label_negotiation = $statusController->getLabelStatusNegotiation($project->estado,$project->clavet);
-                    return $project;  
+                    return $project;
                 });
-            //embedimos los porcentajes programados o esperados para cada proyecto    
-            $proyt = $porcentProjectController->appendProgressProgram($proyt);    
+            //embedimos los porcentajes programados o esperados para cada proyecto
+            $proyt = $porcentProjectController->appendProgressProgram($proyt);
 
             $proy = Equipo::join('proyectos', 'proyectos.id', '=', 'equipo.idproyecto')
                 ->where('equipo.idusuario', '=', session('LoginId'))
@@ -408,18 +459,19 @@ class dbcontroller extends Controller
                     'proyectos.costo',
                     'proyectos.estado',
                     'proyectos.publicacion',
-                    'proyectos.idpublicacion'
+                    'proyectos.idpublicacion',
+                    'proyectos.completado'
                 ])
                 //agregamos el campo con la etiqueta de acuerdo con su estado
                 ->map(function($project) use ($statusController){
                     $project->label_status = $statusController->getLabelStatus($project->estado);
                     $project->label_color = $statusController->getColorLabelStatus($project->estado);
                     //$project->label_negotiation = $statusController->getLabelStatusNegotiation($project->estado,$project->clavet);
-                    return $project;  
+                    return $project;
                 });
 
-                //embedimos los porcentajes programados o esperados para cada proyecto    
-                $proy = $porcentProjectController->appendProgressProgram($proy);  
+                //embedimos los porcentajes programados o esperados para cada proyecto
+                $proy = $porcentProjectController->appendProgressProgram($proy);
             return view('paginaprincipaluser', $data, compact('proy', 'proyt'));
         }
     }
@@ -444,6 +496,96 @@ class dbcontroller extends Controller
             ->whereNotNull('ncontratos')->where('status', 1)->get();
         }
         return view('paginaprincipalfina', $data, compact('proy'));
+    }
+
+    public function resumenMensual($id){
+        $proyecto = Proyecto::find($id);
+        $tareas = Tarea::where('idproyecto', $id)->orderBy('fecha_inicio', 'ASC')->get();
+        $mesesdur = Tarea::where('idproyecto', $id)->sum('duracion');
+
+        $tareafechamin = Tarea::where('idproyecto', $id)->min('fecha_inicio');
+        $tareafechamax = Tarea::where('idproyecto', $id)->max('fecha_fin');
+        $datosPorMes = [];
+
+        if($tareafechamin && $tareafechamax && $mesesdur != 0){
+            $inicio = new \DateTime($tareafechamin);
+            $fin = new \DateTime($tareafechamax);
+            // CONTAR HASTA EL ULTIMO DIA DEL MES
+            $fin->modify('last day of this month');
+            while($inicio <= $fin){
+                $clave = $inicio->format('Y-m');
+                $datosPorMes[$clave] = ['programado' => 0, 'realizado' => 0];
+                // CONTAR DESDE EL PRIMER DIA DEL MES
+                $inicio->modify('first day of next month');
+            }
+            // Matrices para acumulados por columna (mes) - // MATRICES PARA LOS MESES, PARA PROGRAMADO Y REALIZADO, LOS DOS ÚLTIMOS SE INICIAN EN 0 
+            $mesesMat = array_keys($datosPorMes);
+            $matp = array_fill(0, count($mesesMat), 0.0);
+            $matr = array_fill(0, count($mesesMat), 0.0);
+
+            foreach($tareas as $ta){
+                $c = $ta->duracion;
+                $p = $ta->progreso;
+
+                // PARA CALCULAR EL PORCENTAJE PROGRAMADO DE CADA MES
+                $real = round(100 / $mesesdur, 2);
+                $op = round($real * $c, 2);
+                $f = round(($op * $p) / 100, 2);
+
+                // Encontrar el índice del mes de inicio de la tarea 
+                $fechaIni = new \DateTime($ta->fecha_inicio);
+                $mesInicio = $fechaIni->format('Y-m');
+                $colinicro = array_search($mesInicio, $mesesMat);
+                if ($colinicro === false) {
+                    continue;
+                }
+
+                // PROGRAMADO: PARA REPARTIR EL VALOR ENTRE LOS MESES DE LA YAREA
+                for ($i = 0; $i < $c; $i++) {
+                    $colMes = $colinicro + $i;
+                    if (isset($matp[$colMes])) {
+                        $matp[$colMes] += $real;
+                    }
+                }
+
+                if ($p > 0) {
+                    $mesprog = ceil($f / $real);
+                    if ($mesprog > $c) $mesprog = $c;
+                    $idcol = $colinicro;
+                    for ($mp = 1; $mp <= $mesprog; $mp++) {
+                        if ($mp < $mesprog) {
+                            if (isset($matr[$idcol])) {
+                                $matr[$idcol] += $real;
+                            }
+                        } else {
+                            $pa = $f - ($real * ($mp - 1));
+                            if (isset($matr[$idcol])) {
+                                $matr[$idcol] += $pa;
+                            }
+                        }
+                        $idcol++;
+                    }
+                }
+            }
+
+            // IR ACOMODANDO LOS DATOS POR MES 
+            foreach ($mesesMat as $i => $mes) {
+                $datosPorMes[$mes]['programado'] = round($matp[$i], 2);
+                $datosPorMes[$mes]['realizado'] = round($matr[$i], 2);
+            }
+
+            // PARA OBTENER LOS ACUMULADOS UNA VEZ QUE SE TIENEN POR MES
+            $acumuladoProgramado = 0;
+            $acumuladoRealizado = 0;
+            foreach ($datosPorMes as $mes => $valores) {
+                $acumuladoProgramado += $valores['programado'];
+                $acumuladoRealizado += $valores['realizado'];
+                $datosPorMes[$mes]['acum_programado'] = round($acumuladoProgramado, 2);
+                $datosPorMes[$mes]['acum_realizado'] = round($acumuladoRealizado, 2);
+            }
+        }
+
+        return view('resumenMensual', compact('proyecto', 'datosPorMes', 'mesesdur'));
     }
 
     function logout (request $request) {
@@ -500,6 +642,7 @@ class dbcontroller extends Controller
             }
         }
     }
+
 /*Login y Accesos Fin */
 
 /*Usuarios Inicio*/
@@ -577,7 +720,9 @@ class dbcontroller extends Controller
         $use->correo = $request->get('correo');
         $use->curp = $request->get('curp');
         $use->usuario = $request->get('usuario');
-        $use-> idarea = $request->areas;
+        $use->idarea = $request->areas;
+        $use->director = $request->get('esdg');
+        $use->pcospii = $request->get('espd');
         $use->pass = Hash::make($request->pass);
         $use->passen = Crypt::encrypt($request->pass);
         $use->acceso = $request->get('tacces');
@@ -648,25 +793,52 @@ class dbcontroller extends Controller
 /*Usuarios Fin */
 
 /*Proyectos Fin*/
-    public function adpindex(){
-        if(session()->has('LoginId')){
-        $proyt = Proyecto::join('usuarios','usuarios.id','=','proyectos.idusuarior')
-                ->get(['proyectos.id',
-                    'proyectos.oculto',
-                    'usuarios.Nombre',
-                    'usuarios.Apellido_Paterno',
-                    'usuarios.Apellido_Materno',
-                    'proyectos.nomproy',
-                    'proyectos.clavea',
-                    'proyectos.clavet',
-                    'proyectos.claven',
-                    'proyectos.clavey',
-                    'proyectos.fecha_inicio',
-                    'proyectos.fecha_fin'
-                ]);
-        $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+    public function adpindex(Request $request){
+        if (session()->has('LoginId')) {
+            $texto = trim($request->get('buscarp'));
+            if ($texto == "") {
+                $proyt = Proyecto::join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+                    ->orderBy('proyectos.id', 'ASC')
+                    ->get([
+                        'proyectos.id',
+                        'proyectos.oculto',
+                        'usuarios.Nombre',
+                        'usuarios.Apellido_Paterno',
+                        'usuarios.Apellido_Materno',
+                        'proyectos.nomproy',
+                        'proyectos.clavea',
+                        'proyectos.clavet',
+                        'proyectos.claven',
+                        'proyectos.clavey',
+                        'proyectos.fecha_inicio',
+                        'proyectos.fecha_fin'
+                    ]);
+            }else{
+                $proyt = Proyecto::join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+                    ->where(function ($query) use ($texto) {
+                        $query->where('proyectos.nomproy', 'LIKE', '%'.$texto.'%')
+                            ->orWhere(DB::raw("CONCAT(proyectos.clavea, proyectos.clavet, '-', proyectos.claven, '/', proyectos.clavey)"), 'LIKE', '%'.$texto.'%');
+                    })
+                    ->orderBy('proyectos.id', 'ASC')
+                    ->get([
+                        'proyectos.id',
+                        'proyectos.oculto',
+                        'usuarios.Nombre',
+                        'usuarios.Apellido_Paterno',
+                        'usuarios.Apellido_Materno',
+                        'proyectos.nomproy',
+                        'proyectos.clavea',
+                        'proyectos.clavet',
+                        'proyectos.claven',
+                        'proyectos.clavey',
+                        'proyectos.fecha_inicio',
+                        'proyectos.fecha_fin'
+                    ]);
+            }
+
+            $data = ['LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first()];
+            return view('AdminPr', $data, compact('proyt', 'texto'));
         }
-        return view('AdminPr',$data,compact('proyt'));
     }
 
     public function changestatuspro (Request $request){
@@ -685,66 +857,6 @@ class dbcontroller extends Controller
         $proyto->oculto = $request->oculto;
         $proyto->save();
         return response()->json(['success'=>'Status changed Succesfully']);
-    }
-
-    public function newp()
-    {
-        if (session()->has('LoginId')) {
-            $search = User::where('id', '=', session('LoginId'))->first();
-            $areauser = Area::where('id', $search->idarea)->first();
-            $resp = User::Where('idarea', $areauser->id)->where('responsable', 1)->first();
-            $contri = Contribucion::where('status', 1)->get();
-            $areas = Area::where('status', 1)->orderBy('nombre_area', 'ASC')->get();
-            $invs = Investigacion::where('status', 1)->orderBy('nombre_linea', 'ASC')->get();
-            $objs = Objetivo::where('status', 1)->get();
-            $trans = Transporte::where('status', 1)->get();
-            $alins = Alineacion::where('status', 1)->get();
-            $proy = Proyecto::where('status', 1)->get();
-            $clie = Cliente::where('status', 1)->orderBy('nivel1', 'DESC')
-                ->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
-            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
-                ->orderBy('Apellido_Paterno', 'ASC')->orderBy('Apellido_Materno', 'ASC')->orderBy('nombre', 'ASC')->get();
-
-            //Nuevas tablas
-                $materia = Materia::where('status', 1)->get();
-                $orientacion = Orientacion::where('status', 1)->get();
-                $nivel = Nivel::where('status', 1)->get();
-            //Nuevas tablas
-
-            //enviamos las categorias disponibles en base de datos
-            $categoriesN1 = $this->getCategoriesList();
-            //enviamos la lista de clientes nivel2 de la primera categoria    
-            $clientsN2 = $this->getCategoriesListN2($categoriesN1[0]);
-            //enviamos los clientes de la categoria niveo 3 que coincida con la categoria y nivel1 y nivel2 
-            $clientsN3 =  $this->getCategoriesListN3($categoriesN1[0], $clientsN2[0]);
-
-                        //obtenemos los anios disponibles para realizar el proyecto
-            //instancia a la clase
-            $projectController = new ProyectoController();
-            $yearOptions = $projectController->getYearOptionsForRealizeProject(2);
-        }
-
-        return view('addproy', compact(
-            'contri',
-            'areas',
-            'invs',
-            'objs',
-            'trans',
-            'alins',
-            'proy',
-            'user',
-            'clie',
-            'areauser',
-            'search',
-            'resp',
-            'categoriesN1',
-            'clientsN2',
-            'clientsN3',
-            'orientacion',
-            'nivel',
-            'materia',
-            'yearOptions'
-        ));
     }
 
     /*
@@ -770,7 +882,7 @@ class dbcontroller extends Controller
     }
 
     //retorna todas las distintas categorias Nivel2 de la base de datos
-    private function getCategoriesListN2($categoryN1)
+    public function getCategoriesListN2($categoryN1)
     {
         //comprobamos si el usuario autenticado pertenece al departamento de División de Telemática
         if ($this->currentUserIsInDepto('División de Telemática') || $this->currentUserIsInDepto('Administración y Finanzas')) {
@@ -797,7 +909,7 @@ class dbcontroller extends Controller
     }
 
     //retorna todas las distintas categorias Nivel3 de la base de datos dado el nivel1 y nivel2
-    private function getCategoriesListN3($categoryN1, $categoryN2){
+    public function getCategoriesListN3($categoryN1, $categoryN2){
         //seleccionamos las categorias diferentes de la base de datos
         $categoriesN3 = Cliente::where('nivel1', $categoryN1)
             ->where('nivel2', $categoryN2)
@@ -817,7 +929,7 @@ class dbcontroller extends Controller
     /*
     metodo para obtener obtener el id del cliente usando el nombre completo
     */
-    function getIdClientByFullName($nivel1, $nivel2, $nivel3){
+    public function getIdClientByFullName($nivel1, $nivel2, $nivel3){
         $client = Cliente::select('id')
             ->where('nivel1', $nivel1)
             ->where('nivel2', $nivel2)
@@ -835,6 +947,7 @@ class dbcontroller extends Controller
     /*
     obtiene los clientes descartando alguno especificado del nivel 2; retorna un JSON
     */
+
     private function getClientsExcludeByDepartamento($category, $clientToExclude = 'IMT'){
         //seleccionamos las categorias diferentes de la base de datos
         $categoriesN2 = Cliente::Where('nivel1', $category)
@@ -845,6 +958,17 @@ class dbcontroller extends Controller
             ->pluck('nivel2');
 
         return ($categoriesN2);
+    }
+
+    //retorna todas las distintas categorias Nivel2 sin excepciones
+    public function getCategoriesListN2All($categoryN1){
+        return response()->json(
+            Cliente::Where('nivel1', $categoryN1)
+            ->select('nivel2')
+            ->distinct()
+            ->orderBy('nivel2','ASC')
+            ->pluck('nivel2')
+        );
     }
 
     /*
@@ -941,6 +1065,7 @@ class dbcontroller extends Controller
             'usuarios.Apellido_Paterno',
             'usuarios.Apellido_Materno',
             'area_adscripcion.nombre_area',
+            'proyectos.completado'
         )
         ->where('area_adscripcion.nombre_area', $area)
         ->where('proyectos.oculto', '=', '1')
@@ -961,9 +1086,8 @@ class dbcontroller extends Controller
         return $projectsArea;
     }
 
-
     //obtiene los proyectos de multicoordinacion de un usaurio que pertence a un area dada
-    function getProjectsMulticoordinacionArea($area){
+    public function getProjectsMulticoordinacionArea($area){
         //instancia la clase que calcula progresos de acuerdo con publicacion
         $progressPublicationController = new ProgressPublicaciontController();
         $projectsAreaMulticoordinacion = Proyecto::select(
@@ -988,6 +1112,7 @@ class dbcontroller extends Controller
             'usuarios.Apellido_Paterno',
             'usuarios.Apellido_Materno',
             'area_adscripcion.nombre_area',
+            'proyectos.completado'
         )
         ->join('usuarios','proyectos.idusuarior','=','usuarios.id')        
         ->join('area_adscripcion','usuarios.idarea','=','area_adscripcion.id')
@@ -1016,13 +1141,12 @@ class dbcontroller extends Controller
         return $projectsAreaMulticoordinacion;
     }
 
-
     public function getProjectsAreaAndMulticoordinacion($area){
 
         $multicoordinacionProjects = $this->getProjectsMulticoordinacionArea($area);
         $areaProjects = $this->getProjectsByArea($area);
 
-        return $areaProjects->concat($multicoordinacionProjects);                        
+        return $areaProjects->concat($multicoordinacionProjects);
 
     }
 
@@ -1094,8 +1218,7 @@ class dbcontroller extends Controller
                             ->get();
 
             //return response()->json($userProjects);
-            return $userProjects;                
-
+            return $userProjects;
         }
 
         return ['error' => 'Error de autenticacion'];
@@ -1106,6 +1229,67 @@ class dbcontroller extends Controller
     protected function getMulticoordData(){
         return Area::where('id','=', 12)->first();
     }
+
+    public function newp()
+    {
+        if (session()->has('LoginId')) {
+            $search = User::where('id', '=', session('LoginId'))->first();
+            $areauser = Area::where('id', $search->idarea)->first();
+            $resp = User::Where('idarea', $areauser->id)->where('responsable', 1)->first();
+            $contri = Contribucion::where('status', 1)->get();
+            $areas = Area::where('status', 1)->orderBy('nombre_area', 'ASC')->get();
+            $invs = Investigacion::where('status', 1)->orderBy('nombre_linea', 'ASC')->get();
+            $objs = Objetivo::where('status', 1)->get();
+            $trans = Transporte::where('status', 1)->get();
+            $alins = Alineacion::where('status', 1)->get();
+            $proy = Proyecto::where('status', 1)->get();
+            $clie = Cliente::where('status', 1)->orderBy('nivel1', 'DESC')
+                ->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
+            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+                ->orderBy('Apellido_Paterno', 'ASC')->orderBy('Apellido_Materno', 'ASC')->orderBy('nombre', 'ASC')->get();
+
+            //Nuevas tablas
+                $materia = Materia::where('status', 1)->get();
+                $orientacion = Orientacion::where('status', 1)->get();
+                $nivel = Nivel::where('status', 1)->get();
+            //Nuevas tablas
+
+            //enviamos las categorias disponibles en base de datos
+            $categoriesN1 = $this->getCategoriesList();
+            //enviamos la lista de clientes nivel2 de la primera categoria    
+            $clientsN2 = $this->getCategoriesListN2($categoriesN1[0]);
+            //enviamos los clientes de la categoria niveo 3 que coincida con la categoria y nivel1 y nivel2 
+            $clientsN3 =  $this->getCategoriesListN3($categoriesN1[0], $clientsN2[0]);
+
+                        //obtenemos los anios disponibles para realizar el proyecto
+            //instancia a la clase
+            $projectController = new ProyectoController();
+            $yearOptions = $projectController->getYearOptionsForRealizeProject(2);
+        }
+
+        return view('addproy', compact(
+            'contri',
+            'areas',
+            'invs',
+            'objs',
+            'trans',
+            'alins',
+            'proy',
+            'user',
+            'clie',
+            'areauser',
+            'search',
+            'resp',
+            'categoriesN1',
+            'clientsN2',
+            'clientsN3',
+            'orientacion',
+            'nivel',
+            'materia',
+            'yearOptions'
+        ));
+    }
+    
     public function addnewp(Request $request)
     {
         //mensajes de error personalizados
@@ -1119,6 +1303,9 @@ class dbcontroller extends Controller
             'objs.numeric' => 'Selecciona un :attribute',
             'alin.numeric' => 'Selecciona una :attribute',
             'tran.numeric' => 'Selecciona un :attribute',
+            'orien.required' => 'Selecciona una :attribute',
+            'nivel.required' => 'Selecciona un :attribute',
+            'materia.required' => 'Selecciona una :attribute'
         ];
         //atributos del request
         $attributtes = [
@@ -1129,6 +1316,9 @@ class dbcontroller extends Controller
             'objs' => 'Objetivo Sectorial',
             'alin' => 'Alineación',
             'tran' =>  'Modo de Transporte',
+            'orien' => 'Orientación',
+            'materia' => 'Materia',
+            'nivel' => 'Nivel'
         ];
 
         $request->validate([
@@ -1146,6 +1336,15 @@ class dbcontroller extends Controller
             'aprobo' => 'numeric',
             'year_to_realize_project' => 'required',
             'is_project_multicoord' => 'required|in:Sí,No|string',
+            'orien' => 'required',
+            'nivel' => 'required',
+            'materia' => 'required',
+            'antecedente'=>'required',
+            'alcance'=>'required',
+            'metodologia'=>'required',
+            'comciente'=>'required',
+            'beneficios'=>'required',
+            'Referencias'=>'required'
         ],$messages,$attributtes);
 
         //instancia de objeto a clase que nos permite la asignacion de numeros a proyectos de manera automatica
@@ -1165,8 +1364,6 @@ class dbcontroller extends Controller
         //obtenemos la clave del anio
         $claveYear = $projectController->getValueYear($request->input('year_to_realize_project'));
 
-
-
         $pr = new Proyecto();
         $pr->id;
         $pr->nomproy = $request->get('nameproy');
@@ -1176,23 +1373,178 @@ class dbcontroller extends Controller
         $pr->tipo = $request->get('tipo');
         $pr->cliente = $request->get('userpot');
         $pr->oculto;
-        $pr->status;
-        $pr->duracionm = $request->get('meses');
-        $pr->idalin = $request->get('alin');
+        $pr->status;        
         $pr->idarea = $areaProject->id;
+        $pr->duracionm = $request->get('meses');
+
+        $pr->idalin = $request->get('alin');
         $pr->idlinea = $request->get('lins');
         $pr->idmodot = $request->get('tran');
-        $pr->aprobo = $request->get('aprobo');
-        $pr->ncontratos = $request->get('atipo');
-        $pr->otrotrans = $request->get('otran');
         $pr->idobjt = $request->get('objs');
+        $pr->otrotrans = $request->get('otran');
+        $pr->aprobo = $request->get('aprobo');
+
+        $pr->ncontratos = $request->get('atipo');
+
         $pr->clavea = $areaProject->inicial_clave;
         $pr->clavet = $request->get('tipo');
-
         $pr->claven = $claveNumber;
-
         $pr->clavey = $claveYear;
 
+        $pr->orientacion = $request->get('orien');
+        $pr->nivel = $request->get('nivel');
+        $pr->materia = $request->get('materia');
+
+        $pr->antecedente = $request->get('antecedente');
+        $pr->alcance = $request->get('alcance');
+        $pr->metodologia = $request->get('metodologia');
+        $pr->comciente = $request->get('comciente');
+        $pr->beneficios = $request->get('beneficios');
+        $pr->referenciasn = $request->get('Referencias');
+
+        $res = $pr->save();
+        if ($res) {
+            if (session()->has('LoginId')) {
+                $access = User::where('id', '=', session('LoginId'))->where('acceso', '=', 1)->first();
+                $accessejec = User::where('id', '=', session('LoginId'))->where('acceso', '=', 2)->first();
+                $accessuser = User::where('id', '=', session('LoginId'))->where('acceso', '=', 3)->first();
+                //construimos la clave del proyecto y la regresamos
+                if($pr->claven < 10){
+                    $claveN = '0'.$pr->claven;
+                }else{
+                    $claveN =$pr->claven;
+                }
+                $key_project = $pr->clavea . $pr->clavet.'-'.$claveN.'/'.$pr->clavey;
+
+                // if ($access) {
+                //     return redirect('dashboard')->with([
+                //         'registered'=>'¡Proyecto registrado exitosamente!',
+                //         'key_project'=> $key_project
+                //     ]);
+                // } elseif ($accessejec) {
+                //     return redirect('dashboardresp')->with([
+                //         'registered'=>'¡Proyecto registrado exitosamente!',
+                //         'key_project'=> $key_project
+                //     ]);
+                // } elseif ($accessuser) {
+                //     return redirect('dashboardauser')->with([
+                //         'registered'=>'¡Proyecto registrado exitosamente!',
+                //         'key_project'=> $key_project
+                //     ]);
+                // } else {
+                //     return redirect('/');
+                // }
+
+                $existeclave = Proyecto::where('clavea', $pr->clavea)
+                    ->where('clavet', $pr->clavet)
+                    ->where('claven', $pr->claven)
+                    ->where('clavey', $pr->clavey)
+                    ->first();
+                return redirect('tareag/'.$existeclave->id);
+            }
+        } else {
+            return back()->with('fail', 'No se pudo resgistrar al nuevo usuario');
+        }
+    }
+    
+    public function claveproy()
+    {
+        if (session()->has('LoginId')) {
+            $search = User::where('id', '=', session('LoginId'))->first();
+            $areauser = Area::where('id', $search->idarea)->first();
+            $resp = User::Where('idarea', $areauser->id)->where('responsable', 1)->first();
+            $areas = Area::where('status', 1)->orderBy('nombre_area', 'ASC')->get();
+            $proy = Proyecto::where('status', 1)->get();
+            $clie = Cliente::where('status', 1)->orderBy('nivel1', 'DESC')
+                ->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
+            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+                ->orderBy('Apellido_Paterno', 'ASC')->orderBy('Apellido_Materno', 'ASC')->orderBy('nombre', 'ASC')->get();
+            //enviamos las categorias disponibles en base de datos
+            $categoriesN1 = $this->getCategoriesList();
+            //enviamos la lista de clientes nivel2 de la primera categoria
+            $clientsN2 = $this->getCategoriesListN2($categoriesN1[0]);
+            //enviamos los clientes de la categoria niveo 3 que coincida con la categoria y nivel1 y nivel2
+            $clientsN3 =  $this->getCategoriesListN3($categoriesN1[0], $clientsN2[0]);
+            //obtenemos los anios disponibles para realizar el proyecto
+            //instancia a la clase
+            $projectController = new ProyectoController();
+            $yearOptions = $projectController->getYearOptionsForRealizeProject(2);
+        }
+
+        return view('addclaveproy', compact(
+            'areas',
+            'proy',
+            'user',
+            'clie',
+            'areauser',
+            'search',
+            'resp',
+            'categoriesN1',
+            'clientsN2',
+            'clientsN3',
+            'yearOptions'
+        ));
+    }
+
+    public function addclave(Request $request)
+    {
+        //mensajes de error personalizados
+        $messages = [
+            'nameproy.required' => 'Escribe un nombre para el proyecto',
+            'year_to_realize_project.required' => 'Por favor selecciona un valor para este campo (:attribute)',
+            'is_project_multicoord.required' => 'Por favor selecciona si el proyecto es multicoordinacion',
+            'is_project_multicoord.in' => 'Selecciona un valor permitido "Sí" o "No"',
+            'userpot.numeric' => 'Selecciona los 3 nivles del :attribute',
+        ];
+        //atributos del request
+        $attributtes = [
+            'year_to_realize_project' => 'Año de realización',
+            'is_project_multicoord' => 'Proyecto multicoordinación',
+            'userpot' => 'Cliente o Usuario Potencial',
+        ];
+
+        $request->validate([
+            'nameproy' => 'required',
+            'userpot' => 'numeric',
+            'areas' => 'numeric',
+            'tipo' => 'required',
+            'respon' => 'numeric',
+            'aprobo' => 'numeric',
+            'year_to_realize_project' => 'required',
+            'is_project_multicoord' => 'required|in:Sí,No|string'
+        ],$messages,$attributtes);
+
+        //instancia de objeto a clase que nos permite la asignacion de numeros a proyectos de manera automatica
+        $projectController = new ProyectoController();
+
+        //comprobamos si el usuario selecciono la casilla de proyecto multicoordinacion
+        if($request->input('is_project_multicoord') == 'Sí'){
+            $areaProject = $this->getMulticoordData();
+        }else{
+            $areaProject = Area::find($request->get('areas'));
+        }
+        //obtenemos la clave del numero
+        $claveNumber = $projectController->getNumberProject($areaProject->id,
+        $request->input('year_to_realize_project'));
+        //obtenemos la clave del anio
+        $claveYear = $projectController->getValueYear($request->input('year_to_realize_project'));
+
+        $pr = new Proyecto();
+        $pr->id;
+        $pr->nomproy = $request->get('nameproy');
+        $pr->idusuarior = $request->get('respon');
+        $pr->tipo = $request->get('tipo');
+        $pr->cliente = $request->get('userpot');
+        $pr->oculto;
+        $pr->status;
+        $pr->idarea = $areaProject->id;
+        $pr->aprobo = $request->get('aprobo');
+        $pr->ncontratos = $request->get('atipo');
+        $pr->clavea = $areaProject->inicial_clave;
+        $pr->clavet = $request->get('tipo');
+        $pr->claven = $claveNumber;
+        $pr->clavey = $claveYear;
+        $pr->completado = 0;
         $res = $pr->save();
         if ($res) {
             if (session()->has('LoginId')) {
@@ -1230,11 +1582,1931 @@ class dbcontroller extends Controller
             return back()->with('fail', 'No se pudo resgistrar al nuevo usuario');
         }
     }
+    
+    public function proydatos ($id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $users = User::where('id',$proyt->idusuarior)->first();
+            $respon = User::where('id',$proyt->aprobo )->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+            ->orderBy('Apellido_Paterno', 'ASC')
+            ->orderBy('Apellido_Materno', 'ASC')
+            ->orderBy('nombre', 'ASC')
+            ->Where('idarea',  $uniq->idarea)
+            ->Where('acceso', '!=',1)
+            ->get();
+
+            $vimpacto= Impacto::where('idproyecto', $id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();      
+        }
+            return view('proyectodatos',$data, compact('proyt','users','user','respon',
+            'vimpacto','vtarea','vrecurso','vriesgo','vcontri', 'vequipo'));
+    }
+    
+    public function actulizarproyecto($id, Request $request)
+    {
+        $messages = [
+            'nameproy.required' => 'Escribe un nombre para el proyecto',
+            'respon.numeric' => 'Escoge un responsable valido',
+            'aprobo.numeric' => 'Escoge un Mando valido'
+        ];
+
+        $request->validate([
+            'nameproy' => 'required',
+            'respon' => 'numeric',
+            'aprobo' => 'numeric'
+        ],$messages);
+
+        
+        $pr = Proyecto::find($id);
+        $pr->nomproy = $request->get('nameproy');
+        $pr->idusuarior = $request->get('respon');
+        $pr->aprobo  = $request->get('aprobo');
+        
+        $pp = $request->get('oculto');
+
+        $proyt = Proyecto::where('id', $id)->first();
+        if ($proyt->nomproy != $request->get('nameproy') || $proyt->idusuarior != $request->get('respon') ||  $proyt->aprobo != $request->get('aprobo')) {
+            if (session()->has('LoginId')) {
+                $existeclave = Proyecto::where('clavea', $pr->clavea)
+                    ->where('clavet', $pr->clavet)
+                    ->where('claven', $pr->claven)
+                    ->where('clavey', $pr->clavey)
+                    ->first();
+                $res = $pr->save();
+                if ($pp == 1) {
+                    return redirect('proydatos/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 2) {
+                    return redirect('proydatos1/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 3) {
+                    return redirect('proydatos2/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 4) {
+                    return redirect('proydatos3/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 5) {
+                    return redirect('proydatos4/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                }else {
+                    return back()->with('fail', 'Datos no se guardado');
+                }
+            }
+        }else{
+            if ($pp == 1) {
+                return redirect('proydatos/'.$pr->id);
+            } elseif ($pp == 2) {
+                return redirect('proydatos1/'.$pr->id);
+            } elseif ($pp == 3) {
+                return redirect('proydatos2/'.$pr->id);
+            } elseif ($pp == 4) {
+                return redirect('proydatos3/'.$pr->id);
+            } elseif ($pp == 5) {
+                return redirect('proydatos4/'.$pr->id);
+            }else {
+                return back()->with('fail', 'Datos no se guardado');
+            }
+        }
+    }
+
+    public function proydatos1 ($id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+                ->orderBy('Apellido_Paterno', 'ASC')
+                ->orderBy('Apellido_Materno', 'ASC')
+                ->orderBy('nombre', 'ASC')
+                ->Where('idarea',  $uniq->idarea)
+                ->Where('acceso', '!=',1)
+                ->get();
+
+            $materia = Materia::where('status', 1)->get();
+            $orientacion = Orientacion::where('status', 1)->get();
+            $nivel = Nivel::where('status', 1)->get();
+
+            $users = User::where('id',$proyt->idusuarior)->first();
+            $respon = User::where('id',$proyt->aprobo )->first();
+
+            $vimpacto= Impacto::where('idproyecto', $id)->count();
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+        }
+            return view('proyectodatos1',$data, compact('proyt','user','materia','orientacion', 'nivel', 'vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo','users','respon'));
+    }
 
 
-    public function infoproys( $id ){
+    public function actulizarproyecto1($id, Request $request)
+    {
+        $pr = Proyecto::find($id);
+        if ($request->get('justificacion') != '') {
+            $pr->justificacion = $request->get('justificacion');
+        };
+        
+        if ($request->get('materia') != '') {
+            $pr->materia = $request->get('materia');
+        };
+
+        if ($request->get('orien') != '') {
+            $pr->orientacion = $request->get('orien');
+        };
+
+        if ($request->get('antecedente') != '') {
+            $pr->antecedente = $request->get('antecedente');
+        };
+
+        if ($request->get('notajust') != '') {
+            $pr->obsnotasjust = $request->get('notajust');
+        };
+
+        if ($request->get('notaant') != '') {
+            $pr->obsnotasantc = $request->get('notaant');
+        };
+
+        if($pr->antecedente != '' && $pr->orientacion != '' && $pr->materia != '' && $pr->justificacion != ''){
+            if($pr->objetivo != '' && $pr->alcance != '' && $pr->metodologia != '' && $pr->objespecifico != ''){
+                if($pr->producto != '' && $pr->comcliente != '' && $pr->beneficios != ''){
+                    if ($pr->idlinea != '' && $pr->idobjt != '' && $pr->idalin != '' && $pr->idmodot != '' && $pr->referencias != ''){
+                        $pr->completado = 1;
+                    }
+                }
+            }
+        }
+        $pp = $request->get('oculto');
+        
+        $proyt = Proyecto::where('id', $id)->first();
+        if ($proyt->justificacion != $request->get('justificacion') || $proyt->materia != $request->get('materia') || $proyt->orientacion != $request->get('orien') || $proyt->antecedente != $request->get('antecedente') || $proyt->obsnotasjust != $request->get('notajust') || $proyt->obsnotasantc != $request->get('notaant')) {
+            if (session()->has('LoginId')) {
+                $existeclave = Proyecto::where('clavea', $pr->clavea)
+                    ->where('clavet', $pr->clavet)
+                    ->where('claven', $pr->claven)
+                    ->where('clavey', $pr->clavey)
+                    ->first();
+                $res = $pr->save();
+                if ($pp == 1) {
+                    return redirect('proydatos/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 2) {
+                    return redirect('proydatos1/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 3) {
+                    return redirect('proydatos2/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 4) {
+                    return redirect('proydatos3/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 5) {
+                    return redirect('proydatos4/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                }else {
+                    return back()->with('fail', 'Datos no se guardado');
+                }
+            }
+        }else{
+            if ($pp == 1) {
+                return redirect('proydatos/'.$pr->id);
+            } elseif ($pp == 2) {
+                return redirect('proydatos1/'.$pr->id);
+            } elseif ($pp == 3) {
+                return redirect('proydatos2/'.$pr->id);
+            } elseif ($pp == 4) {
+                return redirect('proydatos3/'.$pr->id);
+            } elseif ($pp == 5) {
+                return redirect('proydatos4/'.$pr->id);
+            }else {
+                return back()->with('fail', 'Datos no se guardado');
+            }
+        }
+    }
+
+    public function proydatos2 ($id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $users = User::where('id',$proyt->idusuarior)->first();
+            $respon = User::where('id',$proyt->aprobo )->first();
+            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+                ->orderBy('Apellido_Paterno', 'ASC')
+                ->orderBy('Apellido_Materno', 'ASC')
+                ->orderBy('nombre', 'ASC')
+                ->Where('idarea',  $uniq->idarea)
+                ->Where('acceso', '!=',1)
+                ->get();
+
+            $vimpacto= Impacto::where('idproyecto', $id)->count();
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+        }
+            return view('proyectodatos2',$data, compact('proyt','user', 'vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo','users','respon'));
+    }
+
+    public function actulizarproyecto2($id, Request $request)
+    {
+        $pr = Proyecto::find($id);
+        if ($request->get('objetivo') != '') {
+            $pr->objetivo = $request->get('objetivo');
+        };
+
+        if ($request->get('objetivoespc') != '') {
+            $pr->objespecifico = $request->get('objetivoespc');
+        };
+        
+        if ($request->get('alcance') != '') {
+            $pr->alcance = $request->get('alcance');
+        };
+
+        if ($request->get('metodologia') != '') {
+            $pr->metodologia = $request->get('metodologia');
+        };
+
+        if ($request->get('notaobj') != '') {
+            $pr->obsnotasobj = $request->get('notaobj');
+        };
+
+        if ($request->get('notaobjes') != '') {
+            $pr->obsnotasobjes = $request->get('notaobjes');
+        };
+
+        if ($request->get('notalcance') != '') {
+            $pr->obsnotasalcn = $request->get('notalcance');
+        };
+
+        if ($request->get('notametod') != '') {
+            $pr->obsnotasmetd = $request->get('notametod');
+        };
+
+        if($pr->antecedente != '' && $pr->orientacion != '' && $pr->materia != '' && $pr->justificacion != ''){
+            if($pr->objetivo != '' && $pr->alcance != '' && $pr->metodologia != '' && $pr->objespecifico != ''){
+                if($pr->producto != '' && $pr->comcliente != '' && $pr->beneficios != ''){
+                    if ($pr->idlinea != '' && $pr->idobjt != '' && $pr->idalin != '' && $pr->idmodot != '' && $pr->referencias != ''){
+                        $pr->completado = 1;
+                    }
+                }
+            }
+        }
+
+        $pp = $request->get('oculto');
+
+        $proyt = Proyecto::where('id', $id)->first();
+        if ($proyt->objetivo != $request->get('objetivo') || $proyt->objespecifico != $request->get('objetivoespc') ||  $proyt->alcance != $request->get('alcance') || $proyt->metodologia != $request->get('metodologia') || $proyt->obsnotasobj != $request->get('notaobj') || $proyt->obsnotasobjes != $request->get('notaobjes') || $proyt->obsnotasalcn != $request->get('notalcance') || $proyt->obsnotasmetd != $request->get('notametod')) {
+            if (session()->has('LoginId')) {
+                $existeclave = Proyecto::where('clavea', $pr->clavea)
+                    ->where('clavet', $pr->clavet)
+                    ->where('claven', $pr->claven)
+                    ->where('clavey', $pr->clavey)
+                    ->first();
+                $res = $pr->save();
+                if ($pp == 1) {
+                    return redirect('proydatos/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 2) {
+                    return redirect('proydatos1/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 3) {
+                    return redirect('proydatos2/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 4) {
+                    return redirect('proydatos3/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 5) {
+                    return redirect('proydatos4/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                }else {
+                    return back()->with('fail', 'Datos no se guardado');
+                }
+            }
+        }else{
+            if ($pp == 1) {
+                return redirect('proydatos/'.$pr->id);
+            } elseif ($pp == 2) {
+                return redirect('proydatos1/'.$pr->id);
+            } elseif ($pp == 3) {
+                return redirect('proydatos2/'.$pr->id);
+            } elseif ($pp == 4) {
+                return redirect('proydatos3/'.$pr->id);
+            } elseif ($pp == 5) {
+                return redirect('proydatos4/'.$pr->id);
+            }else {
+                return back()->with('fail', 'Datos no se guardado');
+            }
+        }
+    }
+
+    public function proydatos3 ($id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+                ->orderBy('Apellido_Paterno', 'ASC')
+                ->orderBy('Apellido_Materno', 'ASC')
+                ->orderBy('nombre', 'ASC')
+                ->Where('idarea',  $uniq->idarea)
+                ->Where('acceso', '!=',1)
+                ->get();
+
+            $vimpacto= Impacto::where('idproyecto', $id)->count();
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+        }
+            return view('proyectodatos3',$data, compact('proyt','user','vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo'));
+    }
+
+    public function actulizarproyecto3($id, Request $request)
+    {
+        $pr = Proyecto::find($id);
+        if ($request->get('prodobt') != '') {
+            $pr->producto = $request->get('prodobt');
+        }
+        if ($request->get('comcliente') != '') {
+            $pr->comcliente = $request->get('comcliente');
+        }
+        if ($request->get('beneficios') != '') {
+            $pr->beneficios = $request->get('beneficios');
+        }
+
+        if ($request->get('notaproducto') != '') {
+            $pr->obsnotasproob = $request->get('notaproducto');
+        }
+
+        if ($request->get('notacompclie') != '') {
+            $pr->obsnotascomcli = $request->get('notacompclie');
+        }
+
+        if ($request->get('notabenefes') != '') {
+            $pr->obsnotasbenes = $request->get('notabenefes');
+        }
+
+        if($pr->antecedente != '' && $pr->orientacion != '' && $pr->materia != '' && $pr->justificacion != ''){
+            if($pr->objetivo != '' && $pr->alcance != '' && $pr->metodologia != '' && $pr->objespecifico != ''){
+                if($pr->producto != '' && $pr->comcliente != '' && $pr->beneficios != ''){
+                    if ($pr->idlinea != '' && $pr->idobjt != '' && $pr->idalin != '' && $pr->idmodot != '' && $pr->referencias != ''){
+                        $pr->completado = 1;
+                    }
+                }
+            }
+        }
+
+        $pp = $request->get('oculto');
+
+        $proyt = Proyecto::where('id', $id)->first();
+        if ($proyt->producto != $request->get('prodobt') || $proyt->comcliente != $request->get('comcliente') ||  $proyt->beneficios != $request->get('beneficios') || $proyt->obsnotasproob != $request->get('notaproducto') || $proyt->obsnotascomcli != $request->get('notacompclie') ||  $proyt->obsnotasbenes != $request->get('notabenefes')) {
+            if (session()->has('LoginId')) {
+                $existeclave = Proyecto::where('clavea', $pr->clavea)
+                    ->where('clavet', $pr->clavet)
+                    ->where('claven', $pr->claven)
+                    ->where('clavey', $pr->clavey)
+                    ->first();
+                $res = $pr->save();
+                if ($pp == 1) {
+                    return redirect('proydatos/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 2) {
+                    return redirect('proydatos1/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 3) {
+                    return redirect('proydatos2/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 4) {
+                    return redirect('proydatos3/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 5) {
+                    return redirect('proydatos4/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                }else {
+                    return back()->with('fail', 'Datos no se guardado');
+                }
+            }
+        }else{
+            if ($pp == 1) {
+                return redirect('proydatos/'.$pr->id);
+            } elseif ($pp == 2) {
+                return redirect('proydatos1/'.$pr->id);
+            } elseif ($pp == 3) {
+                return redirect('proydatos2/'.$pr->id);
+            } elseif ($pp == 4) {
+                return redirect('proydatos3/'.$pr->id);
+            } elseif ($pp == 5) {
+                return redirect('proydatos4/'.$pr->id);
+            }else {
+                return back()->with('fail', 'Datos no se guardado');
+            }
+        }
+    }
+
+    public function proydatos4 (Request $request,$id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+                ->orderBy('Apellido_Paterno', 'ASC')
+                ->orderBy('Apellido_Materno', 'ASC')
+                ->orderBy('nombre', 'ASC')
+                ->Where('idarea',  $uniq->idarea)
+                ->Where('acceso', '!=',1)
+                ->get();
+            $proyt->cliente= $request->get('userpot');
+            
+            $alins = Alineacion::where('status', 1)->get();
+            $invs = Investigacion::where('status', 1)->orderBy('nombre_linea', 'ASC')->get();
+            $objs = Objetivo::where('status', 1)->get();
+            $trans = Transporte::where('status', 1)->get();
+
+            $cliente = Cliente::where('id', $proyt->Cliente)->first(); 
+            $clienteSeleccionado = Cliente::find($proyt->Cliente);
+
+            $clis = Cliente::where('status', 1)->orderBy('nivel1', 'DESC')->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
+
+            $nivel1 = $request->get('nivel1');
+            $categoriesN1 = $this->getCategoriesList();
+            $categoriesN2 = $this->getCategoriesListN2($categoriesN1[0]);
+            $categoriesN3 = $this->getCategoriesListN3($categoriesN1[0], $categoriesN2[0]);
+            
+            $vimpacto= Impacto::where('idproyecto', $id)->count();
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+        }
+            return view('proyectodatos4',$data, compact('proyt','user','invs','objs',
+            'clis','clienteSeleccionado', 'nivel1','categoriesN1','categoriesN2',
+            'categoriesN3','alins','trans','vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo'));
+
+    }
+
+    public function actulizarproyecto4($id, Request $request)
+    {
+        $pr = Proyecto::find($id);
+        if($request->get('userpot') != ''){
+            $pr->Cliente = $request->get('userpot');
+        }
+        if ($request->get('lins') != '') {
+            $pr->idlinea = $request->get('lins');
+        }
+        if ($request->get('objs') != '') {
+            $pr->idobjt = $request->get('objs');
+        }
+        if ($request->get('alin') != '') {
+            $pr->idalin  = $request->get('alin');
+        }
+        if ($request->get('tran') != '') {
+            $pr->idmodot = $request->get('tran');
+        }
+        if ($request->get('otran') != '') {
+            $pr->otrotrans = $request->get('otran');
+        }
+        if ($request->get('referencias') != '') {
+            $pr->referencias = $request->get('referencias');
+        }
+        if ($request->get('notasmetodologia') != '') {
+            $pr->notasmetodologia = $request->get('notasmetodologia');
+        }
+        
+        if($pr->antecedente != '' && $pr->orientacion != '' && $pr->materia != '' && $pr->justificacion != ''){
+            if($pr->objetivo != '' && $pr->alcance != '' && $pr->metodologia != '' && $pr->objespecifico != ''){
+                if($pr->producto != '' && $pr->comcliente != '' && $pr->beneficios != ''){
+                    if ($pr->Cliente != '' && $pr->idlinea != '' && $pr->idobjt != '' && $pr->idalin != '' && $pr->idmodot != '' && $pr->referencias != ''){
+                        $pr->completado = 1;
+                    }
+                }
+            }
+        }
+
+        $pp = $request->get('oculto');
+
+        $proyt = Proyecto::where('id', $id)->first();
+        if ($proyt->Cliente != $request->get('clis') || $proyt->idlinea != $request->get('lins') || $proyt->idobjt != $request->get('objs') ||  $proyt->idalin != $request->get('alin') || $proyt->idmodot != $request->get('tran') || $proyt->referencias != $request->get('referencias') || $proyt->notasmetodologia != $request->get('notasmetodologia')) {
+            if (session()->has('LoginId')) {
+                $existeclave = Proyecto::where('clavea', $pr->clavea)
+                    ->where('clavet', $pr->clavet)
+                    ->where('claven', $pr->claven)
+                    ->where('clavey', $pr->clavey)
+                    ->first();
+                $pr->save();
+                if ($pp == 1) {
+                    return redirect('proydatos/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 2) {
+                    return redirect('proydatos1/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 3) {
+                    return redirect('proydatos2/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 4) {
+                    return redirect('proydatos3/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 5) {
+                    return redirect('proydatos4/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                } elseif ($pp == 6) {
+                    if((($proyt->clavet == 'I' || $proyt->clavet == 'E') && ($proyt->clavea == 'D' || $proyt->clavea == 'A' || $proyt->clavea == 'G'))){
+                        return redirect('Equipo/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                    }elseif ($proyt->clavet == 'I'){
+                        return redirect('contribuciones/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                    }else{
+                        return redirect('contribuciones/'.$existeclave->id)->with('success', 'Datos guardados correctamente');
+                    }
+                }else {
+                    return back()->with('fail', 'Datos no guardados');
+                }
+            }
+        }else{
+            $pr->save();
+            if (session()->has('LoginId')) {
+                $pr->save();
+                if ($pp == 1) {
+                    return redirect('proydatos/'.$pr->id);
+                } elseif ($pp == 2) {
+                    return redirect('proydatos1/'.$pr->id);
+                } elseif ($pp == 3) {
+                    return redirect('proydatos2/'.$pr->id);
+                } elseif ($pp == 4) {
+                    return redirect('proydatos3/'.$pr->id);
+                } elseif ($pp == 5) {
+                    return redirect('proydatos4/'.$pr->id);
+                } elseif ($pp == 6) {
+                    $idproy = $pr->id;
+                    if((($proyt->clavet == 'I' || $proyt->clavet == 'E') && ($proyt->clavea == 'D' || $proyt->clavea == 'A' || $proyt->clavea == 'G'))){
+                        return redirect('Equipo/'.$idproy->id)->with('success', 'Datos guardados correctamente');
+                    }elseif ($proyt->clavet == 'I'){
+                        return redirect('contribuciones/'.$pr->id);
+                    }else{
+                        return redirect('contribuciones/'.$pr->id);
+                    }
+                }else {
+                    return back()->with('fail', 'Datos no guardados');
+                }
+            }
+        }
+    }
+
+    public function generalimpacto($id){
+        $proyt = Proyecto::where('id', $id)->first();
+        $existe = Impacto::where('idproyecto',$proyt->id)->exists();
+        if($existe != true){
+            $improy = new Impacto();
+            $improy->idproyecto = $proyt->id;
+            $improy->save();
+            return redirect('impactoproy/'.$proyt->id)->with('success', 'Datos guardados correctamente');
+        }else{
+            return redirect('impactoproy/'.$proyt->id)->with('success', 'Datos guardados correctamente');
+        }
+    }
+
+    public function cambiarcliente($id){
+        $proyt = Proyecto::where('id',$id)->first();
+
+        $areass = Area::where('id',$proyt->idarea)->first();
+        $users = User::where('id',$proyt->idusuarior)->first();
+        $lineas = Investigacion::where('id',$proyt->idlinea)->first();
+        $alinss = Alineacion::where('id',$proyt->idalin)->first();
+        $clis = Cliente::where('id',$proyt->Cliente)->first();
+        $objss = Objetivo::where('id',$proyt->idobjt)->first();
+        $contris = Contribucion::where('id',$proyt->idcontri)->first();
+        $transs = Transporte::where('id',$proyt->idmodot)->first();
+        $search = User::where('id','=',session('LoginId'))->first();
+        $areauser= Area::where('id',$search->idarea)->first();
+        $resp = User::Where('idarea',$areauser->id)->where('responsable',1)->first();
+        $orent = Orientacion::where('id', $proyt->orientacion)->first();
+        $nivelp = Nivel::where('id', $proyt->nivel)->first();
+        $mate = Materia::where('id', $proyt->materia)->first();
+
+
+        $contri = Contribucion::where('status',1)->get();
+        $areas = Area::where('status',1)->orderBy('nombre_area', 'ASC')->get();
+        $invs = Investigacion::where('status',1)->orderBy('nombre_linea', 'ASC')->get();
+        $objs = Objetivo::where('status',1)->get();
+        $trans = Transporte::where('status',1)->get();
+        $alins = Alineacion::where('status',1)->get();
+        $clie = Cliente::where('status',1)->orderBy('nivel1', 'DESC')->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
+        //Nuevas tablas
+            $materia = Materia::where('status', 1)->get();
+            $orientacion = Orientacion::where('status', 1)->get();
+            $nivel = Nivel::where('status', 1)->get();
+        //Nuevas tablas
+
+        //listado de niveles de clientes y cliente actual para enviar los elementos 
+        //lista de categorias N1
+        $categoriesN1 = $this->getCategoriesList();
+        //lista de categorias basado en nivel 1 y nivel 2 del cliente
+        $categoriesN2 = $this->getCategoriesListN2($clis->nivel1);
+        $categoriesN3 = $this->getCategoriesListN3($clis->nivel1,$clis->nivel2);
+
+        $user = User::where('status',1)->where('acceso','!=',4)->Where('acceso','!=',5)
+                ->orderBy('Apellido_Paterno', 'ASC')
+                ->orderBy('Apellido_Materno', 'ASC')
+                ->orderBy('nombre', 'ASC')
+                ->get();
+
+        $vtarea = Tarea::Where('idproyecto',$id)->count();
+        $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+        $vriesgo = Analisis::Where('idproyecto',$id)->count();
+        $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+        $vequipo = Equipo::Where('idproyecto',$id)->count();
+
+
+        return view('changeclien',compact('proyt','contri','areas','invs','objs','trans','alins','user', 'clie', 'materia', 'mate',
+        'areass','users','lineas','clis','objss','contris','transs','alinss','resp', 'orientacion', 'nivel', 'orent', 'nivelp',
+        'vtarea','vrecurso','vcontri','vequipo','vriesgo',
+        'categoriesN1',
+        'categoriesN2',
+        'categoriesN3',));
+    }
+
+    public function changeclien(Request $request, $id){
+        $pr = Proyecto::find($id);
+        $pr->cliente= $request->get('userpot');
+        $res = $pr->save();
+        if($res){
+            if(session()->has('LoginId')){
+                $access = User::where('id','=',session('LoginId'))->where('acceso','=',1)->first();
+                $accessejec = User::where('id','=',session('LoginId'))->where('acceso','=',2)->first();
+                $accessuser = User::where('id','=',session('LoginId'))->where('acceso','=',3)->first();
+                if($access){
+                    // return redirect('infoproys/'.$id);
+                    return redirect('proydatos4/'.$id);
+                }elseif($accessejec){
+                    // return redirect('infoproys/'.$id);
+                    return redirect('proydatos4/'.$id);
+                }elseif($accessuser){
+                    // return redirect('infoproys/'.$id);
+                    return redirect('proydatos4/'.$id);
+                }else{
+                    return redirect('/');
+                }
+            }
+        }else{
+            return back()->with('fail','No se pudo resgistrar al nuevo usuario');
+        }
+    }
+
+    // CONTROLADORES PARA EL APARTADO DE IMPACTO SOCIOECONÓMICO
+
+// VISTA DE SECCIÓN SOCIAL
+    public function impactoproy($id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $proytImp = Impacto::where('idproyecto', $id)->first();
+
+            $vimpacto= Impacto::where('idproyecto', $id)->count();
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+
+            $problemSoc = ProblemSocial::all();
+            $escalaImp = EscalaImpacto::all();
+            $contriSoc = ContribucionSocial::all(); 
+            
+        }
+        return view('impactoproyecto', $data, compact('uniq', 'proyt','proytImp', 'vimpacto','vtarea','vrecurso',
+        'vriesgo','vcontri','vequipo', 'problemSoc', 'escalaImp', 'contriSoc'));
+    }
+
+    public function upimpactoproy(Request $request, $id){
+        $proytImp = Impacto::where('idproyecto', $id)->first();
+        $idprob = $request->get('problemasoc');
+        $idesc = $request->get('escalaImpacto');
+        $ids = $request->get('contribucionSoc', []);
+        $justificaSoc = $request->get('justificaImp');
+
+        if (!$idprob || $idprob == 'Selecciona...') {
+            return back()->with('fail', 'Necesitas seleccionar el problema social.')
+                        ->withInput();
+        } elseif (!$idesc || $idesc == 'Selecciona...') {
+            return back()->with('fail', 'Es necesario seleccionar una escala de impacto.')
+                        ->withInput();
+        } elseif (empty($ids)) {
+            return back()->with('fail', 'Debes seleccionar al menos una contribución social.')
+                        ->withInput();
+        } elseif (empty($justificaSoc)) {
+            return back()->with('fail', 'Es necesario justificar el impacto social.')
+                        ->withInput();
+        }
+
+        switch ($idprob) {
+            case 1:
+                $proytImp->crit1 = 1;
+                $proytImp->vcrit1 = 5;
+                break;
+            
+            case 2:
+                $proytImp->crit1 = 2;
+                $proytImp->vcrit1 = 4;
+                break;
+
+            case 3:
+                $proytImp->crit1 = 3;
+                $proytImp->vcrit1 = 3;
+                break;
+
+            case 4:
+                $proytImp->crit1 = 4;
+                $proytImp->vcrit1 = 2;
+                break;
+
+            case 5:
+                $proytImp->crit1 = 5;
+                $proytImp->vcrit1 = 1;
+                break;
+            
+            default:
+                $proytImp->crit1 =null;
+                $proytImp->vcrit1 =null;
+                break;
+        }
+
+        switch ($idesc) {
+            case 1:
+                $proytImp->crit2 = 1;
+                $proytImp->vcrit2 = 5;
+                break;
+            
+            case 2:
+                $proytImp->crit2 = 2;
+                $proytImp->vcrit2 = 4;
+                break;
+
+            case 3:
+                $proytImp->crit2 = 3;
+                $proytImp->vcrit2 = 3;
+                break;
+
+            case 4:
+                $proytImp->crit2 = 4;
+                $proytImp->vcrit2 = 2;
+                break;
+
+            case 5:
+                $proytImp->crit2 = 5;
+                $proytImp->vcrit2 = 1;
+                break;
+            
+            default:
+                $proytImp->crit2 =null;
+                $proytImp->vcrit2 =null;
+                break;
+        }
+
+        $ids = $request->get('contribucionSoc', []); 
+        $totescala = count($ids);
+
+        if($ids != ''){
+            $proytImp->crit3 = implode(',', $ids);
+            $proytImp->vcrit3 = $totescala;
+        }
+
+        if ($request->get('justificaImp') != ''){
+            $proytImp->descImpSoc = $request->get('justificaImp');
+        }
+
+        if($proytImp->crit1 != 0 && $proytImp->vcrit1 != 0 && $proytImp->crit2 != 0 && 
+            $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0){
+                if($proytImp->crit4 != null && $proytImp->vcrit4 != 0 && $proytImp->crit5 != null 
+                    && $proytImp->vcrit5 != 0 && $proytImp->crit6 != null && $proytImp->vcrit6 != 0
+                        && $proytImp->descImpSoc != ''){
+                        $proytImp->completado = 1;
+                }
+        }
+
+        $pp = $request->get('oculto');
+
+        $impact = $proytImp->first();
+        if($impact->crit1 != $proytImp->crit1 || $impact->vcrit1 != $proytImp->vcrit1 
+        || $impact->crit2 != $proytImp->crit2 || $impact->vcrit2 != $proytImp->vcrit2 
+        || $impact->crit3 != $proytImp->crit3 || $impact->vcrit3 != $proytImp->vcrit3
+        || $impact-> descImpSoc != $proytImp->descImpSoc){
+            if(session()->has('LoginId')){
+                $res = $proytImp->save();
+                if ($pp == 1) {
+                    return redirect('impactoproy/'.$id)->with('success', 'Datos guardados');
+                } elseif ($pp == 2) {
+                    return redirect('impactoproy1/'.$id)->with('success', 'Datos guardados');
+                } elseif ($pp  == 3) {
+                    return redirect('impactoproy2/'.$id)->with('success', 'Datos guardados');
+                }else {
+                    return back()->with('fail', 'Datos no guardados');
+                }
+            }
+        }else{
+            if ($pp == 1) {
+                return redirect('impactoproy/'.$id);
+            } elseif ($pp == 2) {
+                return redirect('impactoproy1/'.$id);
+            } elseif ($pp == 3) {
+                return redirect('impactoproy2/'.$id);
+            }else {
+                return back()->with('fail', 'Datos no guardados');
+            }
+        }
+    } 
+
+
+// VISTA DE SECCIÓN ECONOMICA
+
+    public function impactoproy1($id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $proytImp = Impacto::where('idproyecto', $id)->first();
+
+
+            $vimpacto= Impacto::where('idproyecto', $id)->count();          
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+
+            $eficiTransp = EficienciaTransp::all();
+            $produTransp = ProductividadTransp::all();
+            $contriEco = ContribucionEcono::all();
+            
+        }
+        return view('impactoproyecto1', $data, compact('uniq', 'proyt','proytImp', 'vimpacto','vtarea',
+        'vrecurso','vriesgo','vcontri','vequipo', 'eficiTransp', 'produTransp', 'contriEco'));
+    }
+
+    public function upimpactoproy1(Request $request, $id){
+        $proytImp = Impacto::where('idproyecto', $id)->first();
+
+        $ids = $request->get('eficienciaTransp', []); 
+        $totefi = count($ids);
+
+        $ids2 = $request->get('productividadTransp', []); 
+        $totprod = count($ids2);
+
+        $ids3 = $request->get('contribucionEcono', []); 
+        $totcontri = count($ids3);
+        $justificaEco = $request->get('justificaImp');
+
+        if (empty($ids)) {
+            return back()->with('fail', 'Mínimo debes seleccionar una opción en "Eficiencia del Transporte".')->withInput();
+        } elseif (empty($ids2)) {
+            return back()->with('fail', 'Mínimo debes seleccionar una opción en "Productividad del Transporte".')->withInput();
+        } elseif (empty($ids3)) {
+            return back()->with('fail', 'Mínimo debes seleccionar una opción en "Contribución Económica".')->withInput();
+        } elseif (empty($justificaEco)) {
+            return back()->with('fail', 'Es necesario justificar el impacto económico.')->withInput();
+        }
+
+        if($ids != ''){
+            $proytImp->crit4 = implode(',', $ids);
+            $proytImp->vcrit4 = $totefi;
+        }
+
+        if($ids2 != ''){
+            $proytImp->crit5 = implode(',', $ids2);
+            $proytImp->vcrit5 = $totprod;
+        }
+
+        if($ids3 != ''){
+            $proytImp->crit6 = implode(',', $ids3);
+            $proytImp->vcrit6 = $totcontri;
+        }
+
+        if ($request->get('justificaImp') != ''){
+            $proytImp->descImpEco = $request->get('justificaImp');
+        }
+
+        if($proytImp->crit1 != 0 && $proytImp->vcrit1 != 0 && $proytImp->crit2 != 0 && 
+            $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0){
+                if($proytImp->crit4 != null && $proytImp->vcrit4 != 0 && $proytImp->crit5 != null 
+                    && $proytImp->vcrit5 != 0 && $proytImp->crit6 != null && $proytImp->vcrit6 != 0
+                        && $proytImp->descImpEco != ''){
+                        $proytImp->completado = 1;
+                }
+        }
+
+        $pp = $request->get('oculto');
+
+        $impact = $proytImp->first();
+        if($impact->crit1 != $proytImp->crit1 || $impact->vcrit1 != $proytImp->vcrit1 
+        || $impact->crit2 != $proytImp->crit2 || $impact->vcrit2 != $proytImp->vcrit2 
+        || $impact->crit3 != $proytImp->crit3 || $impact->vcrit3 != $proytImp->vcrit3
+        || $impact->crit4 != $proytImp->crit4 || $impact->vcrit5 != $proytImp->vcrit5
+        || $impact->crit6 != $proytImp->crit6 || $impact->descImpEco != $proytImp->descImpEco){
+            if(session()->has('LoginId')){
+                $res = $proytImp->save();
+                if ($pp == 1) {
+                    return redirect('impactoproy/'.$id)->with('success', 'Datos guardados');
+                } elseif ($pp == 2) {
+                    return redirect('impactoproy1/'.$id)->with('success', 'Datos guardados');
+                } elseif ($pp == 3) {
+                        return redirect('impactoproy2/'.$id)->with('success', 'Datos guardados');
+                }else{
+                        return back()->with('fail', 'Datos no guardados');
+                    }
+                }
+            }else{
+                if ($pp == 1) {
+                    return redirect('impactoproy/'.$id);
+                } elseif ($pp == 2) {
+                    return redirect('impactoproy1/'.$id);
+                } elseif ($pp == 3) {
+                    return redirect('impactoproy2/'.$id);
+                }else {
+                    return back()->with('fail', 'Datos no guardados');
+                }
+            }
+    }
+
+// VISTA DE SECCIÓN RESULTADOS
+
+    public function impactoproy2(Request $request, $id){
+        if(session()->has('LoginId')){
+            $uniq = User::where('id','=',session('LoginId'))->first();
+            $proyt = Proyecto::where('id',$id)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $proytImp = Impacto::where('idproyecto', $id)->first();
+
+            $vimpacto= Impacto::where('idproyecto', $id)->count();          
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+
+            $impacto = Impacto::all();
+            $escalaTot = $proytImp->vcrit1 + $proytImp->vcrit2 +
+                         $proytImp->vcrit3 + $proytImp->vcrit4 +
+                         $proytImp->vcrit5 + $proytImp->vcrit6;
+        
+                $proytImp->escalaImp = $escalaTot;
+
+                if($escalaTot >= 6 && $escalaTot <=10){
+                    $nivelImp = 'Muy Bajo' ;
+                }elseif ($escalaTot >= 11 && $escalaTot <=15) {
+                    $nivelImp = 'Bajo' ;
+                }elseif ($escalaTot >= 16 && $escalaTot <=20) {
+                    $nivelImp = 'Medio' ;
+                }elseif ($escalaTot >= 21 && $escalaTot <=25) {
+                    $nivelImp = 'Alto' ;
+                }elseif ($escalaTot >= 26 && $escalaTot <=30) {
+                    $nivelImp = 'Muy Alto' ;
+                }
+                $proytImp->nivelImp = $nivelImp;
+                if($nivelImp == 'Muy Bajo'){
+                    $proyt->nivel= 5;
+                }elseif ($nivelImp == 'Bajo') {
+                    $proyt->nivel= 3;
+                }elseif ($nivelImp == 'Medio') {
+                    $proyt->nivel= 2;
+                }elseif ($nivelImp == 'Alto') {
+                    $proyt->nivel= 1;
+                }elseif ($nivelImp == 'Muy Alto') {
+                    $proyt->nivel= 4;
+                }
+                $act = $proyt->save();
+                $res = $proytImp->save();
+
+        }
+        return view('impactoproyecto2', $data, compact('uniq', 'proyt', 'proytImp','vimpacto','vtarea','vrecurso',
+        'vriesgo','vcontri','vequipo', 'impacto', 'escalaTot', 'nivelImp'));
+    }
+
+    public function upimpactoproy2(Request $request, $id){
+        $proytImp = Impacto::where('idproyecto', $id)->first();
+
+        if($proytImp->crit1 != 0 && $proytImp->vcrit1 != 0 && $proytImp->crit2 != 0 && 
+            $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0){
+                if($proytImp->crit4 != null && $proytImp->vcrit4 != 0 && $proytImp->crit5 != null 
+                    && $proytImp->vcrit5 != 0 && $proytImp->crit6 != null && $proytImp->vcrit6 != 0
+                        && $proytImp->descImp != ''){
+                        $proytImp->completado = 1;
+                }
+        }
+
+        $pp = $request->get('oculto');
+
+        $impact = $proytImp->first();
+        if($impact->crit1 != $proytImp->crit1 || $impact->vcrit1 != $proytImp->vcrit1 
+        || $impact->crit2 != $proytImp->crit2 || $impact->vcrit2 != $proytImp->vcrit2 
+        || $impact->crit3 != $proytImp->crit3 || $impact->vcrit3 != $proytImp->vcrit3
+        || $impact->crit4 != $proytImp->crit4 || $impact->vcrit5 != $proytImp->vcrit5
+        || $impact->crit6 != $proytImp->crit6 || $impact->descImp != $proytImp->descImp){
+            if(session()->has('LoginId')){
+                $res = $proytImp->save();
+                if ($pp == 1) {
+                    return redirect('impactoproy/'.$id)->with('success', 'Datos Guardados');
+                } elseif ($pp == 2) {
+                    return redirect('impactoproy1/'.$id)->with('success', 'Datos Guardados');
+                } elseif ($pp  == 3) {
+                    return redirect('impactoproy2/'.$id)->with('success', 'Datos Guardados');
+                }elseif ($pp == 4) {
+                    return redirect('contribuciones/'.$id)->with('success', 'Impacto Registrado');
+                }else {
+                    return back()->with('fail', 'Datos no guardados');
+                }
+            }
+        }else{
+            if ($pp == 1) {
+                return redirect('impactoproy/'.$id);
+            } elseif ($pp == 2) {
+                return redirect('impactoproy1/'.$id);
+            } elseif ($pp == 3) {
+                return redirect('impactoproy2/'.$id);
+            }elseif ($pp == 4) {
+                return redirect('contribuciones/'.$id)->with('success', 'Impacto Registrado');
+            }else {
+                return back()->with('fail', 'Datos no guardados');
+            }
+        }
+    }
+
+    public function notificarreporte($id){
+
+        $pr = Proyecto::find($id);
+        $responsable = User::where('id', $pr->idusuarior)->first();
+        $autoriza = User::where('id', $pr->aprobo)->first();
+        $area = Area::where('id', $pr->idarea )->first();
+
+        $obsexiste = Observacion::where('idproyecto', $id)->where('tipo','>=',3)->first();
+        if (!$obsexiste) {
+            // $posc = Observacion::all()->count();
+            // if ($posc == 0) {
+            //     $posc = 1;
+            // } else {
+            //     $posc++;
+            // }
+
+            $obs = new Observacion();
+            // $obs->id = $posc;
+            $obs->obs = 'N/A';
+            $obs->idproyecto = $id;
+            $obs->tipo = 3;
+            $obs->fechaobs = date("Y-m-d");
+            $mes = date('m');
+            $obs->yearobs = date(('Y'));
+            switch ($mes) {
+                case "1":
+                    $obs->bimestreobs = "Enero-Febrero";
+                    break;
+                case "2":
+                    $obs->bimestreobs = "Enero-Febrero";
+                    break;
+                case "3":
+                    $obs->bimestreobs = "Marzo-Abril";
+                    break;
+                case "4":
+                    $obs->bimestreobs = "Marzo-Abril";
+                    break;
+                case "5":
+                    $obs->bimestreobs = "Mayo-Junio";
+                    break;
+                case "6":
+                    $obs->bimestreobs = "Mayo-Junio";
+                    break;
+                case "7":
+                    $obs->bimestreobs = "Julio-Agosto";
+                    break;
+                case "8":
+                    $obs->bimestreobs = "Julio-Agosto";
+                    break;
+                case "9":
+                    $obs->bimestreobs = "Septiembre-Octubre";
+                    break;
+                case "10":
+                    $obs->bimestreobs = "Septiembre-Octubre";
+                    break;
+                case "11":
+                    $obs->bimestreobs = "Noviembre-Diciembre";
+                    break;
+                case "12":
+                    $obs->bimestreobs = "Noviembre-Diciembre";
+                    break;
+            }
+            $obs->save();
+        }
+
+        if ($pr->claven < 10) {
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        } else 	{
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        }
+
+        $details = [
+            'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+            'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+            'area' => $area->nombre_area,
+            'clave' => $nombreproyecto
+        ];
+
+        if ($pr->clavet == 'I') {
+            Mail::to($autoriza->correo)->send(new notificarprotocolo($details));
+        } else {
+            Mail::to($autoriza->correo)->send(new notificarpte($details));
+        }
+        return redirect('observaciones/'.$id)->with('success', 'Correo de notificación enviado correctamente');
+    }
+
+    public function notificarprotocolorevision(Request $request ,$id, $ida){
+
+        $request -> validate([
+            'obsresp'=>'required'
+        ]);
+
+        $pr = Proyecto::find($id);
+        $responsable = User::where('id', $pr->idusuarior)->first();
+        $autoriza = User::where('id', $pr->aprobo)->first();
+        $area = Area::where('id', $pr->idarea )->first();
+
+        if ($pr->claven < 10) {
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        } else 	{
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        }
+
+        $obs = Observacion::find($ida);
+        $obs->obs_respuesta = $request->get('obsresp');
+        $obs->tipo = 4;
+        $obs->save();
+        $details = [
+            'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+            'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+            'area' => $area->nombre_area,
+            'clave' => $nombreproyecto,
+            'obsgnrl' => $request->get('obsresp')
+        ];
+
+        Mail::to($autoriza->correo)->send(new notificarprotocolorevision($details));
+        return redirect('observaciones/'.$id)->with('success', 'Correo de notificación de revisión enviado correctamente');
+    }
+
+    public function previsadoaprobado($id, $ida){
+        $pr = Proyecto::find($id);
+        $responsable = User::where('id', $pr->idusuarior)->first();
+        $autoriza = User::where('id', $pr->aprobo)->first();
+        $area = Area::where('id', $pr->idarea )->first();
+
+        if ($pr->claven < 10) {
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        } else 	{
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        }
+
+        $obs = Observacion::find($ida);
+        if ($pr->clavet == 'I') {
+            $obs->tipo = 7;
+        } else {
+            $obs->tipo = 6;
+        }
+
+        $obs->save();
+        $details = [
+            'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+            'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+            'area' => $area->nombre_area,
+            'clave' => $nombreproyecto,
+        ];
+
+        Mail::to($autoriza->correo)->send(new notificarprotocololfirmasaprobado($details));
+        return redirect('observaciones/'.$id)->with('success', 'Correo de notificación de revisión enviado correctamente');
+    }
+
+    public function rechazarprotocolopte(Request $request ,$id, $ida){
+
+        $request -> validate([
+            'obsresp'=>'required'
+        ]);
+
+        $pr = Proyecto::find($id);
+        $responsable = User::where('id', $pr->idusuarior)->first();
+        $autoriza = User::where('id', $pr->aprobo)->first();
+        $area = Area::where('id', $pr->idarea )->first();
+
+        if ($pr->claven < 10) {
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        } else 	{
+            $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+        }
+
+        $obs = Observacion::find($ida);
+        $obs->obs_respuesta = $request->get('obsresp');
+        $obs->tipo = 5;
+        $obs->save();
+        $details = [
+            'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+            'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+            'area' => $area->nombre_area,
+            'clave' => $nombreproyecto,
+            'obsgnrl' => $request->get('obsresp')
+        ];
+
+        Mail::to($autoriza->correo)->send(new notificarprotocolorechazopte($details));
+        return redirect('observaciones/'.$id)->with('success', 'Correo de notificación de revisión enviado correctamente');
+    }
+
+    public function aceptarprotocolo (Request $request, $id, $ida){
+            
+        $request -> validate([
+            'datofichero'=>'required',
+            'pass'=>'required'
+        ]);
+
+        date_default_timezone_set('America/Mexico_City');
+        $data = User::where('id','=',session('LoginId'))->first();
+        $nombre = explode(".", $request->get('datofichero'));
+        $bdfirmas = DB::table('firmasimt.usuarios')->where('username', $nombre[0])->first();
+
+        if( $request->get('pass') == $bdfirmas->pass){
+            if ($data->curp == $bdfirmas->curp){
+                
+                // DB::table('firmasimt.usuarioslog')->insert([
+                //     'idusuario' => $bdfirmas->id,
+                //     'fechalog' => date("Y-m-d"),
+                //     'timelog' => date("h:i:s", strtotime('-1 hour')),
+                //     'sistema' => 'SIREB-Protocolo',
+                //     'created_at' => date("Y-m-d h:i:s", strtotime('-1 hour')),
+                //     'updated_at' => date("Y-m-d h:i:s", strtotime('-1 hour'))
+                // ]);
+
+                $pr = Proyecto::find($id);
+                $obs = Observacion::find($ida);
+                $obs->revisado = 1;
+                $autoriza = User::where('id', $pr->aprobo)->first();
+                $pr->gprotocolo = 2;
+                $nombremando = $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno;
+                $obs->fobsmando = $nombremando.'| IMT | '.date("Y-m-d").'||'.date("H:i:s");
+                $obs->save();
+                $pr->save();
+
+                $responsable = User::where('id', $pr->idusuarior)->first();
+                $area = Area::where('id', $pr->idarea )->first();
+        
+                if ($pr->claven < 10) {
+                    $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+                } else 	{
+                    $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+                }
+                $details = [
+                    'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+                    'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+                    'area' => $area->nombre_area,
+                    'clave' => $nombreproyecto
+                ];
+        
+                Mail::to($autoriza->correo)->send(new notificarprotocoloaceptada($details));
+                return redirect('observaciones/'.$id)->with('success', 'Correo de aceptación de protocolo enviado correctamente');
+                // return redirect('observaciones/'.$id);
+            } else {
+                return back()->with('fail', 'La CURP del usuario no es la correspondiente');
+            }
+        } else {
+            return back()->with('fail', 'Usuario o contraseña incorrecta, intenta de nuevo');
+        }
+    }
+
+    public function firmardgprotocolo (Request $request, $id, $ida){
+            
+        $request -> validate([
+            'datofichero'=>'required',
+            'pass'=>'required'
+        ]);
+
+        date_default_timezone_set('America/Mexico_City');
+        $data = User::where('id','=',session('LoginId'))->first();
+        $nombre = explode(".", $request->get('datofichero'));
+        $bdfirmas = DB::table('firmasimt.usuarios')->where('username', $nombre[0])->first();
+
+        if( $request->get('pass') == $bdfirmas->pass){
+            // DB::table('firmasimt.usuarioslog')->insert([
+            //     'idusuario' => $bdfirmas->id,
+            //     'fechalog' => date("Y-m-d"),
+            //     'timelog' => date("h:i:s", strtotime('-1 hour')),
+            //     'sistema' => 'SIREB-Protocolo',
+            //     'created_at' => date("Y-m-d h:i:s", strtotime('-1 hour')),
+            //     'updated_at' => date("Y-m-d h:i:s", strtotime('-1 hour'))
+            // ]);
+
+            $pr = Proyecto::find($id);
+            $obs = Observacion::find($ida);
+            $nombredg = $data->Nombre.' '.$data->Apellido_Paterno.' '.$data->Apellido_Materno;
+            $obs->fobsdirectorg = $nombredg.'| IMT | '.date("Y-m-d").'||'.date("H:i:s");
+            $pr->fimradg = 1;
+            $pr->director = $data->id;
+            $obs->save();
+            $pr->save();
+
+            $autoriza = User::where('id', $pr->aprobo)->first();
+            $responsable = User::where('id', $pr->idusuarior)->first();
+            $area = Area::where('id', $pr->idarea )->first();
+        
+            if ($pr->claven < 10) {
+                $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+            } else 	{
+                $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+            }
+            $details = [
+                'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+                'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+                'director' => $nombredg,
+                'area' => $area->nombre_area,
+                'clave' => $nombreproyecto
+            ];
+
+            $destinatarios = [
+                $autoriza->correo,
+                $responsable->correo
+            ];
+        
+            Mail::to($destinatarios)->send(new notificarprotocolodirector($details));
+            return redirect('observaciones/'.$id)->with('success', 'Correo de protocolo enviado correctamente');
+        } else {
+            return back()->with('fail', 'Usuario o contraseña incorrecta, intenta de nuevo');
+        }
+    }
+
+    public function firmaresponsable($id, $ida){
+        if(session()->has('LoginId')){
+            $proyt = Proyecto::where('id',$id)->first();
+            $obs = Observacion::Where('id',$ida)->first();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+        }
+        return view('respuestaprotocolo',$data,compact('proyt','obs'));
+    }
+
+    public function firmarprotocolo (Request $request, $id, $ida){
+            
+        $request -> validate([
+            'user'=>'required',
+            'pass'=>'required'
+        ]);
+
+        date_default_timezone_set('America/Mexico_City');
+        $pr = Proyecto::where('id',$id)->first();
+        $data = User::where('id','=',session('LoginId'))->first();
+
+        if($pr->idusuarior == $data->id){
+            if ($request->get('user') == $data->usuario && Hash::check($request->get('pass'), $data->pass)){
+                $obs = Observacion::find($ida);
+                $proy = Proyecto::find($id);
+                $proy->gprotocolo = 1;
+                $obs->tipo = 6;
+                $responsable = User::where('id', $pr->idusuarior)->first();
+                $nombreresp = $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno;
+                $obs->fobsresponsble = $nombreresp.'| IMT | '.date("Y-m-d").'||'.date("H:i:s");
+                $obs->save();
+                $proy->save();
+                return redirect('observaciones/'.$id);
+            } else {
+                return back()->with('fail', 'Usuario o contraseña Incorrecta');
+            }
+        } else {
+            return back()->with('fail', 'No eres el responable del proyecto');
+        }
+    }
+
+    public function gprotocolo($id){
+        $uniq = User::where('id','=',session('LoginId'))->first();
+        $proyt = Proyecto::where('id',$id)->first();
+        $users = User::where('id',$proyt->idusuarior)->first();
+        $respon = User::where('id',$proyt->aprobo )->first();
+        $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+        $user = User::where('status', 1)->where('acceso', '!=', 4)->Where('acceso', '!=', 5)
+                ->orderBy('Apellido_Paterno', 'ASC')
+                ->orderBy('Apellido_Materno', 'ASC')
+                ->orderBy('nombre', 'ASC')
+                ->Where('idarea',  $uniq->idarea)
+                ->Where('acceso', '!=',1)
+                ->get();
+
+        $obs = Observacion::where('idproyecto', $id)->where('tipo', 6)->first();
+
+        $alins = Alineacion::where('status', 1)->get();
+        $invs = Investigacion::where('status', 1)->orderBy('nombre_linea', 'ASC')->get();
+        $objs = Objetivo::where('status', 1)->get();
+        $trans = Transporte::where('status', 1)->get(); 
+        $clis = Cliente::where('status', 1)->orderBy('nivel1', 'DESC')
+                ->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
+        $materia = Materia::where('status', 1)->get();
+        $orientacion = Orientacion::where('status', 1)->get();
+        $nivel = Nivel::where('status', 1)->get();
+        
+        $tarea = Tarea::Where('idproyecto',$id)->orderBy('fecha_inicio', 'ASC')->get();
+        $riesgos = Analisis::where('idproyecto', $id)
+                        ->orderby('fechaproable', 'asc')
+                        ->where('tiporiesgo', 1)->get();
+        $riesgose = Analisis::where('idproyecto', $id)
+                        ->orderby('fechaproable', 'asc')
+                        ->where('tiporiesgo', 2)->get();
+        
+        $criskint = Analisis::where('idproyecto', $id)->where('tiporiesgo', 1)->count();
+        $criskext = Analisis::where('idproyecto', $id)->where('tiporiesgo', 2)->count();
+        
+        $rescm= RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','M')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalm = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','M')
+            ->sum('recursos_general.cantidad');
+        $rescf= RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','F')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalf = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','F')
+            ->sum('recursos_general.cantidad');
+        $resct= RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','T')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalt = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','T')
+            ->sum('recursos_general.cantidad');
+        $resch= RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','H')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalh = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','H')
+            ->sum('recursos_general.cantidad');
+        $resco= RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','O')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalo = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','O')
+            ->sum('recursos_general.cantidad');
+        $total = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->sum('recursos_general.cantidad');
+        
+        if ($proyt->claven < 10) {
+            $clave = $proyt->clavea.''.$proyt->clavet.'-0'.$proyt->claven.'/'.$proyt->clavey;
+        } else 	{
+            $clave = $proyt->clavea.''.$proyt->clavet.'-'.$proyt->claven.'/'.$proyt->clavey;
+        }
+        
+        $areas = Area::where('id',$proyt->idarea)->first();
+
+        return view('SIRB/reportes/protocolo2', $data, compact('proyt','user','invs','objs','clis','alins','trans',
+        'materia','orientacion', 'nivel','users','respon', 'tarea', 'riesgos', 'riesgose', 'criskint', 'criskext',
+        'rescf','rescm','resct','resch','resco','subtotalm','subtotalf','subtotalh','subtotalo','subtotalt', 'total',
+        'clave', 'areas', 'obs'));
+    }
+
+    public function cronogramaProtocolo($proyt, $tarea) {
+        $fechaTarea = null;
+        foreach ($tarea as $tar) {
+            $inicio = new \DateTime($tar->fecha_inicio);
+            $fin = new \DateTime($tar->fecha_inicio);
+            $fin->modify("+{$tar->duracion} months");
+            if (!$fechaTarea || $fin > $fechaTarea) {
+                $fechaTarea = $fin;
+            }
+        }
+
+        $inicio_proyecto = new \DateTime($proyt->fecha_inicio);
+        $fin_proyecto = $fechaTarea;
+        $diferencia = $inicio_proyecto->diff($fin_proyecto);
+        $meses = ($diferencia->y * 12) + $diferencia->m;
+        if ($diferencia->d > 0) {
+            $meses++;
+        }
+        $newDuracion = $meses;
+
+        return view('SIRB.reportes.cronogramaProtocolo', compact('proyt', 
+        'tarea', 'newDuracion', 'fechaTarea'));
+    }
+    
+    public function imagenesQuill(Request $request){
+        $maxTamano = 1 * 1024 * 1024; // INDICAR UN MEGA
+        $permitidas = ['image/jpeg', 'image/png'];
+
+        if($request->hasFile('image')){
+            $archivo = $request->file('image');
+            if(!in_array($archivo->getMimeType(), $permitidas)){
+                return response()->json(['success' => false]);
+            }
+            if($archivo->getSize() > $maxTamano){
+                return response()->json(['success'=>false]);
+            }
+
+            $ruta = $archivo->store('public/quill-images');
+            $url = Storage::url($ruta);
+             return response()->json(['success' => true, 'url' => $url]);
+        }
+        return response()->json(['success' => false]);
+    }
+
+    // BASE64, GUARDAR LA IMAGEN Y PARA DEVOLVER LA URL
+    public function imagenesQuillBase64(Request $request){
+        $maxTamano = 1 * 1024 * 1024; // 1MB
+        $permitidas = ['image/jpeg', 'image/png'];
+        $data = $request->input('image_base64');
+        $idproy = $request->input('idproy');
+        $clave = null;
+
+        if($idproy){
+            $proy = Proyecto::find($idproy);
+            if($proy){
+                $clave = $proy->clavea . $proy->clavet . str_pad($proy->claven, 2, '0', STR_PAD_LEFT) . $proy->clavey;
+            }
+        }
+        if(!$data){
+            return response()->json(['success' => false]);
+        }
+        if(preg_match('/^data:(image\/\w+);base64,/', $data, $type)){
+            $mime = $type[1];
+            if(!in_array($mime, $permitidas)){
+                return response()->json(['success' => false]);
+            }
+
+            $data = substr($data, strpos($data, ',') + 1);
+            $data = base64_decode($data);
+            if($data === false){
+                return response()->json(['success' => false]);
+            }
+            if(strlen($data)>$maxTamano){
+                return response()->json(['success' => false]);
+            }
+
+
+            $ext = $mime === 'image/png' ? 'png' : 'jpg';
+            $nombre = uniqid('quill_', true) . '.' . $ext;
+            $subcarpeta = $clave ? ('/' . $clave) : '';
+            $directorio = 'quill-images' . $subcarpeta;
+            if(!Storage::disk('public')->exists($directorio)){
+                Storage::disk('public')->makeDirectory($directorio);
+            }
+
+            $ruta = $directorio . '/' . $nombre;
+            Storage::disk('public')->put($ruta, $data);
+            $url = Storage::url('public/' . $ruta);
+            return response()->json(['success' => true, 'url' => '..'.$url]);
+        } else {
+            return response()->json(['success' => false]);
+        }
+    }
+
+    public function gprotocolo2($id){
+        $uniq = User::where('id', '=', session('LoginId'))->first();
+        $proyt = Proyecto::where('id', $id)->first();
+
+        // PERMITE MOSTRAR LAS IMAGENES EN EL PDF
+        $camposHtml = ['justificacion', 'antecedente', 'objetivo', 'objespecifico', 'alcance', 'metodologia', 'producto', 'comcliente', 'beneficios'];
+        foreach ($camposHtml as $campo) {
+            if (!empty($proyt->$campo)) {
+                $proyt->$campo = preg_replace_callback(
+                    '/<img[^>]+src=["\\\']([^"\\\']+)["\\\'][^>]*>/i',
+                    function ($matches) {
+                        $src = $matches[1];
+
+                        // Detecta rutas como "/storage/...", "./storage/...", "../storage/..."
+                        if (preg_match('#(\.\./)*storage/#', $src)) {
+                            // Normaliza la ruta quitando los puntos relativos (../ o ./)
+                            $rutaRelativa = preg_replace('#^(\.\./)*#', '', $src); // quita ../ o ./
+                            $ruta = public_path($rutaRelativa);
+
+                            if (file_exists($ruta)) {
+                                // Convertimos a base64 por compatibilidad (recomendado para PDFs)
+                                $tipoMime = mime_content_type($ruta);
+                                $contenido = base64_encode(file_get_contents($ruta));
+                                $nuevoSrc = 'data:' . $tipoMime . ';base64,' . $contenido;
+                                return str_replace($src, $nuevoSrc, $matches[0]);
+                            }
+                        }
+
+                        return $matches[0]; // no se cambia si no se encuentra o no coincide
+                    },
+                    $proyt->$campo
+                );
+            }
+        }
+
+        $users = User::where('id', $proyt->idusuarior)->first();
+        $respon = User::where('id', $proyt->aprobo)->first();
+        $director = User::Where('id', $proyt->director)->first();
+
+        $data = ['LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first()];
+        $user = User::where('status', 1)
+            ->where('acceso', '!=', 4)
+            ->where('acceso', '!=', 5)
+            ->orderBy('Apellido_Paterno', 'ASC')
+            ->orderBy('Apellido_Materno', 'ASC')
+            ->orderBy('nombre', 'ASC')
+            ->where('idarea', $uniq->idarea)
+            ->where('acceso', '!=', 1)
+            ->get();
+
+        $puesto = Puesto::all();
+        $obs = Observacion::where('idproyecto', $id)->where('tipo', 3)->first();
+        $invs = Investigacion::where('status', 1)->orderBy('nombre_linea', 'ASC')->get();
+        $objs = Objetivo::where('status', 1)->get();
+        $clis = Cliente::where('status', 1)->orderBy('nivel1', 'DESC')
+            ->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
+
+        $materia = Materia::where('status', 1)->get();
+        $orientacion = Orientacion::where('status', 1)->get();
+        $nivel = Nivel::where('status', 1)->get();
+
+        $tarea = Tarea::where('idproyecto', $id)->orderBy('fecha_inicio', 'ASC')->get();
+
+        $riesgos = Analisis::where('idproyecto', $id)
+                            ->orderby('fechaproable', 'asc')
+                            ->where('tiporiesgo', 1)->get();
+        $riesgose = Analisis::where('idproyecto', $id)
+                            ->orderby('fechaproable', 'asc')
+                            ->where('tiporiesgo', 2)->get();
+
+        $criskint = Analisis::where('idproyecto', $id)->where('tiporiesgo', 1)->count();
+        $criskext = Analisis::where('idproyecto', $id)->where('tiporiesgo', 2)->count();
+
+        $rescm = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','M')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalm = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','M')
+            ->sum('recursos_general.cantidad');
+        $rescf = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','F')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalf = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','F')
+            ->sum('recursos_general.cantidad');
+        $resct = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','T')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalt = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','T')
+            ->sum('recursos_general.cantidad');
+        $resch = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','H')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalh = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','H')
+            ->sum('recursos_general.cantidad');
+        $resco = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','O')
+            ->get(['recursos_general.id','recursos.partida','recursos.concepto', 'recursos_general.cantidad']);
+        $subtotalo = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->where('clave','O')
+            ->sum('recursos_general.cantidad');
+        $total = RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
+            ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
+            ->Where('idproyecto',$id)
+            ->sum('recursos_general.cantidad');
+        
+        if ($proyt->claven < 10) {
+            $clave = $proyt->clavea . $proyt->clavet . '-0' . $proyt->claven . '/' . $proyt->clavey;
+        } else {
+            $clave = $proyt->clavea . $proyt->clavet . '-' . $proyt->claven . '/' . $proyt->clavey;
+        }
+
+        $areas = Area::where('id', $proyt->idarea)->first();
+
+        // SE MANDA A LLAMAR A LA FUNCIÓN DEL CRONOGRAMA DEL PROTOCOLO
+        $protocolocrono = $this->cronogramaProtocolo($proyt, $tarea);
+
+        // Generar el reporte PDF con la información
+        $unir = 'Protocolo_' . $clave;
+        $pdf = PDF::loadView('SIRB.reportes.protocolo', $data, compact('proyt', 'user', 'invs', 'objs',
+            'clis', 'materia', 'orientacion', 'nivel', 'users', 'respon', 'tarea', 'riesgos', 'riesgose', 
+            'criskint', 'criskext','rescf', 'rescm', 'resct', 'resch', 'resco', 'subtotalm', 'subtotalf',
+            'subtotalh', 'subtotalo', 'subtotalt', 'total','obs', 'areas', 'clave', 'director', 'protocolocrono',
+            'puesto'));
+        
+        $pdf->setPaper('a4', 'portrait')
+        ->setOption('margin-top', 5)->setOption('margin-bottom', 5)
+        ->setOption('margin-left', 5)->setOption('margin-right', 5);
+        $pdf->render();
+
+        $canvas = $pdf->getCanvas();
+        $canvas->page_text(300, 800, '{PAGE_NUM} DE {PAGE_COUNT}', null, 10, array(0, 0, 0));
+        
+        return $pdf->stream($unir . '.pdf');
+    }
+
+    public function firnaralldg(){
+        if(session()->has('LoginId')){
+            // $proyt = Proyecto::where('gprotocolo', 2)->where('fimradg','!=',1)->get();
+            $obs = Observacion::where('tipo','>=',3)->get();
+            $proyt = Proyecto::join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+            ->join('obs_proy', 'obs_proy.idproyecto', '=' , 'proyectos.id')
+            ->join('area_adscripcion', 'area_adscripcion.inicial_clave', '=' , 'proyectos.clavea')
+            ->where('proyectos.gprotocolo', 2)
+            ->where('proyectos.fimradg','!=',1)
+            ->where('obs_proy.tipo','>=',3)
+            ->get([
+                'obs_proy.id',
+                'obs_proy.idproyecto',
+                'usuarios.Nombre',
+                'usuarios.Apellido_Paterno',
+                'usuarios.Apellido_Materno',
+                'proyectos.nomproy',
+                'proyectos.clavea',
+                'proyectos.clavet',
+                'proyectos.claven',
+                'proyectos.clavey',
+                'proyectos.fecha_inicio',
+                'proyectos.fecha_fin',
+                'proyectos.gprotocolo',
+                'proyectos.fimradg',
+                'obs_proy.fobsresponsble',
+                'obs_proy.fobsdirectorg',
+                'obs_proy.fobsmando',
+                'area_adscripcion.nombre_area'
+            ]);
+            $nameuser = User::all();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+        }
+        return view('firnarprotocolos',$data,compact('proyt', 'nameuser', 'obs'));
+    }
+
+    public function firmartodosdg(Request $request){
+        $ids = $request->input('ids', []);
+        // $user = $request->get('datofichero');
+        // $pass = $request->get('pass');
+        $obsexiste = Observacion::whereIn('id', $ids)->get(['id', 'idproyecto']);
+        $request -> validate([
+            'datofichero'=>'required',
+            'pass'=>'required'
+        ]);
+
+        date_default_timezone_set('America/Mexico_City');
+        $data = User::where('id','=',session('LoginId'))->first();
+        $nombre = explode(".", $request->get('datofichero'));
+        $bdfirmas = DB::table('firmasimt.usuarios')->where('username', $nombre[0])->first();
+
+        if( $request->get('pass') == $bdfirmas->pass){
+            foreach ($obsexiste as $obs) {
+                
+                $pr = Proyecto::find($obs->idproyecto);
+                $obs = Observacion::find($obs->id);
+                $nombredg = $data->Nombre.' '.$data->Apellido_Paterno.' '.$data->Apellido_Materno;
+                $obs->fobsdirectorg = $nombredg.'| IMT | '.date("Y-m-d").'||'.date("H:i:s");
+                $pr->fimradg = 1;
+                $pr->director = $data->id;
+                $obs->save();
+                $pr->save();
+    
+                $autoriza = User::where('id', $pr->aprobo)->first();
+                $responsable = User::where('id', $pr->idusuarior)->first();
+                $area = Area::where('id', $pr->idarea )->first();
+            
+                if ($pr->claven < 10) {
+                    $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+                } else 	{
+                    $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+                }
+                $details = [
+                    'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+                    'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+                    'director' => $nombredg,
+                    'area' => $area->nombre_area,
+                    'clave' => $nombreproyecto
+                ];
+    
+                $destinatarios = [
+                    $autoriza->correo,
+                    $responsable->correo
+                ];
+            
+                Mail::to($destinatarios)->send(new notificarprotocolodirector($details));
+            };
+            return redirect('firnaralldg')->with('success', 'Correo de protocolo enviado correctamente');
+        } else {
+            return back()->with('fail', 'Usuario o contraseña incorrecta, intenta de nuevo');
+        }
+
+
+        // $data = [
+        //     'a' => $ids,
+        //     'b' => $user,
+        //     'c' => $pass,
+        //     'd' => $obsexiste
+        // ];
+        // return response()->json($data);
+    }
+
+    public function firmarcospiii(){
+        if(session()->has('LoginId')){
+            // $proyt = Proyecto::where('gprotocolo', 2)->where('fimradg','!=',1)->get();
+            $obs = Observacion::where('tipo','>=',7)->get();
+            $proyt = Proyecto::join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+            ->join('obs_proy', 'obs_proy.idproyecto', '=' , 'proyectos.id')
+            ->join('area_adscripcion', 'area_adscripcion.inicial_clave', '=' , 'proyectos.clavea')
+            ->where('obs_proy.tipo','>=',7)
+            ->get([
+                'obs_proy.id',
+                'obs_proy.idproyecto',
+                'usuarios.Nombre',
+                'usuarios.Apellido_Paterno',
+                'usuarios.Apellido_Materno',
+                'proyectos.nomproy',
+                'proyectos.clavea',
+                'proyectos.clavet',
+                'proyectos.claven',
+                'proyectos.clavey',
+                'proyectos.fecha_inicio',
+                'proyectos.fecha_fin',
+                'proyectos.gprotocolo',
+                'proyectos.fimradg',
+                'obs_proy.fobsresponsble',
+                'obs_proy.fobsdirectorg',
+                'obs_proy.fobsmando',
+                'area_adscripcion.nombre_area'
+            ]);
+            $nameuser = User::all();
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+        }
+        return view('firnarcospiii',$data,compact('proyt', 'nameuser', 'obs'));
+    }
+
+    public function aprobarcospiii(Request $request){
+        $ids = $request->input('ids', []);
+        $observaciones = $request->input('obsfinal', []);
+
+        $obsexiste = Observacion::whereIn('id', $ids)->get(['id', 'idproyecto']);
+
+        foreach ($obsexiste as $obs) {
+            $pr = Proyecto::find($obs->idproyecto);
+            $obs = Observacion::find($obs->id);
+
+            $obsText = $observaciones[$obs->id] ?? null;
+
+            $obs->obs = $obsText;
+            $obs->tipo = 6;
+            $obs->save();
+
+            $autoriza = User::where('id', $pr->aprobo)->first();
+            $responsable = User::where('id', $pr->idusuarior)->first();
+            $area = Area::where('id', $pr->idarea )->first();
+
+            if ($pr->claven < 10) {
+                $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+            } else 	{
+                $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+            }
+
+            $details = [
+                'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+                'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+                'area' => $area->nombre_area,
+                'clave' => $nombreproyecto,
+                'obsprotocolo' => $obs->obs
+            ];
+    
+            $destinatarios = [
+                $autoriza->correo,
+                $responsable->correo
+            ];
+            
+            Mail::to($destinatarios)->send(new notificarcospiiiaprobados($details));
+        };
+        
+        if (empty($obsexiste)) {
+            return redirect('firmarcospiii')->with('success', 'Correos de protocolo aprobados enviados correctamente');
+        } else {
+            return redirect('firmarcospiii');
+        }
+        
+       
+    }
+
+    public function infoproys(Request $request, $id ){
         $proyt = Proyecto::where('id',$id)->first();
         $tareas = Tarea::where('idproyecto',$id)->count();
+
+        $tareasproy = Tarea::where('idproyecto',$id)->get();
+        $tareasum = Tarea::where('idproyecto',$id)->get()->sum('duracion');
 
         if ($proyt->claven < 10) {
             $clave = $proyt->clavea.''.$proyt->clavet.'-0'.$proyt->claven.'/'.$proyt->clavey;
@@ -1243,6 +3515,44 @@ class dbcontroller extends Controller
         }
 
         $publicacion = DB::table('siapimt25.imt_pub_publicacion')->where('CveProy', $clave)->first();
+
+        $aprox = 0;
+
+        foreach ($tareasproy as $tar) {
+            $in = $tar->fecha_inicio;
+            $fin = $tar->fecha_fin;
+            $dur = $tar->duracion;
+            $tar = 100 / $tareasum;
+                                    
+            $inicio = explode('-', $in);
+            $fin = explode('-', $fin);
+            $fhoyog = explode('-', date("Y-m-d"));
+
+            $fecha1 = new \DateTime($inicio[0].'-'.$inicio[1].'-'.$inicio[2]);
+            $fecha2 = new \DateTime($fin[0].'-'.$fin[1].'-'.$fin[2]);
+            $fhoy = new \DateTime($fhoyog[0].'-'.$fhoyog[1].'-'.$fhoyog[2]);
+
+            // Calcular la diferencia entre las dos fechas
+            // $diferencia = $fecha1->diff($fecha2);
+            $diferencia = $fecha1->diff($fhoy);
+
+            // Obtener el número total de meses
+            $meses = (($diferencia->y * 12) + $diferencia->m)+1;
+
+            // diferencia cuantos meses de avance tiene, si ya se completa el valor
+            // se reempleza por la duracion de la tarea
+
+            if ($fecha1 < $fhoy) {
+                if ($meses >= $dur) {
+                    $previsto = $tar*$dur;
+                } else {
+                    $previsto = $tar*$meses;
+                };
+            } else {
+                $previsto = $tar*0;
+            };
+            $aprox = $aprox+$previsto;
+        };
 
         if ($proyt->progreso == 100) {
             if ($proyt->clavet == 'I'){
@@ -1264,6 +3574,7 @@ class dbcontroller extends Controller
 
         $pr1 = Proyecto::find($id);
         $pr1->numtar = $tareas;
+        $pr1->progreal = round($aprox,2);
         $pr1->save();
         
         $areas = Area::where('id',$proyt->idarea)->first();
@@ -1271,6 +3582,8 @@ class dbcontroller extends Controller
         ->join('area_adscripcion','area_adscripcion.id','=','usuarios.idarea')
         ->where('proyectos.id',$id)
         ->get(['usuarios.Nombre','usuarios.Apellido_Paterno','usuarios.Apellido_Materno'])->first();
+
+        $obs = Observacion::where('idproyecto', $id)->where('tipo',3)->first();
 
         $user = User::where('id',$proyt->idusuarior)->first();
         $linea = Investigacion::where('id',$proyt->idlinea)->first();
@@ -1307,6 +3620,23 @@ class dbcontroller extends Controller
             }else{
                 $reanudar = 0;
             }
+
+            $boton = $request->get('crear');
+            if($boton == 1){
+                if($proyt->clavet == 'I'){
+                    $existe = Impacto::where('idproyecto',$proyt->id)->exists();
+                    if($existe != true){
+                        $improy = new Impacto();
+                        $improy->idproyecto = $proyt->id;
+                        $improy->save();
+                        return redirect('proydatos/'.$proyt->id);
+                    }else{
+                        return redirect('proydatos/'.$proyt->id);
+                    }
+                }else{
+                    return redirect('proydatos/'.$proyt->id);
+                }
+            }
         //instancia al contrlador de estados
         $statusController = new StatusController();
         //instancia la contolador de porcentaje de progresos
@@ -1335,7 +3665,14 @@ class dbcontroller extends Controller
             'materia',
             'orientacion',
             'nivel',
-            'publicacion'
+            'publicacion',
+            'completado',
+            'gprotocolo',
+            'idalin',
+            'idlinea',
+            'objespecifico',
+            'idmodot',
+            'idobjt'
         )->where(
             [
                 ['id','=',$id]
@@ -1352,13 +3689,15 @@ class dbcontroller extends Controller
         }
 
         return view('infoproy', $data, compact('proyt','areas','user','linea','alin', 'nivel', 'publicacion',
-        'cli','obj','contri','tran','team','resp', 'responsable', 'reanudar', 'materia', 'orien'));
+        'cli','obj','contri','tran','team','resp', 'responsable', 'reanudar', 'materia', 'orien','tareasproy',
+        'tareasum', 'aprox', 'obs'));
     }
 
     public function infotec($id){
         if(session()->has('LoginId')){
             $proy = Proyecto::find($id);
             $proy->publicacion = 2;
+            $proy->fechapublicacion = date("Y-m-d");
             $res = $proy->save();
             if ($res) {
                 return redirect('infoproys/'.$id);
@@ -1392,7 +3731,6 @@ class dbcontroller extends Controller
         return view('solicitud_cancel',$data, compact('proyt'));
     }
 
-
     // Nuevo codigo
 
         public function sendsolicitud(Request $request, $id){
@@ -1404,15 +3742,15 @@ class dbcontroller extends Controller
             $pr->cam_estado = 1;
             $pr->save();
             
-            $posc = Observacion::all()->count();
-            if ($posc == 0) {
-                $posc = 1;
-            } else {
-                $posc++;
-            }
+            // $posc = Observacion::all()->count();
+            // if ($posc == 0) {
+            //     $posc = 1;
+            // } else {
+            //     $posc++;
+            // }
             
             $obs = new Observacion();
-            $obs->id = $posc;
+            // $obs->id = $posc;
             $obs->obs = $request->get('obssol');
             $obs->idproyecto = $id;
             $obs->tipo = 1;
@@ -1472,26 +3810,26 @@ class dbcontroller extends Controller
                     'area' => $area->nombre_area,
                     'clave' => $nombreproyecto,
                     'just' => $request->get('obssol'),
-                    'idproy' => $id,
-                    'idobs' => $posc
+                    'idproy' => $id
                 ];
                 Mail::to($autoriza->correo)->send(new Solicitudreprogramacion($details));
                 // correo
             $res = $obs->save();
             if($res){
                 if(session()->has('LoginId')){
-                    $access = User::where('id','=',session('LoginId'))->where('acceso','=',1)->first();
-                    $accessejec = User::where('id','=',session('LoginId'))->where('acceso','=',2)->first();
-                    $accessuser = User::where('id','=',session('LoginId'))->where('acceso','=',3)->first();
-                    if($access){
-                        return redirect('infoproys/'.$id);
-                    }elseif($accessejec){
-                        return redirect('infoproys/'.$id);
-                    }elseif($accessuser){
-                        return redirect('infoproys/'.$id);
-                    }else{
-                        return redirect('/');
-                    }
+                    // $access = User::where('id','=',session('LoginId'))->where('acceso','=',1)->first();
+                    // $accessejec = User::where('id','=',session('LoginId'))->where('acceso','=',2)->first();
+                    // $accessuser = User::where('id','=',session('LoginId'))->where('acceso','=',3)->first();
+                    // if($access){
+                    //     return redirect('infoproys/'.$id);
+                    // }elseif($accessejec){
+                    //     return redirect('infoproys/'.$id);
+                    // }elseif($accessuser){
+                    //     return redirect('infoproys/'.$id);
+                    // }else{
+                    //     return redirect('/');
+                    // }
+                    return redirect('observaciones/'.$id)->with('success', 'Solicitud de reprogrmación enviada');
                 }
             }else{
                 return back()->with('fail','No se pudo resgistrar al nuevo usuario');
@@ -1590,7 +3928,7 @@ class dbcontroller extends Controller
                     $obs->save();
                     $pr->save();
 
-                    return redirect('observaciones/'.$id);
+                    return redirect('observaciones/'.$id)->with('success', 'Reprogramación Aceptada');
                 } else {
                     return back()->with('fail', 'La CURP del usuario no es la correspondiente');
                 }
@@ -1608,16 +3946,16 @@ class dbcontroller extends Controller
             $pr->cam_estado = 1;
             $pr->save();
             
-            $posc = Observacion::all()->count();
-            if ($posc == 0) {
-                $posc = 1;
-            } else {
-                $posc++;
-            }
+            // $posc = Observacion::all()->count();
+            // if ($posc == 0) {
+            //     $posc = 1;
+            // } else {
+            //     $posc++;
+            // }
 
             
             $obs = new Observacion();
-            $obs->id = $posc;
+            // $obs->id = $posc;
             $obs->obs = $request->get('obssol');
             $obs->idproyecto = $id;
             $obs->tipo = 2;
@@ -1677,26 +4015,26 @@ class dbcontroller extends Controller
                     'area' => $area->nombre_area,
                     'clave' => $nombreproyecto,
                     'just' => $request->get('obssol'),
-                    'idproy' => $id,
-                    'idobs' => $posc
+                    'idproy' => $id
                 ];
                 Mail::to($autoriza->correo)->send(new Solicitudcancelacion($details));
                 // correo
             $res = $obs->save();
             if($res){
                 if(session()->has('LoginId')){
-                    $access = User::where('id','=',session('LoginId'))->where('acceso','=',1)->first();
-                    $accessejec = User::where('id','=',session('LoginId'))->where('acceso','=',2)->first();
-                    $accessuser = User::where('id','=',session('LoginId'))->where('acceso','=',3)->first();
-                    if($access){
-                        return redirect('infoproys/'.$id);
-                    }elseif($accessejec){
-                        return redirect('infoproys/'.$id);
-                    }elseif($accessuser){
-                        return redirect('infoproys/'.$id);
-                    }else{
-                        return redirect('/');
-                    }
+                    // $access = User::where('id','=',session('LoginId'))->where('acceso','=',1)->first();
+                    // $accessejec = User::where('id','=',session('LoginId'))->where('acceso','=',2)->first();
+                    // $accessuser = User::where('id','=',session('LoginId'))->where('acceso','=',3)->first();
+                    // if($access){
+                    //     return redirect('infoproys/'.$id);
+                    // }elseif($accessejec){
+                    //     return redirect('infoproys/'.$id);
+                    // }elseif($accessuser){
+                    //     return redirect('infoproys/'.$id);
+                    // }else{
+                    //     return redirect('/');
+                    // }
+                    return redirect('observaciones/'.$id)->with('success', 'Solicitud de cancelación enviada');
                 }
             }else{
                 return back()->with('fail','No se pudo resgistrar al nuevo usuario');
@@ -1794,7 +4132,7 @@ class dbcontroller extends Controller
                     $obs->save();
                     $pr->save();
 
-                    return redirect('observaciones/'.$id);
+                    return redirect('observaciones/'.$id)->with('success', 'Cancelación aceptada');
                 } else {
                     return back()->with('fail', 'La CURP del usuario no es la correspondiente');
                 }
@@ -1814,11 +4152,11 @@ class dbcontroller extends Controller
                 $accessejec = User::where('id','=',session('LoginId'))->where('acceso','=',2)->first();
                 $accessuser = User::where('id','=',session('LoginId'))->where('acceso','=',3)->first();
                 if($access){
-                    return redirect('infoproys/'.$id);
+                    return redirect('infoproys/'.$id)->with('success', 'Proyecto reanudado correctamente');
                 }elseif($accessejec){
-                    return redirect('infoproys/'.$id);
+                    return redirect('infoproys/'.$id)->with('success', 'Proyecto reanudado correctamente');
                 }elseif($accessuser){
-                    return redirect('infoproys/'.$id);
+                    return redirect('infoproys/'.$id)->with('success', 'Proyecto reanudado correctamente');
                 }else{
                     return redirect('/');
                 }
@@ -1989,8 +4327,16 @@ class dbcontroller extends Controller
                 ->orderBy('nombre', 'ASC')
                 ->get();
 
+        $vtarea = Tarea::Where('idproyecto',$id)->count();
+        $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+        $vriesgo = Analisis::Where('idproyecto',$id)->count();
+        $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+        $vequipo = Equipo::Where('idproyecto',$id)->count();
+
+
         return view('upproy',compact('proyt','contri','areas','invs','objs','trans','alins','user', 'clie', 'materia', 'mate',
-        'areass','users','lineas','clis','objss','contris','transs','alinss','resp', 'orientacion', 'nivel', 'orent', 'nivelp',            
+        'areass','users','lineas','clis','objss','contris','transs','alinss','resp', 'orientacion', 'nivel', 'orent', 'nivelp',
+        'vtarea','vrecurso','vcontri','vequipo','vriesgo',
         'categoriesN1',
         'categoriesN2',
         'categoriesN3',));
@@ -2056,11 +4402,14 @@ class dbcontroller extends Controller
                 $accessejec = User::where('id','=',session('LoginId'))->where('acceso','=',2)->first();
                 $accessuser = User::where('id','=',session('LoginId'))->where('acceso','=',3)->first();
                 if($access){
-                    return redirect('infoproys/'.$id);
+                    // return redirect('infoproys/'.$id);
+                    return redirect('upproys/'.$id);
                 }elseif($accessejec){
-                    return redirect('infoproys/'.$id);
+                    // return redirect('infoproys/'.$id);
+                    return redirect('upproys/'.$id);
                 }elseif($accessuser){
-                    return redirect('infoproys/'.$id);
+                    // return redirect('infoproys/'.$id);
+                    return redirect('upproys/'.$id);
                 }else{
                     return redirect('/');
                 }
@@ -2091,6 +4440,21 @@ class dbcontroller extends Controller
             $tarea = Tarea::Where('idproyecto',$id)->orderBy('fecha_inicio', 'ASC')->get();
 
             $existen = Tarea::Where('idproyecto',$id)->count();
+
+            if($proyt->clavet == 'I'){
+                $vimpacto= Impacto::where('idproyecto', $id)->count();
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+            }else{
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+            }
 
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
             $progres = Tarea::where('idproyecto',$id)->get();//se usa para generara un arreglo a recorrer
@@ -2128,7 +4492,11 @@ class dbcontroller extends Controller
             $pr->fecha_fin = $tareafecha1;
             $pr->save();
         }
-        return view('tareag',$data,compact('proyt','tarea', 'existen'));
+        if($proyt->clavet == 'I'){
+            return view('tareag',$data,compact('proyt','tarea','existen', 'vimpacto','vtarea','vrecurso','vcontri','vequipo', 'vriesgo'));
+        }else{
+            return view('tareag',$data,compact('proyt','tarea','existen','vtarea','vrecurso','vcontri','vequipo', 'vriesgo'));
+        }
     }
 
     public function tareas($id){
@@ -2258,10 +4626,277 @@ class dbcontroller extends Controller
 
 /*Tareas Fin*/
 
+/* Analisis de riesgo Inicio */
+
+    public function riesgos(){
+        if(session()->has('LoginId')){
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $riesgos = Riesgos::Orderby('tvarrisk', 'desc')->Orderby('tiporiesgo', 'asc')->get();
+        }
+        return view('Riesgos',$data,compact('riesgos'));
+    }
+
+    public function changestatusrisk (Request $request){
+        $risk = Riesgos::findOrFail($request->id);
+        $risk->status =  $request->status;
+        $risk->save();
+        return response()->json(['success'=>'Status changed Succesfully']);
+    }
+
+    public function addlriesgos (Request $request){
+        $request -> validate([
+            'name'=>'required',
+            'tipo'=>'numeric'
+        ]);
+        $risk = new Riesgos();
+        $risk->id;
+        $risk->tiporiesgo = $request->get('name');
+        $risk->tvarrisk = $request->get('tipo');
+        $risk->resprisk = $request->get('actrisk');
+        $risk->status;
+        $res = $risk->save();
+        if($res){
+            return redirect('riesgos');
+        }else{
+            return back()->with('fail','No se agrego el nuevo riesgos correctamente');
+        }
+    }
+    public function uplrisk ( $id ){
+        $riesgo = Riesgos::where('id',$id)->first();
+        return view('uplriesgo',compact('riesgo'));
+    }
+
+    public function uplrisks (Request $request, $id ){
+        $request -> validate([
+            'name'=>'required',
+            'tipo'=>'numeric'
+        ]);
+        $risk = Riesgos::find($id);
+        $risk->tiporiesgo = $request->get('name');
+        $risk->tvarrisk = $request->get('tipo');
+        $risk->resprisk = $request->get('actrisk');
+        $risk->save();
+        $res = $risk->save();
+        if($res){
+            return redirect('riesgos');
+        }else{
+            return back()->with('fail','No se actualizo el riesgo correctamente');
+        }
+    }
+
+    public function ariesgo($id){
+        if(session()->has('LoginId')){
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $proyt = Proyecto::where('id',$id)->first();
+
+            $riesgos = Analisis::where('idproyecto', $id)
+                        ->orderby('fechaproable', 'asc')
+                        ->where('tiporiesgo', 1)->get();
+            $riesgose = Analisis::where('idproyecto', $id)
+                        ->orderby('fechaproable', 'asc')
+                        ->where('tiporiesgo', 2)->get();
+
+            $criskint = Analisis::where('idproyecto', $id)->where('tiporiesgo', 1)->count();
+            $criskext = Analisis::where('idproyecto', $id)->where('tiporiesgo', 2)->count();
+            $ocurrent = Ocurrencias::all();
+            
+            if($proyt->clavet == 'I'){
+                $vimpacto = Impacto::where('idproyecto', $id)->count();
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+                $listrisk = Riesgos::Where('status', 1)->get();
+            }else{
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+                $listrisk = Riesgos::Where('status', 1)->get();
+            }
+        }
+        if($proyt->clavet == 'I'){
+            return view('Analisis',$data,compact('proyt', 'vimpacto','vtarea','vrecurso','vcontri','vequipo','vriesgo',
+            'riesgos','riesgose','criskint','criskext', 'listrisk', 'ocurrent'));
+        }
+        return view('Analisis',$data,compact('proyt','vtarea','vrecurso','vcontri','vequipo','vriesgo',
+        'riesgos','riesgose','criskint','criskext', 'listrisk', 'ocurrent'));
+    }
+
+    public function addriesgo($id, $idt, Request $request){
+        if(session()->has('LoginId')){
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $proyt = Proyecto::where('id',$id)->first();
+            $riesgos = Analisis::where('id', $id)->get();
+            $listriesk = Riesgos::where('status', 1)->where('tvarrisk',$idt)->orWhere('tvarrisk', 3)->Orderby('tiporiesgo', 'asc')->Orderby('tvarrisk', 'asc')->get();
+            $ocurrent = Ocurrencias::all();
+            $tipor = $idt;
+        }
+        return view('addriesgo',$data,compact('proyt', 'listriesk', 'tipor', 'ocurrent'));
+    }
+
+    public function upriesgo($id, Request $request){
+        if(session()->has('LoginId')){
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $riesgos = Analisis::where('id', $id)->first();
+            $listriesk = Riesgos::where('status', 1)->where('tvarrisk', $riesgos->tiporiesgo)->orWhere('tvarrisk', 3)->Orderby('tiporiesgo', 'asc')->Orderby('tvarrisk', 'asc')->get();
+            $riskesp = Riesgos::Where("id", $riesgos->riesgo)->first();
+            $ocurrent = Ocurrencias::all();
+        }
+        return view('upriesgo',$data,compact('riesgos', 'listriesk', 'riskesp', 'ocurrent'));
+    }
+
+    public function addriesgosave(Request $request, $id ){
+        $request -> validate([
+            'idproy'=>'numeric',
+            'trisk'=>'numeric',
+            'risk'=>'required',
+            'probly'=>'numeric',
+            'impact'=>'numeric',
+            'vesp'=>'numeric',
+            'calf'=>'required',
+            'rriesgo'=>'required',
+            'probcurrent'=>'numeric'
+            // 'ocurd'=>'date'
+        ]);
+        $risk = new Analisis();
+        $risk->idproyecto = $request->idproy;
+        $risk->tiporiesgo = $request->trisk;
+        $risk->riesgo = $request->risk;
+        $risk->otroriesgo = $request->riskotro;
+        $risk->probabilidad = $request->probly;
+        $risk->impacto = $request->impact;
+        $risk->vesperado = $request->vesp;
+        $risk->calificacion = $request->calf;
+        $risk->respriesgo = $request->rriesgo;
+        if ($request->calf == "Prioridad alta") {
+            $risk->acciones = $request->accion;
+        } else {
+            $risk->acciones = "";
+        }
+        // $risk->fechaproable = $request->ocurd;
+        $risk->probocurrencia = $request->probcurrent;
+        $res = $risk->save();
+        if($res){
+            return redirect('ariesgo/'.$id);
+        }else{
+            return back()->with('fail','No se pudo resgistrar la tarea correctamente');
+        }
+    }
+
+    public function upriesgosave(Request $request, $id ){
+        $request -> validate([
+            'idproy'=>'numeric',
+            'trisk'=>'numeric',
+            'risk'=>'required',
+            'probly'=>'numeric',
+            'impact'=>'numeric',
+            'vesp'=>'numeric',
+            'calf'=>'required',
+            'rriesgo'=>'required',
+            'probcurrent'=>'numeric'
+            // 'ocurd'=>'date'
+        ]);
+        $risk = Analisis::find($id);
+        $risk->idproyecto = $request->idproy;
+        $risk->tiporiesgo = $request->trisk;
+        $risk->riesgo = $request->risk;
+        $risk->otroriesgo = $request->riskotro;
+        $risk->probabilidad = $request->probly;
+        $risk->impacto = $request->impact;
+        $risk->vesperado = $request->vesp;
+        $risk->calificacion = $request->calf;
+        $risk->respriesgo = $request->rriesgo;
+        if ($request->accion == "") {
+            $risk->acciones = "";
+        } else {
+            $risk->acciones = $request->accion;
+        }
+        // $risk->fechaproable = $request->ocurd;
+        $risk->probocurrencia = $request->probcurrent;
+        $res = $risk->save();
+        if($res){
+            return redirect('ariesgo/'.$risk->idproyecto);
+        }else{
+            return back()->with('fail','No se pudo resgistrar la tarea correctamente');
+        }
+    }
+
+    public function destroyriesgo($id,$ida){
+        $riegos= Analisis::find($ida);
+        $riegos->delete();
+        return redirect('ariesgo/'.$id);
+    }
+/* Analisis de riesgo Fin */
+
+/* Ocurrencia de riesgo Inicio*/
+    public function ocurrencia(){
+        if(session()->has('LoginId')){
+            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $current = Ocurrencias::all();
+        }
+        return view('Ocurrencias',$data,compact('current'));
+    }
+
+    public function changestatuocurrencia (Request $request){
+        $current = Ocurrencias::findOrFail($request->id);
+        $current->status = $request->status;
+        $current->save();
+        return response()->json(['success'=>'Status changed Succesfully']);
+    }
+
+    public function addcurrent (Request $request){
+        $request -> validate([
+            'name'=>'required'
+        ]);
+        $current = new Ocurrencias();
+        $current->id;
+        $current->nombre_ocurrencia = $request->get('name');
+        $current->status;
+        $res = $current->save();
+        if($res){
+            return redirect('ocurrencia');
+        }else{
+            return back()->with('fail','No se agrego el nuevo riesgos correctamente');
+        }
+    }
+
+    public function upocurrencia ( $id ){
+        $current = Ocurrencias::where('id',$id)->first();
+        return view('upocurrencia',compact('current'));
+    }
+
+    public function upcurrent (Request $request, $id ){
+        $request -> validate([
+            'name'=>'required'
+        ]);
+        $current = Ocurrencias::find($id);
+        $current->nombre_ocurrencia = $request->get('name');
+        $res = $current->save();
+        if($res){
+            return redirect('ocurrencia');
+        }else{
+            return back()->with('fail','No se actualizo el riesgo correctamente');
+        }
+    }
+
+/* Ocurrencia de riesgo Fin*/
+
 /*Equipo Inicio */
-    public function Equipo($id){
+    public function Equipo(Request $request, $id){
         if(session()->has('LoginId')){
             $proyt = Proyecto::where('id',$id)->first();
+
+            $vimpacto = Impacto::where('idproyecto',$id)->count();
+            $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+            $vequipo = Equipo::Where('idproyecto',$id)->count();
+            $colaboradores = $proyt->colaboradores;
+            $vtarea = Tarea::Where('idproyecto',$id)->count();
+            $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+            $vriesgo = Analisis::Where('idproyecto',$id)->count();
+
             $equipos= Equipo::join('usuarios','usuarios.id','=','equipo.idusuario')
                 ->join('proyectos','proyectos.id','=','equipo.idproyecto')
                 ->orderBy('usuarios.Apellido_Paterno', 'ASC')
@@ -2269,34 +4904,62 @@ class dbcontroller extends Controller
                 ->orderBy('usuarios.Nombre', 'ASC')
                 ->Where('idproyecto',$id)
                 ->get(['equipo.id','usuarios.Nombre','usuarios.Apellido_Paterno', 'usuarios.Apellido_Materno']);
+            
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
         }
-        return view('Equipo',$data,compact('proyt','equipos'));
+            return view('Equipo',$data,compact('proyt','equipos','vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo'));
+        
     }
+
+    public function sinColab(Request $request){
+        $proyecto = Proyecto::find($request->proyId);
+        $proyecto->colaboradores = $request->colaboradores;
+        $proyecto->save();
+        return response()->json(['reload' => true]);
+    }
+
     public function addequipos($id){
-        if(session()->has('LoginId')){
-            $proyt = Proyecto::where('id',$id)->first();
-            $user = User::where('status',1)->where('acceso','!=',4)->Where('acceso','!=',5)->where('id','!=',session('LoginId'))
-            ->orderBy('Apellido_Paterno', 'ASC')->orderBy('Apellido_Materno', 'ASC')->orderBy('nombre', 'ASC')->get();
-            $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+        if (session()->has('LoginId')) {
+            $proyt = Proyecto::where('id', $id)->first();
+            $data = ['LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first()];
+            $users = User::where('status', 1)
+                        ->where('acceso', '!=', 4)
+                        ->where('acceso', '!=', 5)
+                        ->where('acceso', '!=', 1)
+                        ->where([ ['nombre', '!=', 'Usuario Proyectos'], ['Apellido_Materno', '!=', 'General'], 
+                        ['Apellido_Paterno', '!=', 'Dirección'] ])
+                        ->orderBy('Apellido_Paterno', 'ASC')
+                        ->orderBy('Apellido_Materno', 'ASC')
+                        ->orderBy('nombre', 'ASC')
+                        ->get();
+
+            $areas = Area::where('status', 1)->where('inicial_clave', '!=', 'M')->get();
         }
-        return view('addequipo',$data,compact('proyt','user'));
+        if($proyt->clavea != 'M'){
+                return view('addequipo', $data, compact('proyt', 'users'));
+            }
+        return view('addequip', $data, compact('proyt', 'users', 'areas'));
     }
+    
     public function addequipo(Request $request, $id ){
-            $request -> validate([
-                'idproy'=>'numeric',
-                'equipo'=>'numeric'
-            ]);
+        $request->validate([
+            'idproy' => 'numeric',
+            'equipo' => 'numeric'
+        ]);
+
         $equipo = new Equipo();
         $equipo->idproyecto = $request->idproy;
-        $equipo->idusuario = $request->equipo;
+        $equipo->idusuario = $request->usuarios;
+        
         $res = $equipo->save();
-        if($res){
-            return redirect('Equipo/'.$id);
-        }else{
-            return back()->with('fail','No se pudo resgistrar la tarea correctamente');
+
+        if($res) {
+            return redirect('Equipo/' . $id);
+        } else {
+            return back()->with('fail', 'No se pudo registrar la tarea correctamente');
         }
     }
+
     public function destroyequipo($id,$ida){
         $equipo= Equipo::find($ida);
         $equipo->delete();
@@ -2355,14 +5018,28 @@ class dbcontroller extends Controller
             $obs= Observacion::Where('idproyecto',$id)->get();
 
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
+            $user = User::where('id',$proyt->idusuarior)->first();
+            $LoggedUserInfo = User::where('id','=',session('LoginId'))->first();
+
+                if ($LoggedUserInfo->id == $user->id) {
+                    $responsable = 1;
+                } else {
+                    $responsable = 0;
+                }
+
+                if ($LoggedUserInfo['acceso'] == 2){
+                    $reanudar = 1;
+                }else{
+                    $reanudar = 0;
+                }
         }
-        return view('solicitudes',$data,compact('proyt','obs'));
+        return view('solicitudes',$data,compact('proyt','obs','responsable','reanudar'));
     }
 
     public function revisionobs($id, $ida){
         if(session()->has('LoginId')){
             $proyt = Proyecto::where('id',$id)->first();
-            $obs= Observacion::Where('id',$ida)->first();
+            $obs = Observacion::Where('id',$ida)->first();
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
         }
         return view('respuestasolicitud',$data,compact('proyt','obs'));
@@ -2374,6 +5051,22 @@ class dbcontroller extends Controller
     public function recursosproy($id){
         if(session()->has('LoginId')){
             $proyt = Proyecto::where('id',$id)->first();
+            
+            if($proyt->clavet == 'I'){
+                $vimpacto = Impacto::where('idproyecto',$id)->count();
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+            }else{
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+            }
+            
             $rescm= RecursosGeneral::join('recursos','recursos.id','=','recursos_general.idrecurso')
                 ->join('proyectos','proyectos.id','=','recursos_general.idproyecto')
                 ->Where('idproyecto',$id)
@@ -2440,7 +5133,12 @@ class dbcontroller extends Controller
             }
             $proyt->save();
         }
-        return view('recursosg',$data,compact('proyt','rescf','rescm','resct','resch','resco','subtotalm','subtotalf','subtotalh','subtotalo','subtotalt','total'));
+        if($proyt->clavet == 'I'){
+            return view('recursosg',$data,compact('proyt','rescf','rescm','resct','resch','resco','subtotalm','subtotalf','subtotalh','subtotalo','subtotalt',
+            'vimpacto','vtarea','vrecurso','vcontri','vequipo','vriesgo','total'));
+        }
+        return view('recursosg',$data,compact('proyt','rescf','rescm','resct','resch','resco','subtotalm','subtotalf','subtotalh','subtotalo','subtotalt',
+        'vtarea','vrecurso','vcontri','vequipo','vriesgo','total'));
     }
 
     public function addrecursosproyf($id){
@@ -2486,6 +5184,7 @@ class dbcontroller extends Controller
             return back()->with('fail','No se pudo resgistrar el recurso correctamente');
         }
     }
+
     public function Recursos(){
         if(session()->has('LoginId')){
             $resc = Recursos::orderBy('partida', 'ASC')->get();
@@ -2493,26 +5192,31 @@ class dbcontroller extends Controller
         }
         return view('Recursos',$data,compact('resc'));
     }
+
     public function changestatusrecu (Request $request){
         $resc = Recursos::findOrFail($request->id);
         $resc->status =  $request->status;
         $resc->save();
         return response()->json(['success'=>'Status changed Succesfully']);
     }
+
     public function addrecus(){
         return view('addrecursos');
     }
+
     public function addrecu (Request $request){
         $request -> validate([
             'partida'=>'numeric',
             'clave'=>'required',
-            'concepto'=>'required'
+            'concepto'=>'required',
+            'costo' => 'numeric'
         ]);
         $resc = new Recursos();
         $resc->id;
         $resc->partida = $request->get('partida');
         $resc->concepto = $request->get('concepto');
         $resc->clave = $request->get('clave');
+        $resc->costo = $request->get('costo');
         $res = $resc->save();
         if($res){
             return redirect('Recursos');
@@ -2520,21 +5224,25 @@ class dbcontroller extends Controller
             return back()->with('fail','No se agrego el recurso correctamente');
         }
     }
+
     public function uprecu ( $id ){
         $resc = Recursos::where('id',$id)->first();
         return view('uprecursos',compact('resc'));
     }
+
     public function uprecus (Request $request, $id ){
         $resc = Recursos::find($id);
         $request -> validate([
             'partida'=>'numeric',
             'clave'=>'required',
-            'concepto'=>'required'
+            'concepto'=>'required',
+            'costo' => 'numeric'
         ]);
         $resc->id;
         $resc->partida = $request->get('partida');
         $resc->concepto = $request->get('concepto');
         $resc->clave = $request->get('clave');
+        $resc->costo = $request->get('costo');
         $res = $resc->save();
         if($res){
             return redirect('Recursos');
@@ -2542,11 +5250,20 @@ class dbcontroller extends Controller
             return back()->with('fail','No se actualizar el recurso correctamente');
         }
     }
+
     public function destroyrecurso(Request $request,$id,$ida){
         $recs= RecursosGeneral::find($ida);
         $recs->delete();
         return redirect('recursosproy/'.$id);
     }
+
+    public function addnotapresupuesto (Request $request) {
+        $proyt = Proyecto::find($request->get('id'));
+        $proyt->notapresupuesto = $request->get('notapresupuesto');
+        $proyt->save();
+        return redirect('recursosproy/'.$request->get('id'));
+    }
+    
 /*Recursos Fin */
 
 /*Contribuciones Inicio*/
@@ -2554,13 +5271,32 @@ class dbcontroller extends Controller
         if(session()->has('LoginId')){
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
             $proyt = Proyecto::where('id',$id)->first();
+            
+            if($proyt->clavet == 'I'){
+                $vimpacto = Impacto::where('idproyecto',$id)->count();
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+            }else{
+                $vtarea = Tarea::Where('idproyecto',$id)->count();
+                $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
+                $vriesgo = Analisis::Where('idproyecto',$id)->count();
+                $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
+                $vequipo = Equipo::Where('idproyecto',$id)->count();
+            }
             $contri= ContribucionesProyecto::join('contribucion_a','contribucion_a.id','=','contribuciones.idcontri')
                 ->join('proyectos','proyectos.id','=','contribuciones.idproyecto')
                 ->orderBy('contribucion_a.nombre_contri', 'ASC')
                 ->Where('idproyecto',$id)
                 ->get(['contribuciones.id','contribucion_a.nombre_contri']);
         }
-        return view('contribuciones', $data,compact('contri', 'proyt'));
+        if($proyt->clavet == 'I'){
+            return view('contribuciones', $data,compact('contri','proyt','vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo'));
+        }else{
+            return view('contribuciones', $data,compact('contri','proyt','vtarea','vrecurso','vriesgo','vcontri','vequipo'));
+        }
     }
 
     public function addcontribuciones($id){
@@ -2961,15 +5697,18 @@ class dbcontroller extends Controller
         }
         return view('modcliente',$data,compact('clien'));
     }
+
     public function changestatucl (Request $request){
         $clien = Cliente::findOrFail($request->id);
         $clien->status =  $request->status;
         $clien->save();
         return response()->json(['success'=>'Status changed Succesfully']);
     }
+
     public function newcli(){
         return view('addcli');
     }
+
     public function addcli( Request $request){
         $request -> validate([
             'nivel1'=>'required',
@@ -2988,6 +5727,7 @@ class dbcontroller extends Controller
             return back()->with('fail','No se pudo resgistrar al nuevo Cliente');
         }
     }
+
     public function upcli( $id ){
         $cli = Cliente::where('id',$id)->first();
         return view('upclie',compact('cli'));
@@ -3024,6 +5764,7 @@ class dbcontroller extends Controller
         }
         return view('Financiero', $data,compact('proy'));
     }
+
     public function indexpartida (){
         if(session()->has('LoginId')){
             $access = User::where('id','=',session('LoginId'))->where('acceso','=',1)->first();
@@ -3043,12 +5784,14 @@ class dbcontroller extends Controller
             }
         }
     }
+
     public function changestatupart (Request $request){
         $part = Financiero::findOrFail($request->id);
         $part->status =  $request->status;
         $part->save();
         return response()->json(['success'=>'Status changed Succesfully']);
     }
+
     public function addpartidas (Request $request){
         $partida = new Financiero();
         $partida->id;
@@ -3058,10 +5801,12 @@ class dbcontroller extends Controller
         $partida->save();
         return redirect('partidas');
     }
+
     public function uppartida ( $id ){
         $partida = Financiero::where('id',$id)->first();
         return view('uppartida',compact('partida'));
     }
+
     public function uppartidas (Request $request, $id ){
         $partidas = Financiero::find($id);
         $partidas->partida = $request->get('partida');
@@ -3069,6 +5814,7 @@ class dbcontroller extends Controller
         $partidas->save();
         return redirect('partidas');
     }
+
     public function newAf(){
         $partidas = Financiero::where('status',1)->get();
         return view('newAfectacion', compact('partidas'));
@@ -3134,6 +5880,7 @@ class dbcontroller extends Controller
             return back()->with('fail','No se pudo resgistrar correctamente');
         }
     }
+
     //Información
     public function infoafectacion ( $id ,$ida){
         $allPartidas = Financiero::all();
@@ -3144,6 +5891,7 @@ class dbcontroller extends Controller
 
         return view('infoafectacion',compact('allPartidas','partida','proy_a','afectaciones'));
     }
+
     public function upafectaciones($id,$ida){
         $allPartidas = Financiero::all();
         $proy_a= Proyecto::where('id',$id)->first();
@@ -3291,6 +6039,7 @@ class dbcontroller extends Controller
             'proyectos.duracionm',
             'proyectos.costo',
             'proyectos.estado',
+            'proyectos.publicacion',
             'modo_transporte.nombre_transporte',
             'area_adscripcion.nombre_area',
             'linea_investigación.nombre_linea',
@@ -3326,6 +6075,7 @@ class dbcontroller extends Controller
                 'proyectos.duracionm',
                 'proyectos.costo',
                 'proyectos.estado',
+                'proyectos.publicacion',
                 'modo_transporte.nombre_transporte',
                 'area_adscripcion.nombre_area',
                 'linea_investigación.nombre_linea',
@@ -3334,9 +6084,6 @@ class dbcontroller extends Controller
                 'cliente.nivel2',
                 'cliente.nivel3'
             ]);
-        
-
-        
 
         return view('F6GS001',compact('proy','areas', 'proy2'));
     }
@@ -3387,6 +6134,7 @@ class dbcontroller extends Controller
 
         return view('excelproyectosfechas',compact('proy','contri'));
     }
+
     public function exceltodos (){
         if(session()->has('LoginId')){
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
@@ -3598,6 +6346,90 @@ class dbcontroller extends Controller
         $proy->progreso = $actualfinal;
         $proy->save();
     return view('excelinfoactividades',$data,compact('proyt','tarea','areas'));
+    }
+
+    // EXCEL DEL REPORTE DE RIESGOS
+    public function excelriesgos(Request $request){
+        $areaId = $request->get('area');
+        $area = Area::find($areaId);
+        $proysarea = Proyecto::select(['proyectos.id', 'proyectos.clavea', 'proyectos.clavet', 
+        'proyectos.claven', 'proyectos.clavey'])->where([['proyectos.oculto', '=', '1'], 
+        ['proyectos.idarea', '=', $areaId]])->orderBy('proyectos.id', 'ASC')->get();
+
+        $proysMulti = Proyecto::select(['proyectos.id', 'proyectos.clavea', 'proyectos.clavet', 
+        'proyectos.claven', 'proyectos.clavey'])->join('usuarios', 'usuarios.id', '=', 
+        'proyectos.idusuarior')->where('usuarios.idarea', '=', $areaId)
+        ->where('proyectos.clavea', '=', 'M')->where('proyectos.oculto', '=', '1')  
+        ->orderBy('proyectos.id', 'ASC')->get();
+
+        $todosProys = $proysarea->merge($proysMulti);
+
+        $idsProysArea = $todosProys->pluck('id');
+
+        //$cantProys = count($proysarea);
+
+// AQUELLOS RIESGOS QUE TENGAN PRIORIDAD ALTA
+        //$analisisRiesgos = Analisis::where('calificacion', 'Prioridad alta')->get();
+
+//RIESGOS FINALES
+        $riesgosFiltrados = Analisis::whereIn('idproyecto', $idsProysArea->all())->where('calificacion', 'Prioridad Alta')->get(); 
+        //dd($riesgosFiltrados);
+
+        $idsProysRiesgos = $riesgosFiltrados->pluck('idproyecto');
+
+// PROYECTOS FINALES
+        $proysFiltrados = Proyecto::whereIn('id', $idsProysRiesgos->all())->get();
+        //dd($proysFiltrados);
+
+        //$analisisRiesgos = $proysFiltrados->where('calificacion', 'Prioridad alta')->get();
+        //dd($analisisRiesgos);
+
+        $cantProys = count($proysFiltrados);
+
+// GUARDARLOS EN UN ARREGLO - SON LOS PROYECTOS CON RIESGOS DE ALTA PRIORIDAD
+        $proyectosRiesgosAltoP = []; 
+
+// PARA PODER IR GUARDANDO AQUELLOS RIESGOS QUE SEAN DE UN MISMO PROYECTO, SI NO TIENEN UN RIESGO SE HACE EL ARREGLO DE ESE PROYECTO
+        /*
+        // CHECAR PQ NO ESTA FUNCIONANDO ESTO
+        foreach ($analisisRiesgos as $analisis) {
+            if ($proyectosRiesgosAltoP[$analisis->idproyecto] == NULL) {
+                $proyectosRiesgosAltoP[$analisis->idproyecto] = [];
+            }
+            $proyectosRiesgosAltoP[$analisis->idproyecto][] = $analisis->riesgo;
+        }*/ 
+
+        foreach ($riesgosFiltrados as $analisis) {
+            if (!isset($proyectosRiesgosAltoP[$analisis->idproyecto])) {
+                $proyectosRiesgosAltoP[$analisis->idproyecto] = [];
+            }
+            $proyectosRiesgosAltoP[$analisis->idproyecto][] = $analisis->riesgo;
+        }
+
+
+        $riesgosIds = [];
+// PARA IR GUARDANDO LOS RIESGOS DE LOS PROYECTOS Y QUE ESTOS NO SE REPITAN EN EL ECXCEL
+        foreach ($proyectosRiesgosAltoP as $riesgos) {
+            foreach ($riesgos as $riesgo) {
+                $duplicado = false;
+                foreach ($riesgosIds as $id) {
+                    if ($riesgo == $id) {
+                        $duplicado = true; 
+                        break;
+                    }
+                }
+                if (!$duplicado) {
+                    $riesgosIds[] = $riesgo;
+                }
+            }
+        }
+
+        //dd($riesgosIds);
+// PARA IR GUARDANDO LOS RIESGOS DE ALTA PRIO Y PODER USARLOS CON SU ID 
+        $riesgos = Riesgos::whereIn('id', $riesgosIds)->get()->keyBy('id');
+        //dd($riesgos);
+
+        return view('excelproyriesgos', compact('area', 'proysarea', 'proyectosRiesgosAltoP', 'riesgos', 'cantProys', 'riesgosFiltrados', 'proysFiltrados'));
     }
 /*Exceles Alternativo Fin*/
 

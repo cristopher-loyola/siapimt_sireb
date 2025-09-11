@@ -44,6 +44,7 @@ class EjecutivoController extends Controller
                 'usuarios.Apellido_Paterno',
                 'usuarios.Apellido_Materno',
                 'area_adscripcion.nombre_area',
+                'proyectos.completado'
             )
             ->join('usuarios','proyectos.idusuarior','=','usuarios.id')
             ->join('area_adscripcion','usuarios.idarea','=','area_adscripcion.id')
@@ -94,8 +95,9 @@ class EjecutivoController extends Controller
                 'usuarios.Apellido_Paterno',
                 'usuarios.Apellido_Materno',
                 'area_adscripcion.nombre_area',
+                'proyectos.completado'
             )
-                ->join('usuarios','proyectos.idusuarior','=','usuarios.id')        
+                ->join('usuarios','proyectos.idusuarior','=','usuarios.id')
                 ->join('area_adscripcion','usuarios.idarea','=','area_adscripcion.id')
                 ->where([
                     ['proyectos.oculto','=','1'],
@@ -143,9 +145,10 @@ class EjecutivoController extends Controller
                     'usuarios.Apellido_Paterno',
                     'usuarios.Apellido_Materno',
                     'area_adscripcion.nombre_area',
+                    'proyectos.completado'
                 )
                     ->join('equipo', 'equipo.idproyecto', '=', 'proyectos.id')
-                    ->join('usuarios','proyectos.idusuarior','=','usuarios.id')        
+                    ->join('usuarios','proyectos.idusuarior','=','usuarios.id')
                     ->join('area_adscripcion','usuarios.idarea','=','area_adscripcion.id')
                     ->where([
                         ['proyectos.oculto','=','1'],
@@ -193,6 +196,7 @@ class EjecutivoController extends Controller
                 'usuarios.Apellido_Paterno',
                 'usuarios.Apellido_Materno',
                 'area_adscripcion.nombre_area',
+                'proyectos.completado'
             )
                 ->join('usuarios','proyectos.idusuarior','=','usuarios.id')
                 ->join('equipo', 'equipo.idproyecto', '=', 'proyectos.id')

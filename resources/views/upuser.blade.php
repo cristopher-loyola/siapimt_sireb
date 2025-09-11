@@ -1,7 +1,7 @@
 @extends('plantillas/plantillaForm2')
 @section('contenido') 
 <title>Actualizar Usuario</title>
-
+ 
         <h3 class="fw-bold text-center py-5">Actualizar Usuario</h3>
         {{--Inicio del Login o Acceso --}}
             <form action="{{ route('upuser', $user->id)}}" method="POST">
@@ -63,7 +63,35 @@
                     @endforeach
                 </select>
                 <span class="text-danger">@error('tacces') {{$message}} @enderror</span>
-            </div> 
+            </div>
+            <div class="mb-4">
+                <label class="form-label"> ¿Es el director general? </label>
+                <select name="esdg" id="esdg" class="form-control">
+                    @if ($user->director == 1)
+                        <option value="1">Si</option>
+                    @else
+                        <option value="0">No</option>
+                    @endif
+                    <option value=""> Selecciona una respuesta </option>
+                    <option value="1">Si</option>
+                    <option value="0">No</option>
+                </select>
+                <span class="text-danger">@error('esdg') {{$message}} @enderror</span>
+            </div>
+            <div class="mb-4">
+                <label class="form-label"> ¿Es el Presidente COSPIII? </label>
+                <select name="espd" id="espd" class="form-control">
+                    @if ($user->pcospii == 1)
+                        <option value="1">Si</option>
+                    @else
+                        <option value="0">No</option>
+                    @endif
+                    <option value=""> Selecciona una respuesta </option>
+                    <option value="1">Si</option>
+                    <option value="0">No</option>
+                </select>
+                <span class="text-danger">@error('espd') {{$message}} @enderror</span>
+            </div>
             <div>
                 <a href="{{route('userAdmin')}}" class=" btn btn-danger" tabindex="4" id="redond"> 
                     <i class='bx bxs-tag-x'></i>
@@ -75,6 +103,6 @@
                 </button>
             </div>
             </form>
-        {{--Inicio del Login o Acceso --}}  
+        {{--Inicio del Login o Acceso --}}
 
 @endsection

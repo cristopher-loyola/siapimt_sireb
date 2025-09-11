@@ -34,6 +34,8 @@ use App\Mail\notificationCursos;
 use App\Mail\notificationElimCursos;
 use App\Mail\notificationOtraActividad;
 use App\Mail\notificationElimOtraActividad;
+
+use App\Mail\notificaractivarimpacto;
 //modelos de MySQL//
 use App\Models\User;
 use App\Models\Cliente;
@@ -64,14 +66,15 @@ use App\Models\fechabimestre;
 use App\Models\comitesAdmin;
 use App\Models\Proyecto;
 use App\Models\Equipo;
+use App\Models\Impacto;
+use App\Models\Area;
 use App\Models\ServiciostecnologicosAdmin;
 use App\Models\miconfig;
 
+use DateTime;
+
 class reporteBimestral extends Controller
 {
-
-
-
     // Función para obtener el mes de inicio de un bimestre
     private function getStartMonthOfBimester($bimestre) {
         $mesesPorBimestre = [
@@ -85,6 +88,7 @@ class reporteBimestral extends Controller
 
         return $mesesPorBimestre[$bimestre] ?? 1; // Si el bimestre no se encuentra, se utiliza enero (1) por defecto
     }
+
     private function getEndMonthOfBimester($bimestre) {
         $mesesPorBimestre = [
             'Enero-Febrero' => 2,   // El mes de finalización de Enero-Febrero es febrero (2)
@@ -97,7 +101,6 @@ class reporteBimestral extends Controller
 
         return $mesesPorBimestre[$bimestre] ?? 2; // Si el bimestre no se encuentra, se utiliza Febrero (2) por defecto
     }
-
 
     private function calcularBimestres($fechaInicio, $fechaFin) {
         // Convierte las fechas en objetos DateTime
@@ -142,10 +145,8 @@ class reporteBimestral extends Controller
         return $bimestres[$mes];
     }
 
-
     public function difusionD(request $request)
     {
-
         if(session()->has('LoginId')){
             $users= User::join('t_accessos','t_accessos.id','=','usuarios.acceso')
                 ->orderBy('usuarios.Apellido_Paterno', 'ASC')
@@ -236,11 +237,154 @@ class reporteBimestral extends Controller
                 }
             $ppp->save();
         }
+
+        $fechaactual = new DateTime(date('Y-m-d'));
+        $proytimp = Proyecto::join('siapimt25.imt_pub_publicacion','siapimt25.imt_pub_publicacion.ID_PUB_Publicacion','=','proyectos.idpublicacion')
+        ->Where('clavet', 'I')
+        ->Where('estado', 2)
+        ->Where('oculto', 1)
+        ->Where('publicacion', 1)
+        ->Where('actimpacto', 0)
+        ->Where('idpublicacion', '!=' ,'null')
+        ->get([
+            'proyectos.id',
+            'proyectos.nomproy',
+            'proyectos.clavea',
+            'proyectos.clavet',
+            'proyectos.claven',
+            'proyectos.clavey',
+            'proyectos.idpublicacion',
+            'proyectos.fecha_inicio',
+            'proyectos.fecha_fin',
+            'proyectos.estado',
+            'proyectos.actimpacto',
+            'proyectos.idusuarior',
+            'proyectos.aprobo',
+            'proyectos.idarea',
+            'siapimt25.imt_pub_publicacion.ID_PUB_Publicacion',
+            'siapimt25.imt_pub_publicacion.Anio',
+            'siapimt25.imt_pub_publicacion.NoPublicacion'
+        ]);
+        
+        foreach ($proytimp as $pr) {
+            if (!empty($pr->Anio) && strtotime($pr->Anio)) {
+                $fechaFin = new DateTime($pr->Anio);
+                $intervalo = $fechaFin->diff($fechaactual);
+                $meses = $intervalo->y * 12 + $intervalo->m;// Total de meses
+                $dias = $intervalo->d;// Días restantes en este mes
+                $meses += $dias / 30.44; // Usar promedio de días por mes para mayor precisión
+                $pr->meses_diferencia = round($meses, 1);// Redondear a 2 decimales
+
+                if (round($meses, 1) >= 2) {
+                    $upproy = Proyecto::find($pr->id);
+                    $upproy->actimpacto = 1;
+
+                    $responsable = User::where('id', $pr->idusuarior)->first();
+                    $autoriza = User::where('id', $pr->aprobo)->first();
+                    $area = Area::where('id', $pr->idarea )->first();
+
+                    if ($pr->claven < 10) {
+                        $nombreproyecto = $pr->clavea.''.$pr->clavet.'-0'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+                    } else 	{
+                        $nombreproyecto = $pr->clavea.''.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey.' | '.$pr->nomproy;
+                    }
+
+                    $upproy->save();
+                    $details = [
+                        'mando' => $autoriza->Nombre.' '.$autoriza->Apellido_Paterno.' '.$autoriza->Apellido_Materno,
+                        'responsable' => $responsable->Nombre.' '.$responsable->Apellido_Paterno.' '.$responsable->Apellido_Materno,
+                        'area' => $area->nombre_area,
+                        'clave' => $nombreproyecto
+                    ];
+
+                    $destinatarios = [
+                        $autoriza->correo,
+                        $responsable->correo
+                    ];
+
+                    Mail::to($destinatarios)->send(new notificaractivarimpacto($details));
+                }
+            } else {
+                $pr->cumple = 0;
+            }
+        }
+
+        $proyt = Proyecto::Where('clavet', 'I')
+            ->Where('estado', 2)
+            ->Where('oculto', 1)
+            ->Where('publicacion', 2)
+            ->Where('actimpacto', 0)
+            ->get([
+                'proyectos.id',
+                'proyectos.nomproy',
+                'proyectos.clavea',
+                'proyectos.clavet',
+                'proyectos.claven',
+                'proyectos.clavey',
+                'proyectos.idpublicacion',
+                'proyectos.fecha_inicio',
+                'proyectos.fechapublicacion',
+                'proyectos.fecha_fin',
+                'proyectos.estado',
+                'proyectos.actimpacto',
+                'proyectos.idusuarior',
+                'proyectos.aprobo',
+                'proyectos.idarea'
+        ]);
+        
+        foreach ($proyt as $pr) {
+            // Seleccionar fechapublicacion si existe, sino usar fecha_fin
+            $fechaReferenciaStr = !empty($pr->fechapublicacion) && strtotime($pr->fechapublicacion)
+                ? $pr->fechapublicacion
+                : (!empty($pr->fecha_fin) && strtotime($pr->fecha_fin)
+                    ? $pr->fecha_fin
+                    : null);
+
+            if ($fechaReferenciaStr) {
+                $fechaReferencia = new DateTime($fechaReferenciaStr);
+                $intervalo = $fechaReferencia->diff($fechaactual);
+                $meses = $intervalo->y * 12 + $intervalo->m; // Total de meses
+                $dias = $intervalo->d; // Días restantes en este mes
+                $meses += $dias / 30.44; // Promedio de días por mes para más precisión
+                $pr->meses_diferencia = round($meses, 1); // Redondear a un decimal
+
+                if (round($meses, 1) >= 2) {
+                    $upproy = Proyecto::find($pr->id);
+                    $upproy->actimpacto = 1;
+
+                    $responsable = User::find($pr->idusuarior);
+                    $autoriza = User::find($pr->aprobo);
+                    $area = Area::find($pr->idarea);
+
+                    if ($pr->claven < 10) {
+                        $nombreproyecto = $pr->clavea . $pr->clavet . '-0' . $pr->claven . '/' . $pr->clavey . ' | ' . $pr->nomproy;
+                    } else {
+                        $nombreproyecto = $pr->clavea . $pr->clavet . '-' . $pr->claven . '/' . $pr->clavey . ' | ' . $pr->nomproy;
+                    }
+
+                    $upproy->save();
+
+                    $details = [
+                        'mando' => $autoriza->Nombre . ' ' . $autoriza->Apellido_Paterno . ' ' . $autoriza->Apellido_Materno,
+                        'responsable' => $responsable->Nombre . ' ' . $responsable->Apellido_Paterno . ' ' . $responsable->Apellido_Materno,
+                        'area' => $area->nombre_area,
+                        'clave' => $nombreproyecto
+                    ];
+
+                    $destinatarios = [
+                        $autoriza->correo,
+                        $responsable->correo
+                    ];
+
+                    Mail::to($destinatarios)->send(new notificaractivarimpacto($details));
+                }
+            } else {
+                $pr->cumple = 0;
+            }
+        }
+
         return view('SIRB/alertaBD');
     }
-
-
-
 
 
 //////////////////////////////////////Funciones para el modulo de comitesAdmin///////////////////////////////
@@ -429,6 +573,7 @@ class reporteBimestral extends Controller
     //funcion para Sercicios Tecnologicos
     public function serciciosTecnologicos(request $request)
     {
+        $dbController = new dbcontroller();
 
         // Obtener el id del usuario autenticado
         $userID = $request->session()->get('LoginId');
@@ -466,13 +611,20 @@ class reporteBimestral extends Controller
 
         // Obtener los registros de servicios tecnológicos
         $serviciotecnologico = serviciotecnologico::where('nombre_persona', $user->usuario)
-            ->get();
-
+        ->whereYear('fechafin', $añoActual)
+        ->where(function ($query) use ($bimestreActual) {
+            $query->whereMonth('fechainicio', $this->getStartMonthOfBimester($bimestreActual))
+                ->orWhereMonth('fechafin', $this->getEndMonthOfBimester($bimestreActual));
+        })->get();
 
         // Obtener los registros relacionados de servicios tecnológicos
         $serviciotecnologicoRelacionadas = serviciotecnologico::whereHas('usuariosQuePuedenVisualizar', function ($query) use ($userID) {
             $query->where('usuario_id', $userID);
-        })->whereYear('fechainicio', $añoActual)->get();
+        })->whereYear('fechafin', $añoActual)
+        ->where(function ($query) use ($bimestreActual) {
+            $query->whereMonth('fechainicio', $this->getStartMonthOfBimester($bimestreActual))
+                ->orWhereMonth('fechafin', $this->getEndMonthOfBimester($bimestreActual));
+        })->get();
 
 
         $periodoConsultado = $bimestreActual . " del " . $añoActual;
@@ -482,7 +634,7 @@ class reporteBimestral extends Controller
         $fechabimestreP = DB::table('usuarios')->where('id', $userID)->first();
 
 
-
+        $categoriesN1 = $dbController->getCategoriesList();
         // Crear un arreglo de datos
         $data = [
             'LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first(),
@@ -499,7 +651,9 @@ class reporteBimestral extends Controller
             'periodoConsultado' => $periodoConsultado,
             'serviciotecnologicoDescripcion' => $serviciotecnologicoDescripcion,
             'fechabimestreP' => $fechabimestreP,
-            'ServiciostecnologicosAdmin' => $ServiciostecnologicosAdmin
+            'ServiciostecnologicosAdmin' => $ServiciostecnologicosAdmin,
+            'categoriesN1' => $categoriesN1
+
         ];
 
     return view('SIRB/serviciostecnologico2', $data);
@@ -511,7 +665,20 @@ class reporteBimestral extends Controller
     //funcion para nuevo servicio tecnologico
     public function nuevoserviciot(request $request)
     {
-        //dd($request->all());
+        /*
+            Debido a implementaciones del nuevo componente y no realizar alteraciones
+            en la base de datos, se obtiene el nombre para mantener la forma de registro
+            del cliente y evitar inconsistencia de datos
+        */
+        $nombreCliente = Cliente::select(
+            DB::raw("
+            CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
+            ")
+        )
+        ->where([
+            ['cliente.id','=',$request->input('nombrecliente')]
+        ])
+        ->first()->clienteNombre;
 
         $data = ['LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first()];
 
@@ -529,7 +696,7 @@ class reporteBimestral extends Controller
         $serviciot->encargado = $request->encargadoservicio;
         $serviciot->nombreservicio = $request->nombreservicio;
         $serviciot->numeroregistro = $request->numeroregistro;
-        $serviciot->nombrecliente = $request->nombrecliente;
+        $serviciot->nombrecliente = $nombreCliente;
         $serviciot->servicio = $request->servicio;
         $serviciot->costo = $request->costo;
         $serviciot->fechainicio = $request->fechainicio;
@@ -581,7 +748,6 @@ class reporteBimestral extends Controller
         $serviciot->nombreservicio = $request->nombreservicio;
         $serviciot->encargado = $request->encargadoservicio;
         $serviciot->numeroregistro = $request->numeroregistro;
-        $serviciot->nombrecliente = $request->nombrecliente;
         $serviciot->servicio = $request->servicio;
         $serviciot->costo = $request->costo;
         $serviciot->fechainicio = $request->fechainicio;
@@ -591,6 +757,20 @@ class reporteBimestral extends Controller
         $serviciot->nombre_persona = $request->nombre_persona;
         $serviciot->descripcion = $request->descripcion;
         $serviciot->participantes = $request->usuarios_seleccionados;
+
+        //solo se actualiza el cliente en caso de que se haya seleccionado uno nuevo
+        if(isset($request->nombrecliente)){
+            $serviciot->nombrecliente = Cliente::select(
+                DB::raw("
+                CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
+                ")
+            )
+            ->where([
+                ['cliente.id','=',$request->input('nombrecliente')]
+            ])
+            ->first()->clienteNombre;
+        }
+
         $serviciot->save();
 
 
@@ -803,6 +983,8 @@ class reporteBimestral extends Controller
 public function reuniones(request $request)
 {
 
+    $dbController = new dbcontroller();
+
     // Obtener el id del usuario autenticado
     $userID = $request->session()->get('LoginId');
     // variable para buscar en la tabla usuarios y relacionarla
@@ -863,7 +1045,9 @@ public function reuniones(request $request)
         'fechabimestre2' => $fechabimestre2,
         'periodoConsultado' => $periodoConsultado,
         'fechabimestreP' => $fechabimestreP,
-        'userID' => $userID
+        'userID' => $userID,
+        'categoriesN1' => $dbController->getCategoriesList()
+
     ];
 
 
@@ -874,7 +1058,20 @@ return view('SIRB/reunion', $data);
 //funcion para nueva reunion
 public function nuevareunion(request $request)
 {
-    //dd($request->all());
+    /*
+        Debido a implementaciones del nuevo componente y no realizar alteraciones
+        en la base de datos, se obtiene el nombre para mantener la forma de registro
+        del cliente y evitar inconsistencia de datos
+    */
+    $nombreCliente = Cliente::select(
+        DB::raw("
+        CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
+        ")
+    )
+    ->where([
+        ['cliente.id','=',$request->input('D_perteneciente')]
+    ])
+    ->first()->clienteNombre;
 
     $data = ['LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first()];
 
@@ -894,7 +1091,7 @@ public function nuevareunion(request $request)
         $reunion->tipo_reunion = $request->tipo_reunion;
     }
     $reunion->nombre_persona = $request->nombre_persona;
-    $reunion->D_vinculacion = $request->D_perteneciente;
+    $reunion->D_vinculacion = $nombreCliente;
     $reunion->descripcion_R = $request->descripcion;
     $reunion->lugar_reunion = $request->lugar_reunion;
     $reunion->encargado = $request->encargadoservicio;
@@ -948,10 +1145,23 @@ public function reunionesEditar(request $request, $id)
     }
     $reunion->nombre_persona = $request->nombre_persona;
     $reunion->encargado = $request->encargadoservicio;
-    $reunion->D_vinculacion = $request->D_perteneciente;
     $reunion->descripcion_R = $request->descripcion;
     $reunion->lugar_reunion = $request->lugar_reunion;
     $reunion->participantes = $request->usuarios_seleccionados;
+
+    //solo se actualiza el cliente en caso de que se haya seleccionado uno nuevo
+    if(isset($request->D_perteneciente)){
+        $reunion->D_vinculacion = Cliente::select(
+            DB::raw("
+            CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
+            ")
+        )
+        ->where([
+            ['cliente.id','=',$request->input('D_perteneciente')]
+        ])
+        ->first()->clienteNombre;
+    }
+
     $reunion->save();
 
     // Obtener la lista de participantes actuales asociados al registro
@@ -1074,7 +1284,7 @@ public function reunionesEliminar($id)
                 'evento' => 'Reunión'
             ];
 
-            Mail::to($correoParticipante)->send(new notificationElim($detailsEliminar));
+            Mail::to($correoParticipante)->send(new notificationElimReunion($detailsEliminar));
         }
     }
 
@@ -1169,6 +1379,8 @@ public function comites(request $request)
 
     //Periodo consultado
     $periodoConsultado = $bimestreActual . " del " . $añoActual;
+    $dbController = new dbcontroller();
+
 
     // Crear un arreglo de datos
     $data = [
@@ -1184,7 +1396,9 @@ public function comites(request $request)
         'fechabimestre2' => $fechabimestre2,
         'periodoConsultado' => $periodoConsultado,
         'fechabimestreP' => $fechabimestreP,
-        'userID' => $userID
+        'userID' => $userID,
+        'categoriesN1' => $dbController->getCategoriesList()
+
         ];
 
 
@@ -1209,7 +1423,7 @@ public function nuevocomite(request $request)
     $comite->nombre_comite = $request->nombre_comite;
     $comite->nombre_persona = $request->nombre_persona;
     $comite->encargado = $request->encargadoservicio;
-    $comite->dependencia_V = $request->dependencia_V;
+    $comite->dependencia_V = $request->client_full_name;
     $comite->cargo_comite = $request->cargo_comite;
     $comite->A_desarrolladas = $request->A_desarrolladas;
     $comite->area = $request->areaActividad;
@@ -1257,10 +1471,21 @@ public function comitesEditar(request $request, $id)
     $comite->nombre_comite = $request->nombre_comite;
     $comite->nombre_persona = $request->nombre_persona;
     $comite->encargado = $request->encargadoservicio;
-    $comite->dependencia_V = $request->dependencia_V;
     $comite->cargo_comite = $request->cargo_comite;
     $comite->A_desarrolladas = $request->A_desarrolladas;
     $comite->participantes = $request->usuarios_seleccionados;
+        //solo se actualiza el cliente en caso de que se haya seleccionado uno nuevo
+    if(isset($request->dependencia_V)){
+        $comite->dependencia_V = Cliente::select(
+            DB::raw("
+            CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
+            ")
+        )
+        ->where([
+            ['cliente.id','=',$request->input('dependencia_V')]
+        ])
+        ->first()->clienteNombre;
+    }
     $comite->save();
 
         // Obtener la lista de participantes actuales asociados al registro
@@ -1480,6 +1705,9 @@ public function comitesEliminarRelacion(Request $request, $id)
     //Periodo consultado
     $periodoConsultado = $bimestreActual . " del " . $añoActual;
 
+    $dbController = new dbcontroller();
+
+
         // Crear un arreglo de datos
         $data = [
             'LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first(),
@@ -1493,7 +1721,8 @@ public function comitesEliminarRelacion(Request $request, $id)
             'fechabimestre2' => $fechabimestre2,
             'periodoConsultado' => $periodoConsultado,
             'fechabimestreP' => $fechabimestreP,
-            'userID' => $userID
+            'userID' => $userID,
+            'categoriesN1' => $dbController->getCategoriesList()
         ];
 
 
@@ -1528,7 +1757,8 @@ public function nuevasolicitud(request $request)
     $solicitud->nombre_persona = $request->nombre_persona;
     $solicitud->encargado = $request->encargadoservicio;
     $solicitud->cargo_actual = $request->cargo_actual;
-    $solicitud->D_perteneciente = $request->D_perteneciente;
+    //se inserta el nombre del cliente, directo del componente
+    $solicitud->D_perteneciente = $request->client_full_name;
     $solicitud->descripcion = $request->descripcion;
     $solicitud->tiempo_dedicado = $request->tiempo_dedicado;
     $solicitud->producto_final = $request->producto_final;
@@ -1578,11 +1808,22 @@ public function solicitudesEditar(request $request, $id)
     $solicitud->nombre_persona = $request->nombre_persona;
     $solicitud->encargado = $request->encargadoservicio;
     $solicitud->cargo_actual = $request->cargo_actual;
-    $solicitud->D_perteneciente = $request->D_perteneciente;
     $solicitud->descripcion = $request->descripcion;
     $solicitud->tiempo_dedicado = $request->tiempo_dedicado;
     $solicitud->producto_final = $request->producto_final;
     $solicitud->participantes = $request->usuarios_seleccionados;
+    //solo se actualiza el cliente en caso de que se haya seleccionado uno nuevo
+    if(isset($request->D_perteneciente)){
+        $solicitud->D_perteneciente = Cliente::select(
+            DB::raw("
+            CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
+            ")
+        )
+        ->where([
+            ['cliente.id','=',$request->input('D_perteneciente')]
+        ])
+        ->first()->clienteNombre;
+    }
     $solicitud->save();
 
 
@@ -4220,8 +4461,6 @@ public function menureportes(Request $request){
     return view('SIRB/menureportes', $data);
 }
 
-
-
 public function reporte(Request $request){
 ////////////////////////////Consulta para los reportes/////////////////////////////////////
     // Obtener los datos del usuario
@@ -4282,6 +4521,7 @@ public function reporte(Request $request){
 
     $proyectos = DB::table('proyectos')
         ->where('idusuarior', $userID)
+        ->where('oculto', 1)
         ->get()
         ->map(function ($item) {
             // Añadir la propiedad "participacion"
@@ -4315,6 +4555,7 @@ public function reporte(Request $request){
 
     $proyectosPart = DB::table('proyectos')
         ->whereIn('id', $proyectosrelacionados)
+        ->where('oculto', 1)
         ->get()
         ->map(function ($item) {
             // Añadir la propiedad "participacion"
@@ -4594,6 +4835,7 @@ public function reporte(Request $request){
     ////Ponencias y conf
         $ponenciasconferencias = ponenciasconferencia::where('nombre_persona', $user->usuario)
             ->whereYear('fecha_fin', $añoActual)
+            ->where('fecha_fin', 'like', $añoActual.'%')
             ->where(function ($query) use ($bimestreActual) {
                 $query->whereMonth('fecha_fin', $this->getStartMonthOfBimester($bimestreActual))
                     ->orWhereMonth('fecha_fin', $this->getEndMonthOfBimester($bimestreActual));
@@ -4605,7 +4847,8 @@ public function reporte(Request $request){
 
             $ponenciasconferenciasRelacionadas = ponenciasconferencia::whereHas('usuariosQuePuedenVisualizar', function ($query) use ($userID) {
                 $query->where('usuario_id', $userID);
-            })->where(function ($query) use ($bimestreActual) {
+            })->whereYear('fecha_fin', $añoActual)
+            ->where(function ($query) use ($bimestreActual) {
                 $query->whereMonth('fecha_fin', $this->getStartMonthOfBimester($bimestreActual))
                     ->orWhereMonth('fecha_fin', $this->getEndMonthOfBimester($bimestreActual));
             })->get();
@@ -4988,7 +5231,6 @@ public function reporteACVN(request $request){
         //$pdf->setPaper('A4','landscape');
         //return $pdf-> download ('accionesVinculacion.pdf');
 }
-
 
 public function reporteACDF(request $request){
     $userID = $request->session()->get('LoginId');
@@ -5461,7 +5703,6 @@ public function reporteACDF(request $request){
         //return $pdf-> download ('accionesDifusion.pdf');
 }
 
-
 public function reporteACCM(request $request){
     $userID = $request->session()->get('LoginId');
     $user = User::find($userID);
@@ -5544,7 +5785,6 @@ public function reporteACCM(request $request){
         //$pdf->setPaper('A4','landscape');
         //return $pdf-> download ('accionesComites.pdf');
 }
-
 
 public function reporteConfigIndicadores(request $request){
 
@@ -5671,7 +5911,6 @@ public function insertarRegistrosIndicadores(request $request)
             ['PE5' => $valor5]
         );
     }
-
 
     // Itera sobre los años y realiza la inserción en la base de datos
     foreach ($rangoDeAños as $año) {
@@ -6002,7 +6241,6 @@ public function insertarRegistrosIndicadores(request $request)
     return redirect(route('menureportes'));
 }
 
-
 public function indicadoresrendimiento(request $request){
 
     // Obtener el id del usuario autenticado
@@ -6018,22 +6256,36 @@ public function indicadoresrendimiento(request $request){
     $sexenio = $request->input('sexenio');
     // Calcular el rango de años (desde el año seleccionado hasta 5 años después)
     $rangoDeAños = range($sexenio, $sexenio + 5);
+    //dd($rangoDeAños);
     // Obtener los datos de la base de datos para el rango de datos
     $datosParaRango = miconfig::whereBetween('anio', [$sexenio, $sexenio + 5])->get();
+    //dd($datosParaRango);
 
     // Inicializar el arreglo asociativo para almacenar el conteo por año
     $conteoProyectosIPorAño = [];
     // Iterar sobre el rango de años y obtener el conteo para cada año
-    foreach ($rangoDeAños as $año) {
+
+        foreach ($rangoDeAños as $año) {
         $conteoProyectosI = Proyecto::where('fecha_fin', '>=', $año . '-01-01')
             ->where('fecha_fin', '<=', $año . '-12-31')
             ->where('progreso', 100)
-            ->where('idarea', User::find($userID)->idarea)
-            ->where('Tipo', 'I')
+            ->where('idarea', $idarea)
+            ->where('clavet', 'I')
             ->count();
 
-        // Almacenar el conteo en el arreglo asociativo
-        $conteoProyectosIPorAño[$año] = $conteoProyectosI;
+        $conteoProyectosMI = Proyecto::join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+            ->where('fecha_fin', '>=', $año . '-01-01')
+            ->where('fecha_fin', '<=', $año . '-12-31')
+            ->where('proyectos.progreso', 100)
+            ->where('proyectos.clavea', 'M')
+            ->where('clavet', 'I')
+            ->where('usuarios.idarea', $idarea)
+            ->count();
+
+        $conteoProys = $conteoProyectosI+ $conteoProyectosMI;
+
+        $conteoProyectosIPorAño[$año] = $conteoProys;
+        //dd($conteoProyectosIPorAño);
     }
 
     // Inicializar el arreglo asociativo para almacenar el conteo por año
@@ -6045,9 +6297,20 @@ public function indicadoresrendimiento(request $request){
             ->where('idarea', User::find($userID)->idarea)
             ->where('Tipo', 'I')
             ->get();
+            //dd($conteoProyectosIFull);
+
+        $proyectosMIE = Proyecto::select('proyectos.*')
+            ->join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+            ->where('fecha_fin', '>=', $año . '-01-01')
+            ->where('fecha_fin', '<=', $año . '-12-31')
+            ->where('proyectos.clavea', 'M')
+            ->where('usuarios.idarea', $idarea)
+            ->get();
+
+        $proyectosCombinados = $conteoProyectosIFull->merge($proyectosMIE);
 
         // Almacenar el conteo en el arreglo asociativo
-        $conteoProyectosIPorAñoFull[$año] = $conteoProyectosIFull;
+        $conteoProyectosIPorAñoFull[$año] = $proyectosCombinados;
     }
 
 
@@ -6062,8 +6325,17 @@ public function indicadoresrendimiento(request $request){
             ->where('Tipo', 'E')
             ->count();
 
+        $conteoProyectosME = Proyecto::join('usuarios', 'usuarios.id', '=', 'proyectos.idusuarior')
+            ->where('fecha_fin', '>=', $año . '-01-01')
+            ->where('fecha_fin', '<=', $año . '-12-31')
+            ->where('proyectos.progreso', 100)
+            ->where('proyectos.clavea', 'M')
+            ->where('clavet', 'E')
+            ->where('usuarios.idarea', $idarea)
+            ->count();
+
         // Almacenar el conteo en el arreglo asociativo
-        $conteoProyectosEPorAño[$año] = $conteoProyectosE;
+        $conteoProyectosEPorAño[$año] = $conteoProyectosE + $conteoProyectosME;
     }
 
     // Inicializar el arreglo asociativo para almacenar el conteo por año
@@ -6075,11 +6347,9 @@ public function indicadoresrendimiento(request $request){
             ->where('idarea', User::find($userID)->idarea)
             ->where('Tipo', 'E')
             ->get();
-
-        // Almacenar el conteo en el arreglo asociativo
+                
         $conteoProyectosEPorAñoFull[$año] = $conteoProyectosEFull;
     }
-
 
     // Inicializar el arreglo asociativo para almacenar el conteo por año
     $conteoProyectosEPorAñoGET = [];
@@ -6444,7 +6714,6 @@ public function indicadoresrendimiento(request $request){
         return view('SIRB/reportes/indicadoresrendimiento', $data);
 }
 
-
 public function indicadorProyectosInternosTablas(request $request){
 
     // Obtener el id del usuario autenticado
@@ -6476,10 +6745,29 @@ public function indicadorProyectosInternosTablas(request $request){
     ->where('proyectos.Tipo', 'I')
     ->get();
 
+    $conteoProyectosMIGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('usuarios.idarea', $idarea)
+    ->where('clavea', '=', 'M' )
+    ->where('proyectos.Tipo', 'I')
+    ->get();
+
+    $conteoProyectosInternosTodos = $conteoProyectosIGET->merge($conteoProyectosMIGET);
+
    // Agrupar proyectos por bimestre
-   $proyectosPorBimestreI = $conteoProyectosIGET->groupBy(function ($proyecto) {
+   $proyectosPorBimestreI = $conteoProyectosInternosTodos->groupBy(function ($proyecto) {
     $fechaProyecto = strtotime($proyecto->fecha_fin);
     $mesProyecto = date("n", $fechaProyecto);
+
+    
 
     // Define los bimestres según tu lógica
     $bimestres = [
@@ -6498,7 +6786,9 @@ public function indicadorProyectosInternosTablas(request $request){
     ];
 
     return $bimestres[$mesProyecto] ?? 0;
-});
+    });
+
+    
 
     //dd($conteoProyectosIGET);
 
@@ -6507,11 +6797,138 @@ public function indicadorProyectosInternosTablas(request $request){
         'sexenio' => $sexenio,
         'fechabimestre' => $fechabimestre,
         'fechabimestre2' => $fechabimestre2,
-        'conteoProyectosIGET' => $conteoProyectosIGET,
+        'conteoProyectosInternosTodos' => $conteoProyectosInternosTodos,
         'proyectosPorBimestreI' => $proyectosPorBimestreI
     ];
 
+
     return view('SIRB/reportes/tablasIndicadores/indicadoresproyectosItabla', $data);
+}
+
+public function indicadorProyectosITodosTablas(request $request){
+
+    // Obtener el id del usuario autenticado
+    $userID = $request->session()->get('LoginId');
+    // variable para buscar en la tabla usuarios y relacionarla
+    $user = User::find($userID);
+    // variable para buscar el area del usuario
+    $idarea= User::find($userID)->idarea;
+    // variables para buscar el periodo
+    $fechabimestre = DB::table('usuarios')->where('id', $userID)->select('año', 'bimestre')->first();
+    $fechabimestre2 = DB::table('fechabimestres')->where('id', 2)->select('año', 'bimestre')->first();
+    $añoActual = $fechabimestre->año;
+    $bimestreActual = $fechabimestre->bimestre;
+    // variables para buscar el año y sexenio
+    $año = $request->input('año');
+    $sexenio = $request->input('sexenio');
+
+    $conteoProyectosIGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('proyectos.idarea', $idarea)
+    ->where('proyectos.Tipo', 'I')
+    ->get();
+
+    $conteoProyectosMIGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('usuarios.idarea', $idarea)
+    ->where('clavea', '=', 'M' )
+    ->where('proyectos.Tipo', 'I')
+    ->get();
+
+    //PORYECTOS EXTERNOS
+
+    $conteoProyectosEGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('proyectos.idarea', $idarea)
+    ->where('proyectos.Tipo', 'E')
+    ->get();
+
+    $conteoProyectosMEGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('usuarios.idarea', $idarea)
+    ->where('clavea', '=', 'M' )
+    ->where('proyectos.Tipo', 'E')
+    ->get();
+
+    $conteoProysInternos = $conteoProyectosIGET->merge($conteoProyectosMIGET);
+
+    $conteoProysExternos = $conteoProyectosEGET->merge($conteoProyectosMEGET);
+
+    $conteoProyectosInternosTodos = $conteoProysInternos->merge($conteoProysExternos);
+
+   // Agrupar proyectos por bimestre
+   $proyectosPorBimestreI = $conteoProyectosInternosTodos->groupBy(function ($proyecto) {
+    $fechaProyecto = strtotime($proyecto->fecha_fin);
+    $mesProyecto = date("n", $fechaProyecto);
+
+    
+
+    // Define los bimestres según tu lógica
+    $bimestres = [
+        1 => 1,
+        2 => 1,
+        3 => 2,
+        4 => 2,
+        5 => 3,
+        6 => 3,
+        7 => 4,
+        8 => 4,
+        9 => 5,
+        10 => 5,
+        11 => 6,
+        12 => 6,
+    ];
+
+    return $bimestres[$mesProyecto] ?? 0;
+    });
+
+    
+
+    //dd($conteoProyectosIGET);
+
+    $data = [
+        'año' => $año,
+        'sexenio' => $sexenio,
+        'fechabimestre' => $fechabimestre,
+        'fechabimestre2' => $fechabimestre2,
+        'conteoProyectosIGET' => $conteoProysInternos,
+        'proyectosPorBimestreI' => $proyectosPorBimestreI
+    ];
+
+
+    return view('SIRB/reportes/tablasIndicadores/indicadoresproyectosTodostablas', $data);
 }
 
 public function indicadorProyectosInternosGrafica(request $request)
@@ -6568,9 +6985,9 @@ public function indicadorProyectosInternosGrafica(request $request)
     ];
 
     return $bimestres[$mesProyecto] ?? 0;
-})->map(function ($proyectos) {
-    return $proyectos->count();
-});
+    })->map(function ($proyectos) {
+        return $proyectos->count();
+    });
 
     //dd($proyectosPorBimestreI);
 
@@ -6584,6 +7001,129 @@ public function indicadorProyectosInternosGrafica(request $request)
     ];
 
     return view('SIRB/reportes/graficasindicadores/graficaProyectosI', $data);
+}
+
+public function indicadorProyectosIntExtGrafica(request $request)
+{
+
+    // Obtener el id del usuario autenticado
+    $userID = $request->session()->get('LoginId');
+    // variable para buscar en la tabla usuarios y relacionarla
+    $user = User::find($userID);
+    // variable para buscar el area del usuario
+    $idarea= User::find($userID)->idarea;
+    // variables para buscar el periodo
+    $fechabimestre = DB::table('usuarios')->where('id', $userID)->select('año', 'bimestre')->first();
+    $fechabimestre2 = DB::table('fechabimestres')->where('id', 2)->select('año', 'bimestre')->first();
+    $añoActual = $fechabimestre->año;
+    $bimestreActual = $fechabimestre->bimestre;
+    // variables para buscar el año y sexenio
+    $año = $request->input('año');
+    $sexenio = $request->input('sexenio');
+
+    $conteoProyectosIGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('proyectos.idarea', $idarea)
+    ->where('proyectos.Tipo', 'I')
+    ->get();
+
+    $conteoProyectosMIGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('usuarios.idarea', $idarea)
+    ->where('clavea', '=', 'M' )
+    ->where('proyectos.Tipo', 'I')
+    ->get();
+
+    $conteoProyectosEGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('proyectos.idarea', $idarea)
+    ->where('proyectos.Tipo', 'E')
+    ->get();
+
+    $conteoProyectosMEGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('usuarios.idarea', $idarea)
+    ->where('clavea', '=', 'M' )
+    ->where('proyectos.Tipo', 'E')
+    ->get();
+
+    $conteoProysInternos = $conteoProyectosIGET->merge($conteoProyectosMIGET);
+
+    $conteoProysExternos = $conteoProyectosEGET->merge($conteoProyectosMEGET);
+
+    $conteoProyectosIntExtGraf = $conteoProysInternos->merge($conteoProysExternos);
+
+
+   // Agrupar proyectos por bimestre
+   $proyectosPorBimestreI = $conteoProyectosIntExtGraf->groupBy(function ($proyecto) {
+    $fechaProyecto = strtotime($proyecto->fecha_fin);
+    $mesProyecto = date("n", $fechaProyecto);
+
+    // Define los bimestres según tu lógica
+    $bimestres = [
+        1 => 1,
+        2 => 1,
+        3 => 2,
+        4 => 2,
+        5 => 3,
+        6 => 3,
+        7 => 4,
+        8 => 4,
+        9 => 5,
+        10 => 5,
+        11 => 6,
+        12 => 6,
+    ];
+
+    return $bimestres[$mesProyecto] ?? 0;
+    })->map(function ($proyectos) {
+        return $proyectos->count();
+    });
+
+    //dd($proyectosPorBimestreI);
+
+    $data = [
+        'año' => $año,
+        'sexenio' => $sexenio,
+        'fechabimestre' => $fechabimestre,
+        'fechabimestre2' => $fechabimestre2,
+        'conteoProyectosIGET' => $conteoProyectosIGET,
+        'proyectosPorBimestreI' => $proyectosPorBimestreI,
+    ];
+
+    return view('SIRB/reportes/graficasindicadores/graficaProyectosIntExt', $data);
 }
 
 public function indicadorProyectosExternosTablas(request $request){
@@ -6617,8 +7157,25 @@ public function indicadorProyectosExternosTablas(request $request){
     ->where('proyectos.Tipo', 'E')
     ->get();
 
+    $conteoProyectosMEGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('usuarios.idarea', $idarea)
+    ->where('clavea', '=', 'M' )
+    ->where('proyectos.Tipo', 'E')
+    ->get();
+
+    $conteoProysExternosTodos = $conteoProyectosEGET->merge($conteoProyectosMEGET);
+
    // Agrupar proyectos por bimestre
-   $proyectosPorBimestreE = $conteoProyectosEGET->groupBy(function ($proyecto) {
+   $proyectosPorBimestreE = $conteoProysExternosTodos->groupBy(function ($proyecto) {
     $fechaProyecto = strtotime($proyecto->fecha_fin);
     $mesProyecto = date("n", $fechaProyecto);
 
@@ -6639,7 +7196,7 @@ public function indicadorProyectosExternosTablas(request $request){
     ];
 
     return $bimestres[$mesProyecto] ?? 0;
-});
+    });
 
     //dd($conteoProyectosIGET);
 
@@ -6648,7 +7205,7 @@ public function indicadorProyectosExternosTablas(request $request){
         'sexenio' => $sexenio,
         'fechabimestre' => $fechabimestre,
         'fechabimestre2' => $fechabimestre2,
-        'conteoProyectosIGET' => $conteoProyectosEGET,
+        'conteoProyectosIGET' => $conteoProysExternosTodos,
         'proyectosPorBimestreE' => $proyectosPorBimestreE
     ];
 
@@ -6686,8 +7243,26 @@ public function indicadorProyectosExternosGrafica(request $request){
     ->where('proyectos.Tipo', 'E')
     ->get();
 
+    $conteoProyectosMEGET = Proyecto::select(
+        'proyectos.*',
+        'usuarios.Nombre',
+        'usuarios.Apellido_Paterno',
+        'usuarios.Apellido_Materno'
+    )
+    ->join('usuarios', 'proyectos.idusuarior', '=', 'usuarios.id')
+    ->where('proyectos.fecha_fin', '>=', $año . '-01-01')
+    ->where('proyectos.fecha_fin', '<=', $año . '-12-31')
+    ->where('proyectos.progreso', 100)
+    ->where('usuarios.idarea', $idarea)
+    ->where('clavea', '=', 'M' )
+    ->where('proyectos.Tipo', 'E')
+    ->get();
+
+    $conteoProysExternosTodos = $conteoProyectosEGET->merge($conteoProyectosMEGET);
+
+
    // Agrupar proyectos por bimestre
-   $proyectosPorBimestreE = $conteoProyectosEGET->groupBy(function ($proyecto) {
+   $proyectosPorBimestreE = $conteoProysExternosTodos->groupBy(function ($proyecto) {
     $fechaProyecto = strtotime($proyecto->fecha_fin);
     $mesProyecto = date("n", $fechaProyecto);
 
@@ -6708,9 +7283,9 @@ public function indicadorProyectosExternosGrafica(request $request){
     ];
 
     return $bimestres[$mesProyecto] ?? 0;
-})->map(function ($proyectos) {
-    return $proyectos->count();
-});
+    })->map(function ($proyectos) {
+        return $proyectos->count();
+    });
 
     //dd($conteoProyectosEGET);
 
@@ -6719,14 +7294,12 @@ public function indicadorProyectosExternosGrafica(request $request){
         'sexenio' => $sexenio,
         'fechabimestre' => $fechabimestre,
         'fechabimestre2' => $fechabimestre2,
-        'conteoProyectosEGET' => $conteoProyectosEGET,
+        'conteoProyectosEGET' => $conteoProysExternosTodos,
         'proyectosPorBimestreE' => $proyectosPorBimestreE
     ];
 
     return view('SIRB/reportes/graficasIndicadores/graficaProyectosE', $data);
 }
-
-
 
 public function indicadorServiciosTablas(request $request){
 
@@ -6887,8 +7460,6 @@ public function indicadorServiciosGrafica(request $request){
 
     return view('SIRB/reportes/graficasindicadores/graficaServicios', $data);
 }
-
-
 
 public function indicadoresRevistasMemoriasNacionalestabla(request $request){
 
@@ -7124,8 +7695,6 @@ public function indicadoresRevistasMemoriasNacionalesGrafica(request $request){
 
     return view('SIRB/reportes/graficasindicadores/indicadoresRevistasMemoriasNacionalesGrafica', $data);
 }
-
-
 
 public function indicadoresRevistasMemoriasInternacionalestabla(request $request){
 
@@ -7363,8 +7932,6 @@ public function indicadoresRevistasMemoriasInternacionalesGrafica(request $reque
     return view('SIRB/reportes/graficasindicadores/indicadoresRevistasMemoriasInternacionalesGrafica', $data);
 }
 
-
-
 public function indicadoresBoletinestabla(request $request){
 
     // Obtener el id del usuario autenticado
@@ -7428,8 +7995,6 @@ public function indicadoresBoletinestabla(request $request){
     $curpUsuario = $user->curp;
     $startDateInicio = $this->getStartMonthOfBimester($bimestreActual);
     $startDateFin = $this->getEndMonthOfBimester($bimestreActual);
-
-
 
         // Paso 1: Consulta para obtener participantes
         // $participantes = \DB::connection('mysql2')
@@ -7754,8 +8319,6 @@ public function indicadoresBoletinesGraficaporAño(request $request){
     return view('SIRB/reportes/graficasporañoindicadores/indicadoresboletinesgraficaporaño', $data);
 }
 
-
-
 public function indicadorPonenciasConferenciasTablas(request $request){
 
     // Obtener el id del usuario autenticado
@@ -7915,8 +8478,6 @@ public function indicadorPonenciasConferenciasGrafica(request $request){
     return view('SIRB/reportes/graficasindicadores/indicadoresPonenciagrafica', $data);
 }
 
-
-
 public function indicadorDocumentosTablas(request $request){
 
     // Obtener el id del usuario autenticado
@@ -7998,8 +8559,7 @@ public function indicadorDocumentosTablas(request $request){
         JOIN siapimt25.imt_pub_publicacion ON imt_pub_autorpublicacion.ID_PUB_Publicacion = imt_pub_publicacion.ID_PUB_Publicacion
         JOIN siapimt25.imt_pub_tipopublicacion ON imt_pub_publicacion.id_pub_tipoPublicacion = imt_pub_tipopublicacion.id_pub_tipoPublicacion
     WHERE YEAR(imt_pub_publicacion.Anio) = ? AND imt_pub_publicacion.ID_GEN_Coordinacion = ?
-", [$año, $idcoordinacion]);
-
+    ", [$año, $idcoordinacion]);
 
         // Paso 2: Organizar los IDs de participantes por Documentos
         $publicaciones = [];
@@ -8198,8 +8758,6 @@ public function indicadorDocumentosGrafica(request $request){
 
     return view('SIRB/reportes/graficasindicadores/indicadoresDocumentoGrafica', $data);
 }
-
-
 
 public function indicadoresReunionesSolicitudestabla(request $request){
 
@@ -8420,8 +8978,6 @@ public function indicadoresReunionesSolicitudesGrafica(request $request){
     return view('SIRB/reportes/graficasindicadores/indicadoresReunionesSolicitudesGrafica', $data);
 }
 
-
-
 public function indicadoresPostgradostabla(request $request){
 
     // Obtener el id del usuario autenticado
@@ -8549,8 +9105,6 @@ public function indicadoresPostgradosGrafica(request $request){
 
     return view('SIRB/reportes/graficasindicadores/indicadoresPostgradografica', $data);
 }
-
-
 
 public function indicadoresDocenciatabla(request $request){
 
@@ -8693,7 +9247,6 @@ public function indicadoresDocenciaGrafica(request $request){
         })->map(function ($proyectos) {
             return $proyectos->count();
         });
-
 
     //dd($conteoCursosGET);
 
@@ -8850,7 +9403,6 @@ public function indicadoresDocenciaGrafica1(request $request){
         })->map(function ($proyectos) {
             return $proyectos->count();
         });
-
 
     //dd($conteoCursosGET);
 
@@ -9187,7 +9739,6 @@ public function indicadorProyectosExternosGraficaAños1(request $request)
 
 public function indicadorProyectosExternosGraficaAños2(request $request)
 {
-
     // Obtener el id del usuario autenticado
     $userID = $request->session()->get('LoginId');
     // variable para buscar en la tabla usuarios y relacionarla
@@ -9229,7 +9780,6 @@ public function indicadorProyectosExternosGraficaAños2(request $request)
         return [$proyecto->year => $proyecto->count];
     });
 
-
     //dd($datosParaRango);
 
     $data = [
@@ -9243,8 +9793,6 @@ public function indicadorProyectosExternosGraficaAños2(request $request)
 
     return view('SIRB/reportes/graficasporañoindicadores/indicadoresporañoproyectostablaII', $data);
 }
-
-
 
 public function indicadorProyectosIn_Ex_ternosGraficaAños(request $request)
 {
@@ -9308,7 +9856,6 @@ public function indicadorProyectosIn_Ex_ternosGraficaAños(request $request)
 
 public function indicadorServiciosGraficaAños(request $request)
 {
-
     // Obtener el id del usuario autenticado
     $userID = $request->session()->get('LoginId');
     // variable para buscar en la tabla usuarios y relacionarla
@@ -9422,7 +9969,6 @@ public function indicadorMem_Rev_NacGraficaAños(request $request)
     return $items->count();
     });
 
-
     //dd($datosParaRango);
 
     //$proyectosfin = $proyectos->concat($proyectosPart);
@@ -9501,7 +10047,6 @@ public function indicadorMem_Rev_ItnacGraficaAños(request $request)
     return $items->count();
     });
 
-
     //dd($datosParaRango);
 
     //$proyectosfin = $proyectos->concat($proyectosPart);
@@ -9578,7 +10123,6 @@ public function indicadorPonenConfGraficaAños(request $request)
 
     return view('SIRB/reportes/graficasporañoindicadores/indicadorponenconftablaVI', $data);
 }
-
 
 public function indicadorDocTecGraficaAños(request $request)
 {
@@ -9753,7 +10297,6 @@ public function indicadorReu_solc_GraficaAños(request $request)
 
     return view('SIRB/reportes/graficasporañoindicadores/indicadorreusolctablaVIII', $data);
 }
-
 
 public function indicadorPostgradosGraficaAños(request $request)
 {
@@ -9996,7 +10539,6 @@ public function indicadorTesisCursosRecGraficaAños(request $request)
 
     return view('SIRB/reportes/graficasporañoindicadores/indicadortesiscursosrecXI', $data);
 }
-
 
 }
 

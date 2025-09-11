@@ -20,6 +20,7 @@
                   <th scope="col" class="">Partida</th>
                   <th scope="col" class="">Concepto</th>
                   <th scope="col" class="">Clave</th>
+                  <th scope="col" class="">Costo</th>
                   <th scope="col" class="">Status</th>
                   <th scope="col" class="">Actualizar</th>
                 </tr>
@@ -30,6 +31,7 @@
                   <td>{{ $re->partida }}</td>
                   <td>{{ $re->concepto }}</td>
                   <td>{{ $re->clave }}</td>
+                  <td>{{ $re->costo }}</td>
                   <td>
                     <input type="checkbox" data-offstyle="danger" 
                     class="toggle-class" data-id="{{$re->id}}" 

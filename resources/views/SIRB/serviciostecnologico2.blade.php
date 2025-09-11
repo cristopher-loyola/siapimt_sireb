@@ -84,24 +84,13 @@
 
 
            <div class="row">
-              <div class="col-md-6">
+              <div class="col">
                 <div class="mb-3">
                   <label class="form-label">Número del registro</label>
                   <input id="numeroregistro" type="text" class="form-control" name="numeroregistro" placeholder="Número del registro" required>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                    <label class="form-label">Nombre del cliente</label>
-                    <select name="nombrecliente" id="nombrecliente" class="form-control" required>
-                        @foreach ($Cliente as $Clientes)
-                            <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                                {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+
             </div>
 
 
@@ -138,7 +127,7 @@
 
 
             <div class="row">
-              <div class="col-md-6">
+              <div class="col">
                 <div class="mb-3">
                   <label class="form-label">Descripción del servicio</label>
                   <textarea id="servicio" type="text" class="form-control" name="servicio" placeholder="Descripción del servicio" required></textarea>
@@ -154,6 +143,10 @@
                 </div>
               </div>
 
+            </div>
+
+            <div class="col mb-3">
+              <x-select-client label="Nombre del cliente" nameField='nombrecliente' :categories="$categoriesN1"/>
             </div>
 
             <input id="nombre_persona" type="hidden" class="form-control" name="nombre_persona" value="{{ $LoggedUserInfo['usuario']}}">
@@ -256,25 +249,27 @@
            </div>
 
            <div class="row">
-              <div class="col-md-6">
+              <div class="col">
                 <div class="mb-3">
                   <label class="form-label">Número del registro</label>
                   <input id="numeroregistroedit" type="text" class="form-control" name="numeroregistro" placeholder="Número del registro" required>
                 </div>
               </div>
 
-              <div class="col-md-6">
-                <div class="mb-3">
-                  <label class="form-label">Nombre del cliente</label>
-                  <select name="nombrecliente" id="nombreclienteedit" class="form-control" required>
-                    @foreach ($Cliente as $Clientes)
-                    <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
-                        {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
-                    </option>
-                    @endforeach
-                  </select>
-                </div>
+            </div>
+            
+            <div class="row pb-3">
+              <div class="col">
+                <label class="form-label">Nombre del cliente actual</label>
+                <input type="text" class="form-control" value="" id="nombreclienteedit" readonly/>
               </div>
+            </div>
+
+
+            <div class="row">
+              <div class="col">
+                <x-select-client label="Cambiar cliente" nameField='nombrecliente' :categories="$categoriesN1" />
+                </div>
             </div>
 
 
@@ -313,7 +308,7 @@
 
 
             <div class="row">
-              <div class="col-md-6">
+              <div class="col">
                 <div class="mb-3">
                   <label class="form-label">Descripción del servicio</label>
                   <textarea id="servicioedit" type="text" class="form-control" name="servicio" placeholder="Servicio" required></textarea>

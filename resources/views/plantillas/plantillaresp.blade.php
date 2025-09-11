@@ -11,6 +11,24 @@
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.0/font/bootstrap-icons.css">
         <link rel="stylesheet" href="{{ asset('css/mlat.css') }}">
 
+        <style>
+            footer {
+                color: #5C5C69;
+                font-size: .8em;
+                text-align: center;
+                padding: 10px 0;
+                background-color: #FFFFFF;
+                border-top: 1px solid #ddd;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+                z-index: 1;
+                margin-top: 24px;
+            }
+        </style>
+
     </head>
 
 {{-- Header inicio --}}
@@ -406,6 +424,8 @@
 
         <div class="container w-75 mt-5 roundedshadow p-3 mb-5 bg-body rounded font-weight-ligth col-xs-12 col-sm-6 col-md-8" >
                 @yield('contenido')
+                
+                <div style="height:50px"></div>
         </div>
 
         <script>
@@ -510,5 +530,8 @@
         <!-- JavaScript Bundle with Popper -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-kQtW33rZJAHjgefvhyyzcGF3C5TFyBQBA13V1RKPf4uH+bwyzQxZ6CmMZHmNBEfJ" crossorigin="anonymous"></script>
         @stack('scripts')
+        <footer>
+            2025 © Desarrollado por la División de Telemática
+        </footer>
     </body>
 </html>

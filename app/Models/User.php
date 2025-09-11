@@ -18,12 +18,15 @@ class User extends Authenticatable
         'Nombre',
         'Apellido_Materno',
         'Apellido_Paterno',
+        'curp',
         'usuario',
         'pass',
         'passen',
         'idpuesto',
         'responsable',
-        'idarea'
+        'idarea',
+        'correo',
+        'director'
     ];
 
     

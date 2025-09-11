@@ -34,7 +34,11 @@
                     </select>
                 <span class="text-danger">@error('clave') {{$message}} @enderror</span>
             </div>
-            
+            <div class="mb-4">
+                <label class="form-label"> Costo </label>
+                <input id="costo" type="number" value="{{$resc->costo}}" class="form-control" name="costo" placeholder="costo" step="0.01">
+                <span class="text-danger">@error('costo') {{$message}} @enderror</span>
+            </div>
             <div>
                 <a href="{{route('Recursos')}}" class=" btn btn-danger" tabindex="4" id="redondb">
                     <i class='bx bxs-tag-x bx-fw bx-flashing-hover'></i>

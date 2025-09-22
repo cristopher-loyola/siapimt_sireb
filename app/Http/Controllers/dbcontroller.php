@@ -2243,7 +2243,14 @@ class dbcontroller extends Controller
             $uniq = User::where('id','=',session('LoginId'))->first();
             $proyt = Proyecto::where('id',$id)->first();
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
-            $proytImp = Impacto::where('idproyecto', $id)->first();
+            $proytImp = Impacto::firstOrCreate(
+                ['idproyecto' => $id],
+                    [
+                'crit1'=>null,'vcrit1'=>0,'crit2'=>null,'vcrit2'=>0,'crit3'=>null,'vcrit3'=>0,
+                'crit4'=>null,'vcrit4'=>0,'crit5'=>null,'vcrit5'=>0,'crit6'=>null,'vcrit6'=>0,
+                'descImpSoc'=>null,'descImpEco'=>null,'escalaImp'=>0,'nivelImp'=>null,'completado'=>0,
+                    ]
+                );
 
             $vimpacto= Impacto::where('idproyecto', $id)->count();
             $vtarea = Tarea::Where('idproyecto',$id)->count();
@@ -2262,7 +2269,7 @@ class dbcontroller extends Controller
     }
 
     public function upimpactoproy(Request $request, $id){
-        $proytImp = Impacto::where('idproyecto', $id)->first();
+        $proytImp = Impacto::firstOrCreate(['idproyecto' => $id]);
         $idprob = $request->get('problemasoc');
         $idesc = $request->get('escalaImpacto');
         $ids = $request->get('contribucionSoc', []);
@@ -2369,7 +2376,7 @@ class dbcontroller extends Controller
 
         $pp = $request->get('oculto');
 
-        $impact = $proytImp->first();
+        $impact = Impacto::where('idproyecto', $id)->first();
         if($impact->crit1 != $proytImp->crit1 || $impact->vcrit1 != $proytImp->vcrit1 
         || $impact->crit2 != $proytImp->crit2 || $impact->vcrit2 != $proytImp->vcrit2 
         || $impact->crit3 != $proytImp->crit3 || $impact->vcrit3 != $proytImp->vcrit3
@@ -2407,7 +2414,15 @@ class dbcontroller extends Controller
             $uniq = User::where('id','=',session('LoginId'))->first();
             $proyt = Proyecto::where('id',$id)->first();
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
-            $proytImp = Impacto::where('idproyecto', $id)->first();
+            $proytImp = Impacto::firstOrCreate(
+                ['idproyecto' => $id],
+                [
+                    'crit1'=>null,'vcrit1'=>0,'crit2'=>null,'vcrit2'=>0,'crit3'=>null,'vcrit3'=>0,
+                    'crit4'=>null,'vcrit4'=>0,'crit5'=>null,'vcrit5'=>0,'crit6'=>null,'vcrit6'=>0,
+                    'descImpSoc'=>null,'descImpEco'=>null,'escalaImp'=>0,'nivelImp'=>null,'completado'=>0,
+                    ]
+                );
+
 
 
             $vimpacto= Impacto::where('idproyecto', $id)->count();          
@@ -2427,7 +2442,16 @@ class dbcontroller extends Controller
     }
 
     public function upimpactoproy1(Request $request, $id){
-        $proytImp = Impacto::where('idproyecto', $id)->first();
+        $proytImp = Impacto::firstOrCreate(
+    ['idproyecto' => $id],
+    [
+        'crit1'=>null,'vcrit1'=>0,'crit2'=>null,'vcrit2'=>0,'crit3'=>null,'vcrit3'=>0,
+        'crit4'=>null,'vcrit4'=>0,'crit5'=>null,'vcrit5'=>0,'crit6'=>null,'vcrit6'=>0,
+        'descImpSoc'=>null,'descImpEco'=>null,'escalaImp'=>0,'nivelImp'=>null,'completado'=>0,
+    ]
+);
+
+
 
         $ids = $request->get('eficienciaTransp', []); 
         $totefi = count($ids);
@@ -2479,7 +2503,7 @@ class dbcontroller extends Controller
 
         $pp = $request->get('oculto');
 
-        $impact = $proytImp->first();
+        $impact = Impacto::where('idproyecto', $id)->first();
         if($impact->crit1 != $proytImp->crit1 || $impact->vcrit1 != $proytImp->vcrit1 
         || $impact->crit2 != $proytImp->crit2 || $impact->vcrit2 != $proytImp->vcrit2 
         || $impact->crit3 != $proytImp->crit3 || $impact->vcrit3 != $proytImp->vcrit3
@@ -2517,7 +2541,8 @@ class dbcontroller extends Controller
             $uniq = User::where('id','=',session('LoginId'))->first();
             $proyt = Proyecto::where('id',$id)->first();
             $data = ['LoggedUserInfo'=>User::where('id','=',session('LoginId'))->first()];
-            $proytImp = Impacto::where('idproyecto', $id)->first();
+            $proytImp = Impacto::firstOrCreate(['idproyecto' => $id]);
+
 
             $vimpacto= Impacto::where('idproyecto', $id)->count();          
             $vtarea = Tarea::Where('idproyecto',$id)->count();
@@ -2571,19 +2596,22 @@ class dbcontroller extends Controller
             $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0){
                 if($proytImp->crit4 != null && $proytImp->vcrit4 != 0 && $proytImp->crit5 != null 
                     && $proytImp->vcrit5 != 0 && $proytImp->crit6 != null && $proytImp->vcrit6 != 0
-                        && $proytImp->descImp != ''){
+                        && $proytImp->descImpEco != ''){
                         $proytImp->completado = 1;
                 }
         }
 
         $pp = $request->get('oculto');
 
-        $impact = $proytImp->first();
-        if($impact->crit1 != $proytImp->crit1 || $impact->vcrit1 != $proytImp->vcrit1 
-        || $impact->crit2 != $proytImp->crit2 || $impact->vcrit2 != $proytImp->vcrit2 
+        $impact = Impacto::where('idproyecto', $id)->first();
+
+        if ($impact->crit1 != $proytImp->crit1 || $impact->vcrit1 != $proytImp->vcrit1
+        || $impact->crit2 != $proytImp->crit2 || $impact->vcrit2 != $proytImp->vcrit2
         || $impact->crit3 != $proytImp->crit3 || $impact->vcrit3 != $proytImp->vcrit3
-        || $impact->crit4 != $proytImp->crit4 || $impact->vcrit5 != $proytImp->vcrit5
-        || $impact->crit6 != $proytImp->crit6 || $impact->descImp != $proytImp->descImp){
+        || $impact->crit4 != $proytImp->crit4 || $impact->vcrit4 != $proytImp->vcrit4
+        || $impact->crit5 != $proytImp->crit5 || $impact->vcrit5 != $proytImp->vcrit5
+        || $impact->crit6 != $proytImp->crit6 || $impact->descImpEco != $proytImp->descImpEco) {
+
             if(session()->has('LoginId')){
                 $res = $proytImp->save();
                 if ($pp == 1) {

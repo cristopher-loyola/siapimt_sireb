@@ -7,14 +7,48 @@
     <title>Datos proyecto</title>
     <link rel="icon" href="../img/Logo_IMT_mini.png" type="image/png" />
     <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
-    <style>
+      <style>
         *{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            box-sizing: border-box;
+        }
+        body {
+            padding-left: 150px;
+            overflow-x: hidden;
+        }
+        @media (max-width: 992px) {
+            body {
+                padding-left: 0;
+            }
+            .sidebar {
+                width: 100% !important;
+                height: auto !important;
+                position: relative !important;
+                flex-direction: row !important;
+                padding: 10px !important;
+            }
+            .sidebar-menu {
+                flex-direction: row !important;
+                flex-wrap: wrap;
+                justify-content: center !important;
+            }
+            .sidebar-item, .sidebar-item-success, .sidebar-item-cancel {
+                width: auto !important;
+                padding: 5px 10px !important;
+            }
+            .sidebar-header {
+                display: none;
+            }
+            .tooltip {
+                display: none !important;
+            }
         }
         header{
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-wrap: wrap;
+            padding: 10px;
         }
         header table{
             font-weight: bold;
@@ -24,62 +58,65 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 0 15px;
         }
         input {
-            border: 3px solid transparent; /* Sin borde visible por defecto */
-            outline: none; /* Elimina el borde de enfoque por defecto */
+            border: 3px solid transparent;
+            outline: none;
             padding: 10px;
             font-size: 16px;
-            transition: border-color 0.3s; /* Transición suave del borde */
+            transition: border-color 0.3s;
             border-radius: 10px;
             text-align: center;
+            width: 100%;
+            max-width: 500px;
         }
         input:hover {
-            border-color: #3498db; /* El color del borde al pasar el mouse */
+            border-color: #3498db;
         }
         input:focus {
-            border-color: #3498db; /* El color del borde cuando el campo está en enfoque */
+            border-color: #3498db;
         }
         textarea {
-            border: 3px solid transparent; /* Sin borde visible por defecto */
-            outline: none; /* Elimina el borde de enfoque por defecto */
-            /* padding: 10px; */
+            border: 3px solid transparent;
+            outline: none;
             font-size: 16px;
-            transition: border-color 0.3s; /* Transición suave del borde */
+            transition: border-color 0.3s;
             border-radius: 10px;
             text-align: justify;
             overflow: hidden;
             resize: none;
             border-color: #aacfe7;
+            width: 100%;
         }
         textarea:hover {
-            border-color: #3498db; /* El color del borde al pasar el mouse */
+            border-color: #3498db;
         }
         textarea:focus {
-            border-color: #3498db; /* El color del borde cuando el campo está en enfoque */
+            border-color: #3498db;
         }
         textarea::placeholder {
-            color: #84abf4; /* Aquí puedes poner el color que desees */
+            color: #84abf4;
             font-style: italic;
         }
         select {
-            border: 3px solid transparent; /* Sin borde visible por defecto */
-            outline: none; /* Elimina el borde de enfoque por defecto */
-            font-size: .9em;
-            transition: border-color 0.3s; /* Transición suave del borde */
+            border: 3px solid transparent;
+            outline: none;
+            font-size: 1em;
+            transition: border-color 0.3s;
             border-radius: 10px;
             text-align: center;
             overflow: hidden;
             resize: none;
             width: 100%;
+            max-width: 500px;
             border-color: #aacfe7;
-            /* padding-right: 30px; */
         }
         select:hover {
-            border-color: #3498db; /* El color del borde al pasar el mouse */
+            border-color: #3498db;
         }
         select:focus {
-            border-color: #3498db; /* El color del borde cuando el campo está en enfoque */
+            border-color: #3498db;
         }
         .contenedor {
             display: flex;
@@ -87,9 +124,11 @@
             text-align: center;
             font-size: 1.2em;
             font-weight: bold;
+            flex-wrap: wrap;
         }
         .columna {
             flex: 1;
+            min-width: 300px;
             padding: 20px;
             border: 1px solid #cccccc00;
         }
@@ -105,7 +144,7 @@
         }
         #actualizar:hover{
             background: #219d1a;
-            transform: scale(1.1); /* Aumenta el tamaño del botón */
+            transform: scale(1.1);
         }
         #modificar{
             background: #eeb93d;
@@ -118,22 +157,22 @@
             padding: .4em;
         }
         #modificar:hover {
-            background-color: #d5a73b; /* Cambia el color de fondo */
-            transform: scale(1.1); /* Aumenta el tamaño del botón */
+            background-color: #d5a73b;
+            transform: scale(1.1);
         }
         #cejas{
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-wrap: wrap;
         }
         .boton-ceja-carpeta-actual{
             display: inline-block;
-            padding: 15px 30px;
-            /* Color de fondo que imita una carpeta amarilla */
+            padding: 15px 20px;
             background-color: #007bff;
             border: none;
-            border-top: 10px solid #0065d0; /* Color más oscuro para la ceja de la carpeta */
-            border-radius: 5px 5px 0 0; /* Bordes redondeados en la parte superior */
+            border-top: 10px solid #0065d0;
+            border-radius: 5px 5px 0 0;
             font-size: 16px;
             color: #fff;
             font-weight: bold;
@@ -141,61 +180,65 @@
             text-align: center;
             position: relative;
             border-right: 1px solid #0065d0;
+            min-width: 80px;
         }
         .boton-ceja-carpeta {
             display: inline-block;
-            padding: 15px 30px;
-            /* Color de fondo que imita una carpeta amarilla */
+            padding: 15px 20px;
             background-color: #3c4d8a;
             border: none;
-            border-top: 10px solid #1A2C6E; /* Color más oscuro para la ceja de la carpeta */
-            border-radius: 5px 5px 0 0; /* Bordes redondeados en la parte superior */
+            border-top: 10px solid #1A2C6E;
+            border-radius: 5px 5px 0 0;
             font-size: 16px;
             color: white;
             font-weight: bold;
             cursor: pointer;
             text-align: center;
             position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra sutil para darle un efecto de profundidad */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-right: 1px solid #1A2C6E;
+            min-width: 80px;
         }
         .boton-ceja-carpeta-success {
             display: inline-block;
-            padding: 15px 30px;
+            padding: 15px 20px;
             background-color: #1e7e19;
             border: none;
-            border-top: 10px solid #3ba335; /* Color más oscuro para la ceja de la carpeta */
-            border-radius: 5px 5px 0 0; /* Bordes redondeados en la parte superior */
+            border-top: 10px solid #3ba335;
+            border-radius: 5px 5px 0 0;
             font-size: 16px;
             color: white;
             font-weight: bold;
             cursor: pointer;
             text-align: center;
             position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra sutil para darle un efecto de profundidad */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-right: 1px solid #3ba335;
+            min-width: 80px;
         }
         .boton-ceja-carpeta:before {
             content: '';
             position: absolute;
-            top: -8px; /* Coloca la "ceja" justo encima del botón */
+            top: -8px;
             left: 50%;
             transform: translateX(-50%);
             width: 20px;
             height: 8px;
-            background-color: #1A2C6E; /* Mismo color de la ceja */
-            border-radius: 5px 5px 0 0; /* Bordes redondeados para la ceja */
+            background-color: #1A2C6E;
+            border-radius: 5px 5px 0 0;
         }
         .boton-ceja-carpeta:hover {
-            background-color: #2742a5; /* Cambio de color al pasar el ratón */
+            background-color: #2742a5;
         }
         .boton-ceja-carpeta-success:hover {
-            background-color: #1e8719; /* Cambio de color al pasar el ratón */
+            background-color: #1e8719;
         }
         label{
             text-align: justify;
             font-weight: 700;
             font-size: 1.2em;
+            display: block;
+            margin-top: 15px;
         }
         #exito{
             width: 100%;
@@ -218,30 +261,26 @@
             padding: 10px;
         }
 
-        #prodobt {
-            width: 800px;
+        #antecedente, #justifica{
+            width: 100%;
+            max-width: 800px;
         }
-        #comcliente{
-            width: 800px;
-        }
-        #beneficios{
-            width: 800px;
-        }
+
         .constpostick{
             display: flex;
             justify-content: flex-end;
         }
         .post-it {
-            width: 600px;
+            width: 100%;
+            max-width: 600px;
             padding: 10px;
-            background-color: #ffeb3b; /* Fondo amarillo para el post-it */
-            border: 2px solid #fbc02d; /* Borde amarillo más oscuro */
+            background-color: #ffeb3b;
+            border: 2px solid #fbc02d;
             border-radius: 10px;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2); /* Sombra para el efecto 3D */
-            font-family: Arial, sans-serif;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
             font-size: 16px;
             color: #333;
-            resize: none; /* Evita que el textarea cambie de tamaño */
+            resize: none;
             position: relative;
         }
         .post-it-title {
@@ -257,24 +296,10 @@
         }
         .post-it:focus {
             outline: none;
-            border: 2px solid #f57f17; /* Borde más oscuro al enfocar */
+            border: 2px solid #f57f17;
         }
-        #notaproducto{
-            width: 580px;
-            height: 60px;
-            background: transparent;
-            text-align: justify;
-            border: 1px transparent solid;
-        }
-        #notacompclie{
-            width: 580px;
-            height: 60px;
-            background: transparent;
-            text-align: justify;
-            border: 1px transparent solid;
-        }
-        #notabenefes{
-            width: 580px;
+        #notajust, #notaant{
+            width: 100%;
             height: 60px;
             background: transparent;
             text-align: justify;
@@ -284,56 +309,285 @@
             text-align: center;
             font-size: 1em;
             font-weight: bold;
-            width: 800px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            display: block;
         }
 
+        .sidebar {
+            width: 150px;
+            height: 100vh;
+            background-color: #001F5B;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 20px;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-icon {
+            width: 80px;
+            object-fit: cover;
+        }
+
+        .sidebar-menu {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        .sidebar-item {
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+        }
+
+        .sidebar-item a {
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .sidebar-image {
+            width: 30px;
+            height: 30px;
+            object-fit: cover;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-item-cancel {
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+            background: #282828;
+        }
+
+        .sidebar-item-cancel a {
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .sidebar-item-success {
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+            background: #1e7e19;
+        }
+
+        .sidebar-item-success a {
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 100%;
+        }
+
+        .sidebar-item:hover {
+            background-color: #143882;
+            cursor: pointer;
+        }
+
+        .sidebar-item.active {
+            background-color: #007bff;
+        }
+
+        .sidebar-item.active .tooltip {
+            background-color: #007bff;
+        }
+
+        .sidebar-item-cancel:hover {
+            background-color: #3c3c3c;
+            cursor: pointer;
+        }
+
+        .sidebar-item-success:hover {
+            background-color: #1e7e19;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            position: absolute;
+            top: 50%;
+            left: 90%;
+            height: 120%;
+            transform: translateY(-50%);
+            background-color: #143882;
+            padding: 5px;
+            border-radius: 3px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            margin-left: 10px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-item:hover .tooltip {
+            opacity: 1;
+        }
+
+        .sidebar-item-success:hover .tooltip {
+            opacity: 1;
+        }
+
+        .sidebar-item-cancel:hover .tooltip {
+            opacity: 1;
+        }
+
+        .sidebar-item.active:hover .tooltip {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .sidebar-item-success:hover .tooltip {
+            background-color: #1e7e19;
+            color: white;
+        }
+
+        .sidebar-item-cancel:hover .tooltip {
+            background-color: #3c3c3c;
+            color: white;
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            padding: 10px 20px;
+            background-color: #ff4c4c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 100%;
+            cursor: button;
+        }
+
+        .logout-btn:hover {
+            background-color: #ff2a2a;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .sidebar-menu {
+                padding-left: 20px;
+            }
+
+            .sidebar-item a {
+                flex-direction: row;
+            }
+
+            .sidebar-image {
+                margin-bottom: 0;
+                margin-right: 10px;
+            }
+        }
+
+        #justifica-container{
+            min-height: 100px;
+        }
         .ql-toolbar.ql-snow,
-            .editor-quill {
-                width: 800px;
-                margin: 0 auto;
-                border-width: 3px !important;
-                border-style: solid !important;
-                border-color: #aacfe7 !important; 
-                box-sizing: border-box;
-                margin-bottom: 6px !important;
-            }
+        .editor-quill {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-width: 3px !important;
+            border-style: solid !important;
+            border-color: #aacfe7 !important; 
+            box-sizing: border-box;
+            margin-bottom: 6px !important;
+        }
 
-            .ql-toolbar.ql-snow {
-                background: #fff;
-                border-radius: 10px 10px 0 0;
-                border: 3px solid #aacfe7;
-                border-bottom: none;
-                padding: 10px;
-            }
+        .ql-toolbar.ql-snow {
+            background: #fff;
+            border-radius: 10px 10px 0 0;
+            border: 3px solid #aacfe7;
+            border-bottom: none;
+            padding: 10px;
+        }
 
-            .editor-quill {
-                min-height: 150px;
-                max-height: 300px;
-                height: 200px;
-                overflow-y: auto;
-                background: #fff;
-                border-radius: 0 0 10px 10px;
-                border: 3px solid #aacfe7;
-                border-top: none;
-                padding: 10px;
-            }
-            .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
-                border-color: #6bb3e3 !important;
-            }
-            .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
-                border-color: #e74c3c !important;
-            }
-            .ql-toolbar .ql-formats button[title] {
-                position: relative;
-            }
-            .ql-table::before {
-                content: '▦'; 
-                font-size: 16px;
-                color: #444;
-                display: inline-block;
-                line-height: 1;
-            }
+        .editor-quill {
+            min-height: 150px;
+            max-height: 300px;
+            height: 200px;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 0 0 10px 10px;
+            border: 3px solid #aacfe7;
+            border-top: none;
+            padding: 10px;
+        }
+        .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
+            border-color: #6bb3e3 !important;
+        }
+        .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
+            border-color: #e74c3c !important;
+        }
+        .ql-toolbar .ql-formats button[title] {
+            position: relative;
+        }
+        .ql-table::before {
+            content: '▦'; 
+            font-size: 16px;
+            color: #444;
+            display: inline-block;
+            line-height: 1;
+        }
 
+        @media (max-width: 768px) {
+            .ql-toolbar .ql-formats {
+                display: flex;
+                flex-wrap: wrap;
+            }
+            .ql-toolbar .ql-formats button {
+                margin: 2px;
+            }
+        }
+
+        .form-group {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .mb-4.col {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
     </style>
     <script>
         function autoResize(textarea) {

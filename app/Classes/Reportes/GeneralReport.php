@@ -217,6 +217,19 @@ class GeneralReport{
                     $this->getIndexFromColumn($this->tableCoord['col']) + $indexField
                 ).$this->tableCoord['row'] + $index);
             }
+/////Use el comando strip_tags para eliminar etiquetas HTML y preg_replace para eliminar espacios en blanco adicionales.
+                $cell = $this->getColumnFromIndex(
+                    $this->getIndexFromColumn($this->tableCoord['col']) + $indexField
+                ).($this->tableCoord['row'] + $index);
+                $value = $project[$fieldValue];
+              if (is_string($value)) {
+                    $value = strip_tags(html_entity_decode($value));
+                    $value = preg_replace('/\s+/', ' ', trim($value));
+                }
+
+                $this->activeSheet->setCellValue($cell, $value);
+
+            
         }
 
     }

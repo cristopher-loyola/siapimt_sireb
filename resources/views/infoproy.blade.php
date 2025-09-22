@@ -4,6 +4,15 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title> Proyecto</title>
 <style>
+
+    .btn-impact{
+  background: linear-gradient(135deg,#0fb37a,#0a8d62);
+  color:#fff !important;
+  border: 0;
+  box-shadow: 0 6px 16px rgba(15,179,122,.25);
+}
+.btn-impact:hover{ filter: brightness(1.06); color:#fff !important; }
+
     .modal {
       display: none;
       justify-content: center;
@@ -77,6 +86,7 @@
     <h3 class="fw-bold text-center py-5" id="tituloform">Información del Proyecto </h3>
 <div>
     <div class="mb-4">
+        
         @if (Session::has('success'))
             <div id="exito">{{Session::get('success')}}</div>
             <br>
@@ -93,6 +103,7 @@
                     </button>
                 </form>
             </div>
+            
             <div class="mb-2">
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </div>
@@ -206,6 +217,11 @@
                     </button>
                 </a>
             </div>
+
+
+        
+
+
             @if ($proyt->actimpacto == 1)
                 <div class="mb-2">
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -219,7 +235,19 @@
                 </form>
             @endif
         @endif
-
+<div class="mb-2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+<a href="{{ route('impactoproy', $proyt->id) }}"
+   class="btn btn-impact d-inline-flex align-items-center gap-2"
+   id="redondb"
+   data-bs-toggle="tooltip"
+   data-bs-placement="top"
+   title="Editar Impacto Socioeconómico"
+   aria-label="Editar Impacto Socioeconómico">
+    <i class='bx bx-line-chart bx-sm'></i>
+    <span class="text-start">
+        <small class="d-block lh-1">Impacto socioeconómico</small>
+    </span>
+</a>
         @if ($LoggedUserInfo['acceso'] == 1)
         <div>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

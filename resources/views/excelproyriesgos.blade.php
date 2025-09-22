@@ -138,7 +138,7 @@ $reporteriesgos->setCellValue('B1', 'REPORTE DE RIESGOS DE ALTA PRIORIDAD');
 
 $reporteriesgos->setCellValue("B2", "Área de Adscripción");
 $reporteriesgos->mergeCells("C2:H2");
-$reporteriesgos->setCellValue('C2', $area->nombre_area);
+$reporteriesgos->setCellValue('C2', strip_tags(html_entity_decode($area->nombre_area)));
 
 // INICIO DE TITULOS PARA EL REPORTE
 $reporteriesgos->mergeCells("A4:B4");
@@ -248,7 +248,7 @@ foreach($proysFiltrados as $proy){
     }else{
         $claveProyecto = $proy->clavea . $proy->clavet . '-' . $proy->claven . '/' . $proy->clavey;
     }
-    $reporteriesgos->setCellValue($col . "5", $claveProyecto);
+    $reporteriesgos->setCellValue($col . "5", strip_tags(html_entity_decode($claveProyecto)));
     $lc++;
 }
 
@@ -333,7 +333,7 @@ $proyectosRiesgosAltoP = [];
 
 foreach($riesgosOrdenados as $riesgoId){
     $reporteriesgos->setCellValue('A' . $cont, $num); 
-    $reporteriesgos->setCellValue('B' . $cont, $riesgos->find($riesgoId)->tiporiesgo);
+    $reporteriesgos->setCellValue('B' . $cont, strip_tags(html_entity_decode($riesgos->find($riesgoId)->tiporiesgo)));
 
     $documento->getActiveSheet()->getStyle('A' . $cont)
         ->getBorders()->getOutline()

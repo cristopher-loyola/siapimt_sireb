@@ -56,7 +56,7 @@
           	 @else <td id="aling">{{$pr->clavea.$pr->clavet.'-'.$pr->claven.'/'.$pr->clavey}}</td>
 		 @endif
 
-          <td id="aling">{{$pr->nomproy}}</td>
+          <td id="aling">{{ strip_tags(html_entity_decode($pr->nomproy)) }}</td>
           <td id="aling">{{$pr->nivel1}}</td>
           <td id="aling">{{$pr->nivel2}}</td>
           <td id="aling">{{$pr->nivel3}}</td>
@@ -112,7 +112,7 @@
             <td id="aling">{{$pr->progreso}}%</td>
           @endif
 
-          <td id="aling">{{$pr->Nombre.' '.$pr->Apellido_Paterno.' '.$pr->Apellido_Materno}}</td>
+          <td id="aling">{{ strip_tags(html_entity_decode($pr->responsable)) }}</td>
           <td id="aling">
             @foreach ($contri as $con)
               @if ($pr->id == $con->idproyecto)

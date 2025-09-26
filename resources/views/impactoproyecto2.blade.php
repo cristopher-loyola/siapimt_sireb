@@ -181,6 +181,7 @@
             background-color: #1A2C6E; /* Mismo color de la ceja */
             border-radius: 5px 5px 0 0; /* Bordes redondeados para la ceja */
         }
+
         .boton-ceja-carpeta:hover {
             background-color: #2742a5; /* Cambio de color al pasar el ratón */
         }
@@ -246,6 +247,29 @@
             margin-bottom: 12px;
             text-align: center;
         }
+        .pdf-btn-corner{
+    position: fixed;
+    top: 60px;           /* ↓ mueve 40px debajo del de Info (que está en top:20px) */
+    right: 20px;
+    background-color: #dc3545;
+    color: #fff;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: background-color .3s, transform .2s;
+}
+.pdf-btn-corner img{
+    width:16px; height:16px; margin-right:5px;
+}
+.pdf-btn-corner:hover{
+    background-color:#b02a37;
+    transform: scale(1.05);
+}
 /*NUEVA LETRA PARA LA CARD Y EL TEXTO ENTRE LAS COMILLAS*/
         body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -479,43 +503,73 @@
     <img src="{{asset('/img/info-chat.png')}}" alt="Información del Proyecto"> Info Proyecto
 </a>
 
+
+
+{{-- Botón para generar PDF --}}
+    <a 
+    href="{{ url('impactoproyecto/pdf/'.$proyt->id) }}" 
+    class="pdf-btn-corner"
+    target="_blank"
+    rel="noopener"
+    title="Generar PDF de Impacto Socioeconómico">
+     Generar PDF
+    </a>
+
     
     <form action="{{ route('upimpactoproy2', $proyt->id) }}" method="POST">
-    <div id="cejas">
-        <button name="oculto" type="submit" value="1"
-        @if($proytImp->crit1 != null && $proytImp->vcrit1 != 0 && $proytImp->crit2 != 0 &&
-            $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0
-            && $proytImp->descImpSoc != null)
-            class="boton-ceja-carpeta-success"
+<div id="cejas">
+    {{-- Social --}}
+    <button name="oculto" type="submit" value="1"
+        class="
+        @if(($activeTab ?? 0) == 1)
+            boton-ceja-carpeta-actual
+        @elseif($proytImp->crit1 != null && $proytImp->vcrit1 != 0 && $proytImp->crit2 != 0 &&
+                $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0 &&
+                $proytImp->descImpSoc != null)
+            boton-ceja-carpeta-success
         @else
-            class="boton-ceja-carpeta"
-        @endif>   
-            Social
-        </button>
-        <button name="oculto" type="submit" value="2"
-            @if($proytImp->crit4 != null && $proytImp->vcrit4 != 0 && $proytImp->crit5 != null
-            && $proytImp->vcrit5 != 0 && $proytImp->crit6 != null && $proytImp->vcrit6 != 0
-            && $proytImp->descImpEco != null)
-            class="boton-ceja-carpeta-success"
+            boton-ceja-carpeta
+        @endif
+        ">
+        Social
+    </button>
+
+    {{-- Económico --}}
+    <button name="oculto" type="submit" value="2"
+        class="
+        @if(($activeTab ?? 0) == 2)
+            boton-ceja-carpeta-actual
+        @elseif($proytImp->crit4 != null && $proytImp->vcrit4 != 0 && $proytImp->crit5 != null &&
+                $proytImp->vcrit5 != 0 && $proytImp->crit6 != null && $proytImp->vcrit6 != 0 &&
+                $proytImp->descImpEco != null)
+            boton-ceja-carpeta-success
         @else
-            class="boton-ceja-carpeta"
-        @endif>
-            Económico
-        </button>
-        <button name="oculto" type="submit" value="3"
-        @if($proytImp->crit1 != 0 && $proytImp->vcrit1 != 0 && $proytImp->crit2 != 0 &&
-            $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0 &&
-            $proytImp->descImpEco != null && $proytImp->crit4 != null && $proytImp->vcrit4 != 0 && 
-            $proytImp->crit5 != null && $proytImp->vcrit5 != 0 && $proytImp->crit6 != null && 
-            $proytImp->vcrit6 != 0 && $proytImp->descImpEco != null && $proytImp->nivelImp != null && 
-            $proytImp->escalaImp != 0)
-            class="boton-ceja-carpeta-success"
+            boton-ceja-carpeta
+        @endif
+        ">
+        Económico
+    </button>
+
+    {{-- Resultado --}}
+    <button name="oculto" type="submit" value="3"
+        class="
+        @if(($activeTab ?? 0) == 3)
+            boton-ceja-carpeta-actual
+        @elseif($proytImp->crit1 != 0 && $proytImp->vcrit1 != 0 && $proytImp->crit2 != 0 &&
+                $proytImp->vcrit2 != 0 && $proytImp->crit3 != null && $proytImp->vcrit3 != 0 &&
+                $proytImp->descImpEco != null && $proytImp->crit4 != null && $proytImp->vcrit4 != 0 &&
+                $proytImp->crit5 != null && $proytImp->vcrit5 != 0 && $proytImp->crit6 != null &&
+                $proytImp->vcrit6 != 0 && $proytImp->descImpEco != null && $proytImp->nivelImp != null &&
+                $proytImp->escalaImp != 0)
+            boton-ceja-carpeta-success
         @else
-            class="boton-ceja-carpeta"
-        @endif>
-            Resultado
-        </button>
-    </div>
+            boton-ceja-carpeta
+        @endif
+        ">
+        Resultado
+    </button>
+</div>
+
     <div style="height: 30px"></div>
     <div id="formulario">
         <div>

@@ -463,6 +463,8 @@
 <a href="{{ route('infoproys', $proyt->id) }}" class="info-btn-corner">
     <img src="{{asset('/img/info-chat.png')}}" alt="Información del Proyecto"> Info Proyecto
 </a>
+
+
     <form action="{{ route('upimpactoproy', $proyt->id) }}" method="POST">
     <div id="cejas">
         <button name="oculto" type="submit" value="1"  class="boton-ceja-carpeta-actual"

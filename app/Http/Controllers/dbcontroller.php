@@ -2585,8 +2585,9 @@ class dbcontroller extends Controller
                 $res = $proytImp->save();
 
         }
+        $activeTab = 3;
         return view('impactoproyecto2', $data, compact('uniq', 'proyt', 'proytImp','vimpacto','vtarea','vrecurso',
-        'vriesgo','vcontri','vequipo', 'impacto', 'escalaTot', 'nivelImp'));
+        'vriesgo','vcontri','vequipo', 'impacto', 'escalaTot', 'nivelImp','activeTab'));
     }
 
     public function upimpactoproy2(Request $request, $id){
@@ -6504,6 +6505,88 @@ class dbcontroller extends Controller
             return view('excelContrato', $data,compact('afectaciones','total','ncontratos'));
         }
     }
+
+    public function exportImpactoPdf($id)
+{
+
+    $proyt     = Proyecto::where('id', $id)->firstOrFail();
+    $proytImp  = Impacto::firstOrCreate(
+        ['idproyecto' => $id],
+        [
+            'crit1'=>null,'vcrit1'=>0,'crit2'=>null,'vcrit2'=>0,'crit3'=>null,'vcrit3'=>0,
+            'crit4'=>null,'vcrit4'=>0,'crit5'=>null,'vcrit5'=>0,'crit6'=>null,'vcrit6'=>0,
+            'descImpSoc'=>null,'descImpEco'=>null,'escalaImp'=>0,'nivelImp'=>null,'completado'=>0,
+        ]
+    );
+
+    
+    $problemSoc = ProblemSocial::all()->keyBy('id');
+    $escalaImp  = EscalaImpacto::all()->keyBy('id');
+    $contriSoc  = ContribucionSocial::all()->keyBy('id');
+    $eficiTransp = EficienciaTransp::all()->keyBy('id');
+    $produTransp = ProductividadTransp::all()->keyBy('id');
+    $contriEco   = ContribucionEcono::all()->keyBy('id');
+
+    // Mapear selecciones (CSV -> arrays de descripciones)
+    $selContriSocIds = $proytImp->crit3 ? array_filter(explode(',', $proytImp->crit3)) : [];
+    $selContriSocTxt = array_values(array_map(function($i) use($contriSoc){
+        return isset($contriSoc[$i]) ? $contriSoc[$i]->descContribucionS : '';
+    }, $selContriSocIds));
+
+    $selEfiIds = $proytImp->crit4 ? array_filter(explode(',', $proytImp->crit4)) : [];
+    $selEfiTxt = array_values(array_map(function($i) use($eficiTransp){
+        return isset($eficiTransp[$i]) ? $eficiTransp[$i]->descEficiencia : '';
+    }, $selEfiIds));
+
+    $selProdIds = $proytImp->crit5 ? array_filter(explode(',', $proytImp->crit5)) : [];
+    $selProdTxt = array_values(array_map(function($i) use($produTransp){
+        return isset($produTransp[$i]) ? $produTransp[$i]->descProductividad : '';
+    }, $selProdIds));
+
+    $selEcoIds = $proytImp->crit6 ? array_filter(explode(',', $proytImp->crit6)) : [];
+    $selEcoTxt = array_values(array_map(function($i) use($contriEco){
+        return isset($contriEco[$i]) ? $contriEco[$i]->descContribucionE : '';
+    }, $selEcoIds));
+
+    // Cálculo Resultado (escala total + nivel) asegurado aquí para el PDF
+    $escalaTot = (int)($proytImp->vcrit1) + (int)($proytImp->vcrit2) + (int)($proytImp->vcrit3)
+               + (int)($proytImp->vcrit4) + (int)($proytImp->vcrit5) + (int)($proytImp->vcrit6);
+
+    $nivelImp = null;
+    if ($escalaTot >= 6 && $escalaTot <= 10)      $nivelImp = 'Muy Bajo';
+    elseif ($escalaTot >= 11 && $escalaTot <= 15) $nivelImp = 'Bajo';
+    elseif ($escalaTot >= 16 && $escalaTot <= 20) $nivelImp = 'Medio';
+    elseif ($escalaTot >= 21 && $escalaTot <= 25) $nivelImp = 'Alto';
+    elseif ($escalaTot >= 26 && $escalaTot <= 30) $nivelImp = 'Muy Alto';
+
+    // Si no están guardados, no forzamos save; solo mostramos
+    $problemaSocialTxt = $proytImp->crit1 && isset($problemSoc[$proytImp->crit1])
+        ? $problemSoc[$proytImp->crit1]->descProb : '—';
+
+    $escalaGeograficaTxt = $proytImp->crit2 && isset($escalaImp[$proytImp->crit2])
+        ? $escalaImp[$proytImp->crit2]->descEscala : '—';
+
+    // Render del PDF con una vista única
+    $pdf = Pdf::loadView('pdf.impacto_socioeconomico', [
+        'proyt'  => $proyt,
+        'proytImp' => $proytImp,
+        // Social
+        'problemaSocialTxt' => $problemaSocialTxt,
+        'escalaGeograficaTxt' => $escalaGeograficaTxt,
+        'selContriSocTxt' => $selContriSocTxt,
+        // Económico
+        'selEfiTxt'  => $selEfiTxt,
+        'selProdTxt' => $selProdTxt,
+        'selEcoTxt'  => $selEcoTxt,
+        // Resultado
+        'escalaTot' => $escalaTot,
+        'nivelImp'  => $nivelImp,
+    ]);
+
+    // stream() abre en el navegador; download() descarga
+    return $pdf->stream('Impacto_Socioeconomico_'.$proyt->id.'.pdf');
+}
+
 /*Excel Módulo Financiero  Fin*/
 
 /**/

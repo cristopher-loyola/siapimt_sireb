@@ -72,6 +72,10 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
         Route::post('upimpactoproy/{id}',[dbcontroller::class,'upimpactoproy'])->name('upimpactoproy');
         Route::post('upimpactoproy1/{id}',[dbcontroller::class,'upimpactoproy1'])->name('upimpactoproy1');
         Route::post('upimpactoproy2/{id}',[dbcontroller::class,'upimpactoproy2'])->name('upimpactoproy2');
+
+        //RUTAS PARA EXPORTAR PDF EN IMPACTO SOCIOECONOMICO
+        Route::get('/impactoproyecto/pdf/{id}', [App\Http\Controllers\dbcontroller::class, 'exportImpactoPdf'])
+     ->name('impacto.pdf');
     // TERMINAN RUTAS
 
     Route::get('proydatos/{id}',[dbcontroller::class, 'proydatos'])->name('proydatos');

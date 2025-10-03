@@ -100,6 +100,10 @@ Route::group(['middleware'=>'isLogged','preventBackHistory'], function()
     Route::get('gprotocolo/{id}', [dbcontroller::class, 'gprotocolo'])->name('gprotocolo');
     Route::get('gprotocolo2/{id}', [dbcontroller::class, 'gprotocolo2'])->name('gprotocolo2');
 
+    ///vista protocolo
+    Route::get('/protocolo/view/{id}', [dbcontroller::class, 'protocolo_view'])->name('protocolo_view');
+
+
     Route::get('adpindex',[dbcontroller::class, 'adpindex'])->name('adpindex');
     Route::get('changestatuspro',[dbcontroller::class, 'changestatuspro'])->name('changestatuspro');
     /* la ruta para actualizar mediante la funcion de ajax con json se define de la sig. manera

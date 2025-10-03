@@ -6585,7 +6585,38 @@ class dbcontroller extends Controller
 
     // stream() abre en el navegador; download() descarga
     return $pdf->stream('Impacto_Socioeconomico_'.$proyt->id.'.pdf');
+
+    
 }
+public function protocolo_view($id)
+{
+    // Recupera el proyecto
+    $proyt = Proyecto::where('id', $id)->first();
+
+    // Verifica que el proyecto exista
+    if (!$proyt) {
+        abort(404, 'Proyecto no encontrado');
+    }
+
+    // Recupera el usuario responsable
+    $user = User::where('id', $proyt->idusuarior)->first();
+
+    // Recupera el director
+    $director = User::where('id', $proyt->director)->first();
+
+    // Si no existe el usuario o el director, maneja el error
+    if (!$user) {
+        $user = (object) ['Nombre' => 'No disponible', 'Apellido_Paterno' => 'No disponible', 'Apellido_Materno' => 'No disponible'];
+    }
+    if (!$director) {
+        $director = (object) ['Nombre' => 'No disponible', 'Apellido_Paterno' => 'No disponible', 'Apellido_Materno' => 'No disponible'];
+    }
+
+    // Pasa los datos a la vista
+    return view('protocolo_view', compact('proyt', 'user', 'director'));
+}
+
+
 
 /*Excel Módulo Financiero  Fin*/
 

@@ -703,6 +703,26 @@
     <link href="{{ asset('vendor/quill/quill-table-ui.min.css') }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}"> 
 </head>
+@php
+    // Modo solo lectura si NO viene ?crear=1
+    $soloLectura = request('crear') != 1;
+@endphp
+
+@if($soloLectura)
+<style>
+  /* apariencia de solo lectura y ocultar botones de submit */
+  .solo-lectura input:not([type="hidden"]),
+  .solo-lectura select,
+  .solo-lectura textarea {
+    background:#f7f7f7;
+    pointer-events:none; /* bloquea clicks/ediciones */
+  }
+  .solo-lectura button[type="submit"],
+  .solo-lectura input[type="submit"] {
+    display:none !important; /* no mostrar guardar/envíos */
+  }
+</style>
+@endif
 <body>
     <header>
         <img src="../img/Logo_IMT.png" alt="" height="100px" width="120px">
@@ -1238,6 +1258,9 @@
         </button>
     </div>
     <br>
+       @php
+    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+@endphp
     <div id="formulario">
         <div>
             @if (Session::has('success'))
@@ -1254,21 +1277,34 @@
                 {{$proyt->nomproy}}
             </div>
             <br>
-            <label> Objetivo </label>
-            <div style="height: 10px;"></div>
-            @php
-                $objetivo = old('objetivo', $proyt->objetivo ?? '');
-                $placeholderObj = 'Describe con precisión los propósitos de la investigación. Es necesario incluir el objetivo general y los objetivos específicos.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="objetivo"
-                    @if(empty(strip_tags($objetivo)))
-                        placeholder="{{ $placeholderObj }}"
-                    @endif
-                >@if(!empty(strip_tags($objetivo))){!! $objetivo !!}@endif</div>
-                <input type="hidden" name="objetivo" value="{{ $objetivo }}">
-                <span class="text-danger">@error('objetivo') {{$message}} @enderror</span>
-            </div>
+<label> Objetivo </label>
+<div style="height: 10px;"></div>
+
+@php
+    $objetivo = old('objetivo', $proyt->objetivo ?? '');
+    $placeholderObj = 'Describe con precisión los propósitos de la investigación. Es necesario incluir el objetivo general y los objetivos específicos.';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)  <!-- Verifica si está en modo solo lectura (proyecto concluido) -->
+        <!-- Modo solo lectura: Mostrar el contenido en un textarea solo lectura -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($objetivo)) ?: $placeholderObj }}</textarea>
+    @else
+        <!-- Modo edición: Mostrar el editor Quill -->
+        <div id="editor-objetivo" class="editor-quill" data-input="objetivo">
+            @if(empty(strip_tags($objetivo)))
+                <!-- Si no hay contenido, se muestra el placeholder -->
+                <div class="ql-placeholder">{{ $placeholderObj }}</div>
+            @else
+                <!-- Si hay contenido, se muestra en el editor Quill -->
+                {!! $objetivo !!}
+            @endif
+        </div>
+    @endif
+
+    <input type="hidden" name="objetivo" value="{{ $objetivo }}">
+    <span class="text-danger">@error('objetivo') {{$message}} @enderror</span>
+</div>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)
@@ -1359,21 +1395,33 @@
             @endif
 
             <br>
-            <label> Objetivo específicos </label>
-            <div style="height: 10px;"></div>
-            @php
-                $objetivoespc = old('objetivoespc', $proyt->objespecifico ?? '');
-                $placeholderObjEsp = 'Describe los objetivos específicos de la investigación.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="objetivoespc"
-                    @if(empty(strip_tags($objetivoespc)))
-                        placeholder="{{ $placeholderObjEsp }}"
-                    @endif
-                >@if(!empty(strip_tags($objetivoespc))){!! $objetivoespc !!}@endif</div>
-                <input type="hidden" name="objetivoespc" value="{{ $objetivoespc }}">
-                <span class="text-danger">@error('objetivoespc') {{$message}} @enderror</span>
-            </div>
+  <label> Objetivo específicos </label>
+<div style="height: 10px;"></div>
+
+@php
+    $objetivoespc = old('objetivoespc', $proyt->objespecifico ?? '');
+    $placeholderObjEsp = 'Describe los objetivos específicos de la investigación.';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)
+        <!-- Solo lectura -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($objetivoespc)) ?: $placeholderObjEsp }}</textarea>
+    @else
+        <!-- Edición con Quill -->
+        <div id="editor-objetivoespc" class="editor-quill" data-input="objetivoespc">
+            @if(empty(strip_tags($objetivoespc)))
+                <div class="ql-placeholder">{{ $placeholderObjEsp }}</div>
+            @else
+                {!! $objetivoespc !!}
+            @endif
+        </div>
+    @endif
+
+    <!-- Donde se envía al servidor -->
+    <input type="hidden" name="objetivoespc" value="{{ $objetivoespc }}">
+    <span class="text-danger">@error('objetivoespc') {{$message}} @enderror</span>
+</div>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)
@@ -1464,21 +1512,33 @@
             @endif
 
             <br>
-            <label> Alcances </label>
-            <div style="height: 10px;"></div>
-            @php
-                $alcance = old('alcance', $proyt->alcance ?? '');
-                $placeholderAlc = 'Describe las metas que se deben cumplir o los resultados que se obtendrán a partir de la ejecución del proyecto, de tal manera que se acote el trabajo a realizar en términos de profundidad y extensión.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="alcance"
-                    @if(empty(strip_tags($alcance)))
-                        placeholder="{{ $placeholderAlc }}"
-                    @endif
-                >@if(!empty(strip_tags($alcance))){!! $alcance !!}@endif</div>
-                <input type="hidden" name="alcance" value="{{ $alcance }}">
-                <span class="text-danger">@error('alcance') {{$message}} @enderror</span>
-            </div>
+           <label> Alcances </label>
+<div style="height: 10px;"></div>
+
+@php
+    $alcance = old('alcance', $proyt->alcance ?? '');
+    $placeholderAlc = 'Describe las metas que se deben cumplir o los resultados que se obtendrán a partir de la ejecución del proyecto, de tal manera que se acote el trabajo a realizar en términos de profundidad y extensión.';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)
+        <!-- Solo lectura -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($alcance)) ?: $placeholderAlc }}</textarea>
+    @else
+        <!-- Edición con Quill -->
+        <div id="editor-alcance" class="editor-quill" data-input="alcance">
+            @if(empty(strip_tags($alcance)))
+                <div class="ql-placeholder">{{ $placeholderAlc }}</div>
+            @else
+                {!! $alcance !!}
+            @endif
+        </div>
+    @endif
+
+    <!-- Valor para enviar al backend -->
+    <input type="hidden" name="alcance" value="{{ $alcance }}">
+    <span class="text-danger">@error('alcance') {{$message}} @enderror</span>
+</div>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)
@@ -1569,21 +1629,34 @@
             @endif
 
             <br>
-            <label> Metodología </label>
-            <div style="height: 10px;"></div>
-            @php
-                $metodologia = old('metodologia', $proyt->metodologia ?? '');
-                $placeholderMet = 'Describe el método a utilizar en la investigación (inductivo, deductivo o experimental, entre otros), las fases que la integran y sus relaciones lógicas. También se deben describir las técnicas (estadística descriptiva, regresión y correlación, optimización matemática, heurísticas o simulación, entre otras) que se utilizarán y las razones que explican su elección.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="metodologia"
-                    @if(empty(strip_tags($metodologia)))
-                        placeholder="{{$placeholderMet}}"
-                    @endif>
-                    @if(!empty(strip_tags($metodologia))){!!$metodologia!!}@endif</div>
-                <input type="hidden" name="metodologia" value="{{$metodologia}}">
-                <span class="text-danger">@error('metodologia') {{$message}} @enderror</span>
-            </div>
+           <label> Metodología </label>
+<div style="height: 10px;"></div>
+
+@php
+    $metodologia = old('metodologia', $proyt->metodologia ?? '');
+    $placeholderMet = 'Describe el método a utilizar en la investigación (inductivo, deductivo o experimental, entre otros), las fases que la integran y sus relaciones lógicas. También se deben describir las técnicas (estadística descriptiva, regresión y correlación, optimización matemática, heurísticas o simulación, entre otras) que se utilizarán y las razones que explican su elección.';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)
+        <!-- Solo lectura -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($metodologia)) ?: $placeholderMet }}</textarea>
+    @else
+        <!-- Edición con Quill -->
+        <div id="editor-metodologia" class="editor-quill" data-input="metodologia">
+            @if(empty(strip_tags($metodologia)))
+                <div class="ql-placeholder">{{ $placeholderMet }}</div>
+            @else
+                {!! $metodologia !!}
+            @endif
+        </div>
+    @endif
+
+    <!-- Valor para enviar al backend -->
+    <input type="hidden" name="metodologia" value="{{ $metodologia }}">
+    <span class="text-danger">@error('metodologia') {{$message}} @enderror</span>
+</div>
+
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)

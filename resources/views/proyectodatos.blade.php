@@ -71,7 +71,7 @@
             text-align: center;
             overflow: hidden;
             resize: none;
-            width: 100%;
+            width: 400px;
             border-color: #aacfe7;
             /* padding-right: 30px; */
         }
@@ -320,6 +320,27 @@
     <script src="{{ asset('vendor/quill/quill-table-ui.min.js') }}"></script>
     <script src="{{ asset('js/quill-config.js') }}"></script>
 </head>
+@php
+    // Modo solo lectura si NO viene ?crear=1
+    $soloLectura = request('crear') != 1;
+@endphp
+
+@if($soloLectura)
+<style>
+  /* apariencia de solo lectura y ocultar botones de submit */
+  .solo-lectura input:not([type="hidden"]),
+  .solo-lectura select,
+  .solo-lectura textarea {
+    background:#f7f7f7;
+    pointer-events:none; /* bloquea clicks/ediciones */
+  }
+  .solo-lectura button[type="submit"],
+  .solo-lectura input[type="submit"] {
+    display:none !important; /* no mostrar guardar/envíos */
+  }
+</style>
+@endif
+
 <body>
     <header>
         <img src="../img/Logo_IMT.png" alt="" height="100px" width="120px">
@@ -809,63 +830,79 @@
     </div>
     <div style="height: 30px"></div>
     <br>
-    <div id="formulario">
+  @php
+    // Verifica si el proyecto está concluido (estado '2')
+    $soloLectura = ($proyt->estado == 2); // Solo lectura cuando el estado es '2' (concluido)
+@endphp
+
+<div id="formulario">
+    <div>
+        @if (Session::has('success'))
+            <div id="exito">{{ Session::get('success') }}</div>
+            <br>
+        @endif
+        @if (Session::has('fail'))
+            <div id="fallo">{{ Session::get('fail') }}</div>
+            <br>
+        @endif
+        @csrf
+
+        <div id="clave">
+            {{$proyt->clavea}}{{$proyt->clavet}}-@if($proyt->claven < 10)0{{$proyt->claven}}@else{{$proyt->claven}}@endif/{{$proyt->clavey}}
+        </div>
+        <div style="height: 50px"></div>
+
+        <!-- Nombre del Proyecto (textarea) -->
         <div>
-            @if (Session::has('success'))
-                <div id="exito">{{Session::get('success')}}</div>
-                <br>
-            @endif
-            @if (Session::has('fail'))
-                <div id="fallo">{{Session::get('fail')}}</div>
-                <br>
-            @endif
-            @csrf
-            <div id="clave">
-                {{$proyt->clavea}}{{$proyt->clavet}}-@if($proyt->claven < 10)0{{$proyt->claven}}@else{{$proyt->claven}}@endif/{{$proyt->clavey}}
-            </div>
-            <div style="height: 50px"></div>
-            <div>
-                <textarea type="text" name="nameproy" value="" maxlength="200"
-                style="text-transform:uppercase" id="nameproy" oninput="autoResize(this)" onkeyup="javascript:this.value=this.value.toUpperCase();">{{$proyt->nomproy}}</textarea>
-            </div>
-            <div style="height: 30px"></div>
-            <div class="contenedor">
-                <div class="columna">
-                    Responsable
-                    <p></p>
-                    <select name="respon" id="respon" onchange="cambio(this)">
-                        <option value="{{ $users->id }}">{{$users->Nombre.' '.$users->Apellido_Paterno.' '.$users->Apellido_Materno}}</option>
+            <textarea name="nameproy" maxlength="200" 
+                      style="text-transform:uppercase" 
+                      id="nameproy" 
+                      oninput="autoResize(this)" 
+                      onkeyup="javascript:this.value=this.value.toUpperCase();"
+                      @if($soloLectura) readonly @endif>
+                {{$proyt->nomproy}}
+            </textarea>
+        </div>
+        <div style="height: 30px"></div>
+
+        <div class="contenedor">
+
+            <!-- Responsable (select) -->
+            <div class="columna">
+                Responsable
+                <p></p>
+                <select name="respon" id="respon" onchange="cambio(this)" @if($soloLectura) readonly @endif>
+                    <option value="{{ $users->id }}">
+                        {{ $users->Nombre.' '.$users->Apellido_Paterno.' '.$users->Apellido_Materno }}
+                    </option>
+                    @if(!$soloLectura)
                         <option value="">Selecciona al responsable</option>
                         @foreach ($user as $use)
-                            <option value="{{ $use->id }}" class="coloroption">{{$use->Nombre.' '.$use->Apellido_Paterno.' '.$use->Apellido_Materno}}</option>
+                            <option value="{{ $use->id }}" class="coloroption">
+                                {{ $use->Nombre.' '.$use->Apellido_Paterno.' '.$use->Apellido_Materno }}
+                            </option>
                         @endforeach
-                    </select>
-                    <span class="text-danger">@error('respon') {{$message}} @enderror</span>
-                </div>
-                <div class="columna">
-                    Aprobó
-                    <p></p>
-                    <select name="aprobo" id="aprobo" onchange="cambioa(this)">
-                        <option value="{{$respon->id}}">
-                            {{$respon->Nombre.' '.$respon->Apellido_Paterno.' '.$respon->Apellido_Materno}}
-                        </option>
-                    </select>
-                    <span class="text-danger">@error('aprobo') {{$message}} @enderror</span>
-                </div>
-            </div>
-            <div style="height: 30px"></div>
-            {{-- <div class="contenedor">
-                <div class="columna" style="text-align: center">
-                    @if($proyt->completado != 1)
-                        <a href="{{ route('cancelcrud')}}">
-                            <button type="button" id="back" style="width: 100px">
-                                <img src="../img/back.png" width="25px" height="25px" alt="">
-                                &nbsp;
-                                <img src="../img/homeb.png" width="25px" height="25px" alt="">
-                            </button>
-                        </a>
                     @endif
-                </div>
+                </select>
+                <span class="text-danger">@error('respon') {{$message}} @enderror</span>
+            </div>
+            <div class="columna">
+                Aprobó
+                <p></p>
+                <select name="aprobo" id="aprobo" onchange="cambioa(this)" @if($soloLectura) readonly @endif>
+                    <option value="{{$respon->id}}">
+                        {{$respon->Nombre.' '.$respon->Apellido_Paterno.' '.$respon->Apellido_Materno}}
+                    </option>
+                </select>
+                <span class="text-danger">@error('aprobo') {{$message}} @enderror</span>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+            <!-- </div>
                 <div class="columna" style="text-align: center">
                     <button type="submit" id="actualizar">
                         <img src="../img/save.png" width="25px" height="25px" alt="">
@@ -873,7 +910,7 @@
                         Guardar
                     </button>
                 </div>
-            </div> --}}
+            </div>  -->
         </div>
     </div>
     </form>

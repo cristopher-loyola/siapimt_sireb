@@ -153,7 +153,8 @@
     </div>
 
     <div class="mb-1 input-group">
-        @if ($proyt->estado == 1 || $proyt->estado == 0 || $proyt->estado == 4 )
+@if ($proyt->estado == 0 || $proyt->estado == 1 || $proyt->estado == 4)
+
         <div>
             @if ($LoggedUserInfo['pcospii'] == 1 && $LoggedUserInfo['id'] != $proyt->idusuarior )
                 <a href="{{ route('firmarcospiii')}}">
@@ -183,23 +184,6 @@
             </button>
         </form>
         </div>
-            @if($proyt->completado == 1)
-                {{-- @if ($proyt->gprotocolo == 2) --}}
-                    <div class="mb-2">
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    </div>
-                    <div>
-                        <form action="{{route('gprotocolo2', $proyt->id)}}" method="GET">
-                            @csrf
-                            <button type="submit" class="btn btn-warning" id="redondb">
-                                <img src="../img/export.png" width="32em" height="32em"
-                                alt="" style="margin-bottom: .1em">
-                                Protocolo
-                            </button>
-                        </form>
-                    </div>
-                {{-- @endif --}}
-            @endif
         {{-- <div >
             <form action="{{route('excelinfoproyecto', $proyt->id)}}" method="get">
                 <button type="submit" class="btn btn-warning" tabindex="5" id="redondb">
@@ -217,10 +201,17 @@
                     </button>
                 </a>
             </div>
+           <div class="mb-2">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</div>
 
-
-        
-
+<form action="{{ route('proydatos', $proyt->id) }}" method="GET">
+    {{-- sin crear=1 => solo lectura --}}
+    <button type="submit" class="btn btn-secondary" id="redondb">
+        <i class='bx bx-show-alt bx-sm bx-fw bx-flashing-hover'></i>
+        Ver detalles
+    </button>
+</form>
 
             @if ($proyt->actimpacto == 1)
                 <div class="mb-2">
@@ -235,19 +226,48 @@
                 </form>
             @endif
         @endif
-<div class="mb-2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-<a href="{{ route('impactoproy', $proyt->id) }}"
-   class="btn btn-impact d-inline-flex align-items-center gap-2"
-   id="redondb"
-   data-bs-toggle="tooltip"
-   data-bs-placement="top"
-   title="Editar Impacto Socioeconómico"
-   aria-label="Editar Impacto Socioeconómico">
-    <i class='bx bx-line-chart bx-sm'></i>
-    <span class="text-start">
-        <small class="d-block lh-1">Impacto socioeconómico</small>
-    </span>
-</a>
+           <div class="mb-2">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</div>
+<div>
+    <form action="{{ route('gprotocolo2', $proyt->id) }}" method="GET">
+        @csrf
+        <button type="submit" class="btn btn-warning" id="redondb">
+            <img src="../img/export.png" width="32em" height="32em" alt="" style="margin-bottom: .1em">
+            Protocolo
+        </button>
+    </form>
+</div>
+{{-- BOTÓN ISE: sólo para proyectos concluidos con ≥ 2 meses desde la fecha de conclusión --}}
+@php
+    // Ajusta el valor si "concluido" no es 2 en tu sistema
+    $esConcluido = ($proyt->estado == 2);
+
+    // Usa la fecha real de conclusión. Cambia a $proyt->fecha_conclusion si tienes ese campo
+    $fechaConclusion = $proyt->fecha_fin ? \Carbon\Carbon::parse($proyt->fecha_fin) : null;
+
+    // Deben haber transcurrido al menos 2 meses completos
+    $hanPasado2Meses = $fechaConclusion
+        ? $fechaConclusion->lte(\Carbon\Carbon::today()->subMonthsNoOverflow(2))
+        : false;
+@endphp
+
+@if($esConcluido && $hanPasado2Meses)
+    <div class="mb-2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    <a href="{{ route('impactoproy', $proyt->id) }}"
+       class="btn btn-impact d-inline-flex align-items-center gap-2"
+       id="redondb"
+       data-bs-toggle="tooltip"
+       data-bs-placement="top"
+       title="Calcular ISE"
+       aria-label="Calcular ISE">
+        <i class='bx bx-line-chart bx-sm'></i>
+        <span class="text-start">
+            <small class="d-block lh-1">Calcular ISE</small>
+        </span>
+    </a>
+@endif
+
         @if ($LoggedUserInfo['acceso'] == 1)
         <div>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -721,44 +741,6 @@
                     <label class="form-label">Objetivo del proyecto</label>
                     <textarea class="form-control" name="objetivo" id="objetivo" rows="3" disabled>{{strip_tags($proyt->objetivo)}}</textarea>
                     {{-- <p>{!!$proyt->objetivo!!}</p> --}}
-                </div>
-            </div>
-
-            <div class="mb-1 input-group">
-                <div class="mb-4 col">
-                    <label class="form-label">Materia</label>
-                    @if ($proyt->materia == '')
-                        <input type="text" class="form-control" name="mate" id="mate" value="" disabled>
-                    @else
-                        <input type="text" class="form-control" name="mate" id="mate" value="{{$materia->descmateria}}" disabled>
-                    @endif
-                </div>
-                <div class="mb-4 col">
-                    <label class="form-label">Orientación</label>
-                    @if ($proyt->orientacion == '')
-                        <input type="text" class="form-control" name="orien" id="orien" value="" disabled>
-                    @else
-                        <input type="text" class="form-control" name="orien" id="orien" value="{{$orien->descorientacion}}" disabled>
-                    @endif
-                </div>
-                <div class="mb-4 col">
-                    <label class="form-label">Nivel de impacto social o Económico</label>
-                    @if ($proyt->nivel == '')
-                        <input type="text" class="form-control" name="nivel" id="nivel" value="" disabled>
-                    @else
-                        <input type="text" class="form-control" name="nivel" id="nivel" value="{{$nivel->nivel}}" disabled>
-                    @endif
-                </div>
-            </div>
-
-            <div class="mb-1 input-group">
-                <div class="mb-4 col-12"> 
-                    <label class="form-label">Investigadores participantes:</label>
-                    <textarea class="form-control" name="cont" id="cont" rows="5" disabled>
-                        @foreach ($team as $t)
-                            {{$t->Apellido_Paterno.' '.$t->Apellido_Materno.' '.$t->nombre}}
-                        @endforeach
-                    </textarea> 
                 </div>
             </div>
 

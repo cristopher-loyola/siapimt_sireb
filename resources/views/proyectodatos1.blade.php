@@ -110,7 +110,7 @@
             overflow: hidden;
             resize: none;
             width: 100%;
-            max-width: 500px;
+            max-width: 800px;
             border-color: #aacfe7;
         }
         select:hover {
@@ -589,6 +589,15 @@
             max-width: 500px;
             margin: 0 auto;
         }
+        /* Estilo para simular solo lectura */
+.readonly {
+    pointer-events: none;  /* Deshabilita la interacción del mouse */
+    background-color: #f7f7f7;  /* Cambia el fondo para reflejar el estado de solo lectura */
+    color: #999;  /* Cambia el color del texto para reflejar el estado de solo lectura */
+}
+
+
+
     </style>
     <script>
         function autoResize(textarea) {
@@ -694,8 +703,32 @@
     <meta name="csrf-token" content="{{ csrf_token() }}"> 
     
 </head>
+@php
+    // Modo solo lectura si NO viene ?crear=1
+    $soloLectura = request('crear') != 1;
+@endphp
+
+@if($soloLectura)
+<style>
+  /* apariencia de solo lectura y ocultar botones de submit */
+  .solo-lectura input:not([type="hidden"]),
+  .solo-lectura select,
+  .solo-lectura textarea {
+    background:#f7f7f7;
+    pointer-events:none; /* bloquea clicks/ediciones */
+  }
+  .solo-lectura button[type="submit"],
+  .solo-lectura input[type="submit"] {
+    display:none !important; /* no mostrar guardar/envíos */
+  }
+</style>
+@endif
+
 <body>
-    
+      @php
+        // Definir la variable $soloLectura para verificar el estado del proyecto
+        $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+    @endphp
     <header>
         <img src="../img/Logo_IMT.png" alt="" height="100px" width="120px">
         <table>
@@ -1251,6 +1284,11 @@
         </button>
     </div>
     <br>
+    
+    @php
+    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+@endphp
+
     <div id="formulario">
         <div>
             @if (Session::has('success'))
@@ -1280,16 +1318,35 @@
                     }
                 @endphp
 
-                <div class="editor-quill" data-input="justificacion"
-                    @if(empty(strip_tags($justificacion)))
-                        placeholder="{{$placeholder}}"
-                    @endif>
-                    @if(!empty(strip_tags($justificacion))){!!$justificacion !!}@endif</div>
+<div style="height: 10px;"></div>
+@php
+    $justificacion = old('justificacion', $proyt->justificacion ?? '');
+    $placeholder = 'Justificar su realización, indicando la necesidad o problemática que se busca atender en referencia a su alineación al Plan Nacional de Desarrollo, a las estrategias, las líneas de acción y objetivo del Programa Sectorial de la SICT vigentes, así como a su contribución al Decreto de creación vigente.';
+@endphp
 
-                <input type="hidden" name="justificacion" value="{{$justificacion}}">
+<div class="form-group">
+    @if($soloLectura)
+        <!-- Modo solo lectura: Mostrar el contenido en un textarea solo lectura sin etiquetas HTML -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($justificacion)) ?: $placeholder }}</textarea>
+    @else
+        <!-- Modo edición: Mostrar el editor Quill -->
+        <div class="editor-quill" data-input="justificacion">
+            @if(empty(strip_tags($justificacion)))
+                <div class="ql-placeholder">{{$placeholder}}</div>  <!-- Esto es solo una visualización inicial -->
+            @else
+                {!! $justificacion !!}  <!-- Muestra el contenido de la justificación si está disponible -->
+            @endif
+        </div>
+    @endif
+
+    <input type="hidden" name="justificacion" value="{{$justificacion}}">
+    <span class="text-danger">@error('justificacion') {{$message}} @enderror</span>
+</div>
+
+
+
                 <span class="text-danger">@error('justificacion') {{$message}} @enderror</span>
-            </div>
-
+                <br>
             {{--<div>
                 @if ($proyt->justificacion == '')
                     @if ($proyt->clavet == 'I')
@@ -1428,45 +1485,51 @@
                 @endif
             @endif
             <br>
-            <label class="form-label"> Materia </label>
-            <div class="mb-4 col">
-                <select name="materia" id="materia" onchange="cambio(this)">
-                    @if ($proyt->materia != '')
-                        @foreach ($materia as $mat)
-                            @if ($proyt->materia == $mat->id)
-                            <option value="{{$proyt->materia}}">{{$mat->descmateria}}</option>
-                            @endif
-                        @endforeach
-                    @endif
-                    <option value="{{old('materia')}}">Selecciona...</option>
-                    @foreach ($materia as $mat)
-                        <option value="{{ $mat->id }}">
-                            {{$mat->descmateria}}
-                        </option>
-                    @endforeach
-                </select>
+           <label class="form-label"> Materia </label>
+<div class="mb-4 col">
+    <select name="materia" id="materia" onchange="cambio(this)" 
+    @if($soloLectura) class="readonly" @endif>  <!-- Añadir clase 'readonly' para simular solo lectura -->
+    @if ($proyt->materia != '')
+        @foreach ($materia as $mat)
+            @if ($proyt->materia == $mat->id)
+            <option value="{{$proyt->materia}}">{{$mat->descmateria}}</option>
+            @endif
+        @endforeach
+    @endif
+    <option value="{{old('materia')}}">Selecciona...</option>
+    @foreach ($materia as $mat)
+        <option value="{{ $mat->id }}">
+            {{$mat->descmateria}}
+        </option>
+    @endforeach
+</select>
+</div>
+
+
                 <span class="text-danger">@error('materia') {{$message}} @enderror</span>
             </div>
             <br>
             <label class="form-label"> Orientación </label>
-            <div class="mb-4 col">
-                <select name="orien" id="orien" onchange="cambio1(this)">
-                    @if ($proyt->orientacion != '')
-                        @foreach ($orientacion as $ore)
-                            @if ($proyt->orientacion == $ore->id)
-                            <option value="{{$proyt->orientacion}}">{{$ore->descorientacion}}</option>
-                            @endif
-                        @endforeach
-                    @endif
-                    <option value="{{old('orien')}}">Selecciona...</option>
-                    @foreach ($orientacion as $ore)
-                        <option value="{{ $ore->id }}">
-                            {{$ore->descorientacion}}
-                        </option>
-                    @endforeach
-                </select>
-                <span class="text-danger">@error('orien') {{$message}} @enderror</span>
-            </div>
+           <div class="mb-4 col">
+    <select name="orien" id="orien" onchange="cambio1(this)" 
+        @if($soloLectura) class="readonly" @endif> <!-- Aplicamos la clase readonly si está en solo lectura -->
+        @if ($proyt->orientacion != '')
+            @foreach ($orientacion as $ore)
+                @if ($proyt->orientacion == $ore->id)
+                    <option value="{{$proyt->orientacion}}">{{$ore->descorientacion}}</option>
+                @endif
+            @endforeach
+        @endif
+        <option value="{{old('orien')}}">Selecciona...</option>
+        @foreach ($orientacion as $ore)
+            <option value="{{ $ore->id }}">
+                {{$ore->descorientacion}}
+            </option>
+        @endforeach
+    </select>
+    <span class="text-danger">@error('orien') {{$message}} @enderror</span>
+</div>
+
             <br>
             {{--<label> Nivel de impacto social o Económico </label>
             <div>
@@ -1488,21 +1551,8 @@
                 <span class="text-danger">@error('nivel') {{$message}} @enderror</span>
             </div>--}}
             <br>
-            <label> Antecedentes </label>
-            <div style="height: 10px;"></div>
-            @php
-                $antecedente = old('antecedente', $proyt->antecedente ?? '');
-                $placeholderAnt = 'Describir en un máximo de dos cuartillas el conocimiento existente sobre el tema de investigación, su evolución histórica y su relación con las aportaciones esperadas de la investigación.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="antecedente"
-                    @if(empty(strip_tags($antecedente)))
-                        placeholder="{{$placeholderAnt}}"
-                    @endif>
-                    @if(!empty(strip_tags($antecedente))){!!$antecedente!!}@endif</div>
-                <input type="hidden" name="antecedente" value="{{$antecedente}}">
-                <span class="text-danger">@error('antecedente') {{$message}} @enderror</span>
-            </div>
+
+
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)

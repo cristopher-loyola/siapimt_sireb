@@ -674,6 +674,26 @@
     <link href="{{ asset('vendor/quill/quill-table-ui.min.css') }}" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
+@php
+    // Modo solo lectura si NO viene ?crear=1
+    $soloLectura = request('crear') != 1;
+@endphp
+
+@if($soloLectura)
+<style>
+  /* apariencia de solo lectura y ocultar botones de submit */
+  .solo-lectura input:not([type="hidden"]),
+  .solo-lectura select,
+  .solo-lectura textarea {
+    background:#f7f7f7;
+    pointer-events:none; /* bloquea clicks/ediciones */
+  }
+  .solo-lectura button[type="submit"],
+  .solo-lectura input[type="submit"] {
+    display:none !important; /* no mostrar guardar/envíos */
+  }
+</style>
+@endif
 <body>
     <header>
         <img src="../img/Logo_IMT.png" alt="" height="100px" width="120px">
@@ -1161,6 +1181,9 @@
         </button>
     </div>
     <br>
+           @php
+    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+@endphp
     <div id="formulario">
         <div>
             @if (Session::has('success'))
@@ -1177,21 +1200,33 @@
                 {{$proyt->nomproy}}
             </div>
             <br>
-            <label> Producto por obtener</label>
-            <div style="height: 10px;"></div>
-            @php
-                $prodobt = old('prodobt', $proyt->producto ?? '');
-                $placeholderProd = 'Describe los productos que se obtendrán como resultado de la investigación, así como sus características, de acuerdo con el contenido que resuelva los requerimientos del cliente o las expectativas de la investigación interna conforme al Manual del COSPIII vigente.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="prodobt"
-                    @if(empty(strip_tags($prodobt)))
-                        placeholder="{{ $placeholderProd }}"
-                    @endif
-                >@if(!empty(strip_tags($prodobt))){!! $prodobt !!}@endif</div>
-                <input type="hidden" name="prodobt" value="{{ $prodobt }}">
-                <span class="text-danger">@error('prodobt') {{$message}} @enderror</span>
-            </div>
+           <label> Producto por obtener</label>
+<div style="height: 10px;"></div>
+
+@php
+    $prodobt = old('prodobt', $proyt->producto ?? '');
+    $placeholderProd = 'Describe los productos que se obtendrán como resultado de la investigación, así como sus características, de acuerdo con el contenido que resuelva los requerimientos del cliente o las expectativas de la investigación interna conforme al Manual del COSPIII vigente.';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)
+        <!-- Solo lectura -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($prodobt)) ?: $placeholderProd }}</textarea>
+    @else
+        <!-- Edición con Quill -->
+        <div id="editor-prodobt" class="editor-quill" data-input="prodobt">
+            @if(empty(strip_tags($prodobt)))
+                <div class="ql-placeholder">{{ $placeholderProd }}</div>
+            @else
+                {!! $prodobt !!}
+            @endif
+        </div>
+    @endif
+
+    <!-- Valor para enviar al backend -->
+    <input type="hidden" name="prodobt" value="{{ $prodobt }}">
+    <span class="text-danger">@error('prodobt') {{$message}} @enderror</span>
+</div>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)
@@ -1277,21 +1312,65 @@
             @endif
             
             <br>
-            <label> Compromisos del cliente </label>
-            <div style="height: 10px;"></div>
-            @php
-                $comcliente = old('comcliente', $proyt->comcliente ?? '');
-                $placeholderComp = 'Describe los insumos necesarios para el desarrollo del proyecto que serán proporcionados por el cliente, por ejemplo: información técnica, planos, especificaciones, muestras, equipos, recursos, etc.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="comcliente"
-                    @if(empty(strip_tags($comcliente)))
-                        placeholder="{{ $placeholderComp }}"
-                    @endif
-                >@if(!empty(strip_tags($comcliente))){!! $comcliente !!}@endif</div>
-                <input type="hidden" name="comcliente" value="{{ $comcliente }}">
-                <span class="text-danger">@error('comcliente') {{$message}} @enderror</span>
-            </div>
+           <label> Compromisos del cliente </label>
+<div style="height: 10px;"></div>
+
+@php
+    $comcliente = old('comcliente', $proyt->comcliente ?? '');
+    $placeholderComp = 'Describe los insumos necesarios para el desarrollo del proyecto que serán proporcionados por el cliente, por ejemplo: información técnica, planos, especificaciones, muestras, equipos, recursos, etc.';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)
+        <!-- Solo lectura -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($comcliente)) ?: $placeholderComp }}</textarea>
+    @else
+        <!-- Edición con Quill -->
+        <div id="editor-comcliente" class="editor-quill" data-input="comcliente">
+            @if(empty(strip_tags($comcliente)))
+                <div class="ql-placeholder">{{ $placeholderComp }}</div>
+            @else
+                {!! $comcliente !!}
+            @endif
+        </div>
+    @endif
+
+    <!-- Valor para enviar al backend -->
+    <input type="hidden" name="comcliente" value="{{ $comcliente }}">
+    <span class="text-danger">@error('comcliente') {{$message}} @enderror</span>
+</div>
+
+@if(!$soloLectura)
+<script>
+(function () {
+  var el = document.getElementById('editor-comcliente');
+  if (el && !el.__quillInited) {
+    var quillComp = new Quill('#editor-comcliente', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+          [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+          ['bold', 'italic', 'underline'],
+          ['link'],
+          [{ 'align': [] }],
+          ['blockquote', 'code-block']
+        ]
+      }
+    });
+    el.__quillInited = true;
+
+    var hidden = document.querySelector('input[name="comcliente"]');
+    quillComp.on('text-change', function () {
+      hidden.value = quillComp.root.innerHTML;
+    });
+
+    if (!hidden.value.trim()) hidden.value = '';
+  }
+})();
+</script>
+@endif
+
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)
@@ -1383,20 +1462,33 @@
 
             <br>
             <label> Beneficios esperados </label>
-            <div style="height: 10px;"></div>
-            @php
-                $beneficios = old('beneficios', $proyt->beneficios ?? '');
-                $placeholderBen = 'Describir la utilidad y/o contribución de la investigación; usualmente se consideran, al menos, tres puntos de vista: el cliente, el país y el IMT.';
-            @endphp
-            <div class="form-group">
-                <div class="editor-quill" data-input="beneficios"
-                    @if(empty(strip_tags($beneficios)))
-                        placeholder="{{ $placeholderBen }}"
-                    @endif
-                >@if(!empty(strip_tags($beneficios))){!! $beneficios !!}@endif</div>
-                <input type="hidden" name="beneficios" value="{{ $beneficios }}">
-                <span class="text-danger">@error('beneficios') {{$message}} @enderror</span>
-            </div>
+<div style="height: 10px;"></div>
+
+@php
+    $beneficios = old('beneficios', $proyt->beneficios ?? '');
+    $placeholderBen = 'Describir la utilidad y/o contribución de la investigación; usualmente se consideran, al menos, tres puntos de vista: el cliente, el país y el IMT.';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)
+        <!-- Solo lectura -->
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($beneficios)) ?: $placeholderBen }}</textarea>
+    @else
+        <!-- Edición con Quill -->
+        <div id="editor-beneficios" class="editor-quill" data-input="beneficios">
+            @if(empty(strip_tags($beneficios)))
+                <div class="ql-placeholder">{{ $placeholderBen }}</div>
+            @else
+                {!! $beneficios !!}
+            @endif
+        </div>
+    @endif
+
+    <!-- Valor para enviar al backend -->
+    <input type="hidden" name="beneficios" value="{{ $beneficios }}">
+    <span class="text-danger">@error('beneficios') {{$message}} @enderror</span>
+</div>
+
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     // Obtén el nombre del usuario (esto lo pasa Laravel con Blade)

@@ -113,7 +113,7 @@
             overflow: hidden;
             resize: none;
             width: 100%;
-            max-width: 500px;
+            max-width: 800px;
             border-color: #aacfe7;
         }
         select:hover {
@@ -592,6 +592,37 @@
             max-width: 500px;
             margin: 0 auto;
         }
+        .readonly {
+    background-color: #f7f7f7; /* Color de fondo gris claro */
+    pointer-events: none; /* Bloquea la interacción con el elemento */
+    color: #888; /* Color del texto más apagado */
+    padding: 8px; /* Espaciado dentro del div para igualar la altura del campo */
+    border: 1px solid #ccc; /* Bordes suaves para igualar al campo de entrada */
+    border-radius: 5px; /* Bordes redondeados */
+    font-size: 16px; /* Tamaño de fuente coherente */
+}
+/* Ocultar solo las etiquetas de Categoría (Nivel 1/2/3) */
+.select-client-wrapper.solo-lectura-categorias .hide-categorias label {
+  display: none !important;
+}
+
+/* Mantener visibles el título principal del Cliente o Usuario Potencial */
+.select-client-wrapper.solo-lectura-categorias label {
+  display: block !important;
+}
+
+/* Si prefieres bloquear la edición de los selects también (opcional) */
+.select-client-wrapper.solo-lectura-categorias select,
+.select-client-wrapper.solo-lectura-categorias .form-select {
+  pointer-events: none;
+  background-color: #fff;
+  color: inherit;
+  border-color: #aacfe7;
+  opacity: 1;
+}
+
+
+
     </style>
         <script>
             function autoResize(textarea) {
@@ -710,6 +741,26 @@
         <link href="{{ asset('vendor/quill/quill-table-ui.min.css') }}" rel="stylesheet">
         <meta name="csrf-token" content="{{ csrf_token() }}">
     </head>
+    @php
+    // Modo solo lectura si NO viene ?crear=1
+    $soloLectura = request('crear') != 1;
+@endphp
+
+@if($soloLectura)
+<style>
+  /* apariencia de solo lectura y ocultar botones de submit */
+  .solo-lectura input:not([type="hidden"]),
+  .solo-lectura select,
+  .solo-lectura textarea {
+    background:#f7f7f7;
+    pointer-events:none; /* bloquea clicks/ediciones */
+  }
+  .solo-lectura button[type="submit"],
+  .solo-lectura input[type="submit"] {
+    display:none !important; /* no mostrar guardar/envíos */
+  }
+</style>
+@endif
     <body>
         <style>
             header{
@@ -1211,6 +1262,9 @@
             </button>
         </div>
         <br>
+         @php
+    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+@endphp
         <div id="formulario">
             <div class="container" style="max-width: 800px; width: 100%; margin: 0 auto;">
                 <div>
@@ -1226,110 +1280,192 @@
                     <div id="clave">
                         {{$proyt->clavea}}{{$proyt->clavet}}-@if($proyt->claven < 10)0{{$proyt->claven}}@else{{$proyt->claven}}@endif/{{$proyt->clavey}} - {{$proyt->nomproy}}
                     </div>
-                    {{--CLIENTE O USUARIO POTENCIAL--}}
-                    <div>
-                        <br>
-                        <div class="form-group">
-                            <x-select-client label="Cliente o Usuario Potencial" nameField='userpot' 
-                            :categories="$categoriesN1" :cliente="$clienteSeleccionado" :categoriesN2="$categoriesN2" 
-                            :categoriesN3="$categoriesN3" />
-                            <span class="text-danger">@error('userpot') {{$message}} @enderror</span>
-                        </div>
-                    </div>  
+{{-- CLIENTE O USUARIO POTENCIAL --}}
+<div>
+  <br>
+  <div class="form-group select-client-wrapper {{ $soloLectura ? 'solo-lectura-categorias' : '' }}">
 
-                    <label> Línea de investigación </label>
-                    <div>
-                        <select name="lins" id="lins" style="width: 100%" onchange="cambio(this)">
-                            @if ($proyt->idlinea != '')
+    <!-- Contenedor que solo se oculta si está en solo lectura -->
+    <div class="{{ $soloLectura ? 'hide-categorias' : '' }}">
+      <label> Categoría (Nivel 1) </label>
+      <label> Categoría (Nivel 2) </label>
+      <label> Categoría (Nivel 3) </label>
+    </div>
+
+    <x-select-client
+      label="Cliente o Usuario Potencial"
+      nameField="userpot"
+      :categories="$categoriesN1"
+      :cliente="$clienteSeleccionado"
+      :categoriesN2="$categoriesN2"
+      :categoriesN3="$categoriesN3"
+    />
+    <span class="text-danger">@error('userpot') {{ $message }} @enderror</span>
+  </div>
+</div>
+
+                    
+
+            <label> Línea de investigación </label>
+            <div>
+                @if($soloLectura)
+                    <!-- Modo solo lectura: Mostrar el select, pero deshabilitarlo -->
+                    <select name="lins" id="lins" style="width: 100%" disabled>
+                        @if ($proyt->idlinea != '')
+                            <option value="{{ $proyt->idlinea }}" selected>
                                 @foreach ($invs as $inv)
                                     @if ($proyt->idlinea == $inv->id)
-                                    <option value="{{$proyt->idlinea}}">{{$inv->nombre_linea}}</option>
+                                        {{ $inv->nombre_linea }}
                                     @endif
                                 @endforeach
-                            @endif
-                            <option value="{{old('lins')}}">Selecciona...</option>
-                            @foreach ($invs as $inv)
-                                <option value="{{ $inv->id }}">{{$inv->nombre_linea}}</option>
-                            @endforeach
-                        </select>
-                        <span class="text-danger">@error('lins') {{$message}} @enderror</span>
-                    </div>
-                    <br>
-
-                    <label> Objetivo sectorial </label>
-                    <div>
-                        <select name="objs" id="objs" onchange="cambio1(this)" style="width: 100%;">
-                            @if ($proyt->idobjt != '')
-                                @foreach ($objs as $obj)
-                                    @if ($proyt->idobjt == $obj->id)
-                                    <option value="{{$proyt->idobjt}}" title= "{{$obj->nombre_objetivosec}}" 
-                                        style="width: 100%;">{{ \Illuminate\Support\Str::limit($obj->nombre_objetivosec, 100, '...') }}</option>
-                                    @endif
-                                @endforeach
-                            @endif
-                            <option value="{{old('objs')}}">Selecciona...</option>
-                            @foreach ($objs as $obj)
-                                <option value="{{ $obj->id }}" title= "{{$obj->nombre_objetivosec}}" style="width: 100%;">
-                                    {{ \Illuminate\Support\Str::limit($obj->nombre_objetivosec, 100, '...') }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <span class="text-danger">@error('objs') {{$message}} @enderror</span>
-                    </div>
-                    <br>
-
-                    <label> Alineación al programa sectorial </label>
-                    <div>
-                        <select name="alin" id="alin" onchange="cambio2(this)" style="width: 100%">
-                            @if ($proyt->idalin != '')
-                                @foreach ($alins as $ali)
-                                    @if ($proyt->idalin == $ali->id)
-                                    <option value="{{ $proyt->idalin }}">{{$ali->nombre}}</option>
-                                    @endif
-                                @endforeach
-                            @endif
-                            <option value="{{old('alin')}}">Selecciona...</option>
-                            @foreach ($alins as $ali)
-                                <option value="{{ $ali->id }}">{{$ali->nombre}}</option>
-                            @endforeach
-                        </select>
-                        <span class="text-danger">@error('alin') {{$message}} @enderror</span>
-                    </div>
-                    <br>
-
-                    <label> Modo de transporte </label>
-                    <div>
-                        <select name="tran" id="tran" onchange="cambio3(this)" style="width: 100%">
-                            @if ($proyt->idmodot != '')
-                                @foreach ($trans as $tra)
-                                    @if ($proyt->idmodot == $tra->id)
-                                    <option value="{{ $proyt->idmodot }}">{{$tra->nombre_transporte}}</option>
-                                    @endif
-                                @endforeach
-                            @endif
-                            <option value="{{old('tran')}}">Selecciona...</option>
-                            @foreach ($trans as $tra)
-                                <option id="formao" value="{{ $tra->id }}">{{$tra->nombre_transporte}}</option>
-                            @endforeach
-                        </select>
-                        <span class="text-danger">@error('tran') {{$message}} @enderror</span>
-                        <br>
-                        @if ($proyt->otrotrans == '' || $proyt->otrotrans == 'N/A')
-                            <input id="otran" name="otran" type="text" style="display: none" placeholder="Otro transporte" value="{{old('otran')}}"/>
-                        @else
-                            <input id="otran" name="otran" type="text" value="{{$proyt->otrotrans}}"/>
+                            </option>
                         @endif
-                        <span class="text-danger">@error('otran') {{$message}} @enderror</span>
-                    </div>
+                        <!-- Asegúrate de que el resto de las opciones estén disponibles, pero no seleccionables -->
+                        <option value="">{{ old('lins') ?? 'Selecciona...' }}</option>
+                        @foreach ($invs as $inv)
+                            <option value="{{ $inv->id }}" @if($proyt->idlinea == $inv->id) selected @endif>
+                                {{ $inv->nombre_linea }}
+                            </option>
+                        @endforeach
+                    </select>
+                @else
+                    <!-- Modo edición: Mostrar el select editable -->
+                    <select name="lins" id="lins" style="width: 100%" onchange="cambio(this)">
+                        @if ($proyt->idlinea != '')
+                            <option value="{{ $proyt->idlinea }}" selected>
+                                @foreach ($invs as $inv)
+                                    @if ($proyt->idlinea == $inv->id)
+                                        {{ $inv->nombre_linea }}
+                                    @endif
+                                @endforeach
+                            </option>
+                        @endif
+                        <option value="{{ old('lins') }}">Selecciona...</option>
+                        @foreach ($invs as $inv)
+                            <option value="{{ $inv->id }}" @if($proyt->idlinea == $inv->id) selected @endif>
+                                {{ $inv->nombre_linea }}
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
+                <span class="text-danger">@error('lins') {{$message}} @enderror</span>
+            </div>
+                    <br>
+                  <label>Objetivo sectorial</label>
+            <div>
+                <select name="objs" id="objs" onchange="cambio1(this)" style="width: 100%;" 
+                    @if($soloLectura) disabled @endif>  <!-- Usamos 'disabled' para simular solo lectura -->
+
+                    @if ($proyt->idobjt != '')
+                        @foreach ($objs as $obj)
+                            @if ($proyt->idobjt == $obj->id)
+                                <option value="{{ $proyt->idobjt }}" title="{{ $obj->nombre_objetivosec }}" selected
+                                    style="width: 100%;">{{ \Illuminate\Support\Str::limit($obj->nombre_objetivosec, 100, '...') }}</option>
+                            @endif
+                        @endforeach
+                    @endif
+
+                    <option value="{{ old('objs') }}">Selecciona...</option>
+
+                    @foreach ($objs as $obj)
+                        <option value="{{ $obj->id }}" title="{{ $obj->nombre_objetivosec }}"
+                            style="width: 100%;">{{ \Illuminate\Support\Str::limit($obj->nombre_objetivosec, 100, '...') }}</option>
+                    @endforeach
+                </select>
+                <span class="text-danger">@error('objs') {{$message}} @enderror</span>
+            </div>
+                    <br>
+                    <label>Alineación al programa sectorial</label>
+            <div>
+                <select name="alin" id="alin" onchange="cambio2(this)" style="width: 100%;" 
+                    @if($soloLectura) disabled @endif>  <!-- Usamos 'disabled' para simular solo lectura -->
+
+                    @if ($proyt->idalin != '')
+                        @foreach ($alins as $ali)
+                            @if ($proyt->idalin == $ali->id)
+                                <option value="{{ $proyt->idalin }}" selected>{{ $ali->nombre }}</option>
+                            @endif
+                        @endforeach
+                    @endif
+
+                    <option value="{{ old('alin') }}">Selecciona...</option>
+
+                    @foreach ($alins as $ali)
+                        <option value="{{ $ali->id }}">{{ $ali->nombre }}</option>
+                    @endforeach
+                </select>
+                <span class="text-danger">@error('alin') {{$message}} @enderror</span>
+            </div>
+
                     <br>
 
-                    <label> Referencias </label>
+                    <label>Modo de transporte</label>
+<div>
+    <select name="tran" id="tran" onchange="cambio3(this)" style="width: 100%;" 
+        @if($soloLectura) disabled @endif>  <!-- Usamos 'disabled' para simular solo lectura -->
+
+        @if ($proyt->idmodot != '')
+            @foreach ($trans as $tra)
+                @if ($proyt->idmodot == $tra->id)
+                    <option value="{{ $proyt->idmodot }}" selected>{{ $tra->nombre_transporte }}</option>
+                @endif
+            @endforeach
+        @endif
+
+        <option value="{{ old('tran') }}">Selecciona...</option>
+        
+        @foreach ($trans as $tra)
+            <option value="{{ $tra->id }}" @if($proyt->idmodot == $tra->id) selected @endif>
+                {{ $tra->nombre_transporte }}
+            </option>
+        @endforeach
+    </select>
+    
+    <span class="text-danger">@error('tran') {{$message}} @enderror</span>
+    
+    <br>
+    
+    <!-- Mostrar campo de texto "Otro transporte" solo si la selección lo requiere -->
+    @if ($proyt->idmodot == 'Otro')
+        <input id="otran" name="otran" type="text" value="{{ old('otran', $proyt->otrotrans) }}" 
+            @if($soloLectura) disabled @endif 
+            placeholder="Otro transporte" />
+    @else
+        <input id="otran" name="otran" type="text" style="display: none;" 
+            placeholder="Otro transporte" value="{{ old('otran') }}" />
+    @endif
+    
+    <span class="text-danger">@error('otran') {{$message}} @enderror</span>
+</div>
                     <br>
-                    <div>
-                        <div class="editor-quill" data-input="referencias" style="min-height:120px"></div>
-                        <input type="hidden" name="referencias" value="{{ old('referencias', $proyt->referencias) }}">
-                        <span class="text-danger">@error('referencias') {{$message}} @enderror</span>
-                    </div>
+<label> Referencias </label>
+<br>
+<div class="form-group">
+    @php
+        $referencias = old('referencias', $proyt->referencias ?? '');
+        $placeholderRef = 'Describe las fuentes, libros, artículos, normativas o cualquier otro recurso relevante que haya sido consultado o que se utilice como base en la investigación.';
+    @endphp
+
+    @if($soloLectura)
+        <!-- Modo solo lectura: Mostrar el contenido con estilo sin fondo gris, con bordes azules -->
+        <textarea class="form-control readonly-textarea" rows="5" readonly>{{ html_entity_decode(strip_tags($referencias)) ?: $placeholderRef }}</textarea>
+    @else
+        <!-- Modo edición con Quill -->
+        <div id="editor-referencias" class="editor-quill" data-input="referencias" style="min-height:120px;">
+            @if(empty(strip_tags($referencias)))
+                <div class="ql-placeholder">{{ $placeholderRef }}</div>
+            @else
+                {!! $referencias !!}
+            @endif
+        </div>
+    @endif
+</div>
+
+
+    <!-- Valor para enviar al backend -->
+    <input type="hidden" name="referencias" value="{{ $referencias }}">
+    <span class="text-danger">@error('referencias') {{$message}} @enderror</span>
+</div>
                     <br>
                     <div>
                         @if ($proyt->notasmetodologia == '')

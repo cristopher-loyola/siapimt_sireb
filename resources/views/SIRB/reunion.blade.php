@@ -381,7 +381,7 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="mb-3">
+                        <div class="mb-3" hidden>
                             <label class="form-label">Nombre del participante</label>
                             <p type="text" class="form-control" id="encargadoservicioviz" readonly></p>
                         </div>
@@ -882,6 +882,17 @@
     const nombreCompletoUsuario = @json($nombreCompleto); // Convierte el valor PHP en un valor JavaScript
 </script>
 <script src="{{ asset('js/reuniones.js') }}"></script>
+@php
+  $usersMap = [];
+  foreach ($usuarios as $u) {
+      $usersMap[$u->id] = trim($u->Apellido_Paterno.' '.$u->Apellido_Materno.' '.$u->Nombre);
+  }
+@endphp
+<script>
+  // Pasa el mapa de usuarios de PHP a JavaScript
+  const usersById = @json($usersMap); // Este es el mapa de usuarios
+</script>
+
 <script>
   resp = document.getElementById('resp').value;
   team = document.getElementById('team').value;
@@ -891,5 +902,81 @@
     element.style.height = "auto";
     element.style.height = (element.scrollHeight) + "px";
 }
+</script>
+<script>
+// Función para escapar caracteres especiales y evitar inyección de HTML
+(function () {
+   function escapeHtml(s){
+      return String(s)
+         .replace(/&/g,'&amp;')
+         .replace(/</g,'&lt;')
+         .replace(/>/g,'&gt;')
+         .replace(/"/g,'&quot;')
+         .replace(/'/g,'&#39;');
+   }
+
+   function normaliza(s){
+      return String(s)
+         .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // quita acentos
+         .toLowerCase().replace(/\s+/g,' ').trim();
+   }
+
+   document.addEventListener('click', function (ev) {
+      const btn = ev.target.closest('#btnviz');
+      if (!btn) return; // Si no es el botón correcto, salimos
+
+      const participantesEl = document.getElementById('selected-options-paragraph-editar');
+      if (!participantesEl) return; // Si no encontramos el contenedor, salimos
+
+      // Obtener el encargado (organizador) de la actividad
+      const encargado = (btn.getAttribute('data-encargado') || '').trim();
+
+      // Obtener los participantes (pueden venir como JSON o como texto)
+      let raw = (btn.getAttribute('data-usuariosseleccionados') || '').trim();
+
+      let items = [];
+      try {
+          // Intentamos parsear si viene en formato JSON (como un array)
+          const maybe = JSON.parse(raw);
+          if (Array.isArray(maybe)) items = maybe;
+      } catch (_) { 
+          // Si no es JSON, seguimos con el formato de texto
+          items = raw
+              .replace(/\r/g, '') // Eliminamos caracteres de retorno
+              .split(/\n|,|;|•/g) // Separamos por saltos de línea, coma, punto y coma o viñetas
+              .map(s => s.trim()) // Limpiamos espacios extra
+              .filter(Boolean); // Eliminamos elementos vacíos
+      }
+
+      // Asegurándonos de que el encargado esté primero
+      const final = [];
+      const seen = new Set(); // Usamos un Set para eliminar duplicados
+
+      // Si el encargado no está ya en la lista, lo agregamos primero
+      if (encargado && !seen.has(normaliza(encargado))) {
+          final.push(encargado);
+          seen.add(normaliza(encargado));
+      }
+
+      // Ahora agregamos los participantes
+      for (const id of items) {
+          // Verificamos si el mapa contiene el ID y obtenemos el nombre
+          const name = usersById[id];
+          if (name && !seen.has(normaliza(name))) {
+              seen.add(normaliza(name));
+              final.push(name); // Agregamos el nombre completo del participante a la lista final
+          }
+      }
+
+      // Mostramos el resultado de la lista final
+      participantesEl.innerHTML = final
+          .map((p, i) => i === 0 ? '<strong>' + escapeHtml(p) + '</strong>' : escapeHtml(p)) // El primero lo ponemos en negritas
+          .join('\n'); // Lo mostramos en nuevas líneas
+
+      // Verificamos en la consola los datos
+      console.log("Usuarios seleccionados:", final);
+   });
+})();
+
 </script>
 @endpush

@@ -1259,7 +1259,7 @@
     </div>
     <br>
        @php
-    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+$soloLectura = in_array($proyt->estado, [2, 3, 4]); // Proyectos concluidos (2), cancelados (3) y no aceptados (4)
 @endphp
     <div id="formulario">
         <div>
@@ -1277,12 +1277,15 @@
                 {{$proyt->nomproy}}
             </div>
             <br>
-<label> Objetivo </label>
+<label> Objetivo 
+     <span class="hint-inline" title="Describe con precisión los propósitos de la investigación. Es necesario incluir el objetivo general y los objetivos específicos.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota">
+</label>
 <div style="height: 10px;"></div>
 
 @php
     $objetivo = old('objetivo', $proyt->objetivo ?? '');
-    $placeholderObj = 'Describe con precisión los propósitos de la investigación. Es necesario incluir el objetivo general y los objetivos específicos.';
+    $placeholderObj = '';
 @endphp
 
 <div class="form-group">
@@ -1395,12 +1398,16 @@
             @endif
 
             <br>
-  <label> Objetivo específicos </label>
+  <label> Objetivo específicos 
+    <span class="hint-inline" title="Describe los objetivos específicos de la investigación.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota">
+</label>
+  </label>
 <div style="height: 10px;"></div>
 
 @php
     $objetivoespc = old('objetivoespc', $proyt->objespecifico ?? '');
-    $placeholderObjEsp = 'Describe los objetivos específicos de la investigación.';
+    $placeholderObjEsp = '';
 @endphp
 
 <div class="form-group">
@@ -1512,12 +1519,15 @@
             @endif
 
             <br>
-           <label> Alcances </label>
+           <label> Alcances 
+                <span class="hint-inline" title="Describe las metas que se deben cumplir o los resultados que se obtendrán a partir de la ejecución del proyecto, de tal manera que se acote el trabajo a realizar en términos de profundidad y extensión.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota">
+           </label>
 <div style="height: 10px;"></div>
 
 @php
     $alcance = old('alcance', $proyt->alcance ?? '');
-    $placeholderAlc = 'Describe las metas que se deben cumplir o los resultados que se obtendrán a partir de la ejecución del proyecto, de tal manera que se acote el trabajo a realizar en términos de profundidad y extensión.';
+    $placeholderAlc = '';
 @endphp
 
 <div class="form-group">
@@ -1629,12 +1639,15 @@
             @endif
 
             <br>
-           <label> Metodología </label>
+           <label> Metodología 
+             <span class="hint-inline" title="Describe el método a utilizar en la investigación (inductivo, deductivo o experimental, entre otros), las fases que la integran y sus relaciones lógicas. También se deben describir las técnicas (estadística descriptiva, regresión y correlación, optimización matemática, heurísticas o simulación, entre otras) que se utilizarán y las razones que explican su elección.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota">
+           </label>
 <div style="height: 10px;"></div>
 
 @php
     $metodologia = old('metodologia', $proyt->metodologia ?? '');
-    $placeholderMet = 'Describe el método a utilizar en la investigación (inductivo, deductivo o experimental, entre otros), las fases que la integran y sus relaciones lógicas. También se deben describir las técnicas (estadística descriptiva, regresión y correlación, optimización matemática, heurísticas o simulación, entre otras) que se utilizarán y las razones que explican su elección.';
+    $placeholderMet = '';
 @endphp
 
 <div class="form-group">

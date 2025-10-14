@@ -351,7 +351,65 @@
         }
         .proyecto{
             width: 900px;
+                }
+        .info-btn-left{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;                 /* espacio entre icono y texto al expandir */
+        height:36px;             /* compacto */
+        max-width:36px;          /* solo icono por defecto */
+        padding:6px;             /* acolchado pequeño */
+        border-radius:8px;
+        background:#808080;
+        color:#fff;
+        text-decoration:none;
+        overflow:hidden;         /* oculta el texto hasta expandir */
+        white-space:nowrap;
+        transition:max-width .25s ease, background-color .2s ease, transform .2s ease;
         }
+
+        /* Ícono más pequeño y consistente */
+        .info-btn-left img{
+        width:18px;
+        height:18px;
+        flex:0 0 18px;
+        }
+
+        /* Texto del botón oculto hasta expandir */
+        .info-btn-left .label{
+        font-size:13px;          /* más pequeño */
+        line-height:1;
+        opacity:0;               /* invisible inicialmente */
+        transition:opacity .15s ease;
+        }
+
+        /* Al pasar el cursor (o focus con teclado), se “despliega” */
+        .info-btn-left:hover,
+        .info-btn-left:focus{
+        background:#6c6c6c;
+        max-width:240px;         /* espacio suficiente para mostrar el texto */
+        transform:scale(1.02);
+        outline:none;
+        }
+
+        .info-btn-left:hover .label,
+        .info-btn-left:focus .label{
+        opacity:1;
+        }
+
+        /* Accesible para teclado */
+        .info-btn-left:focus-visible{
+        box-shadow:0 0 0 3px rgba(0,123,255,.35);
+        border-radius:8px;
+        }
+
+        /* En pantallas táctiles (sin hover) mantenlo compacto */
+        @media (hover:none){
+        .info-btn-left{
+            max-width:36px;
+        }
+        }
+
 
         /* Botón pequeño en esquina */
 .info-btn-corner {
@@ -460,9 +518,14 @@
     <br>
     {{-- Navegadir nuevas vistta Inicio --}}
     </div>
-<a href="{{ route('infoproys', $proyt->id) }}" class="info-btn-corner">
-    <img src="{{asset('/img/info-chat.png')}}" alt="Información del Proyecto"> Info Proyecto
+        <li class="sidebar-item-cancel" id="item6">
+    <a href="{{route('infoproys', $proyt->id)}}" class="info-btn-left" aria-label="Información del Proyecto">
+  <img src="{{asset('/img/info-chat.png')}}" alt="" />
+  <span class="label">Información del Proyecto</span>
 </a>
+
+</li>
+
 
 
     <form action="{{ route('upimpactoproy', $proyt->id) }}" method="POST">

@@ -29,6 +29,21 @@
         /* Estilo de la portada FIN */
         
         /* Estilo para el contenido INICIO */
+            /* === Respeta la alineación de Quill (pantalla y PDF) === */
+            .ql-align-left    { text-align: left !important; }
+            .ql-align-center  { text-align: center !important; }
+            .ql-align-right   { text-align: right !important; }
+            .ql-align-justify { text-align: justify !important; }
+
+            /* Indentaciones (opcional) */
+            .ql-indent-1 { padding-left: 3em !important; }
+            .ql-indent-2 { padding-left: 6em !important; }
+            .ql-indent-3 { padding-left: 9em !important; }
+
+            /* RTL (opcional) */
+            .ql-direction-rtl { direction: rtl !important; }
+
+            
             .contenido {
                 line-height: 1;
             }
@@ -51,19 +66,17 @@
                 font-size: 12pt;
                 color: #000000;
                 margin-bottom: 0.5px;
-                text-align: justify;
                 white-space: normal;
                 word-wrap: break-word;
             }
 
+           /* Permitir que Quill controle la alineación de imágenes */
             .contenido img {
                 max-width: 100%;
                 height: auto;
-                display: block;
-                margin: 0 auto;
-                /* border: #000 1px solid; */
+                display: inline-block;   /* << antes era block */
+                vertical-align: middle;
             }
-
             .footer {
                 position: fixed;
                 bottom: -4mm;
@@ -94,19 +107,14 @@
                 font-weight: bold;
             }
 
+            
             .section p {
                 font-size: 12pt;
                 color: #000000;
                 margin-bottom: 0.5px;
-                text-align: justify;
+                text-align: inherit;  /* o elimina esta línea */
             }
-            /* Centrar imágenes dentro de las secciones (contenido generado por Quill) */
-            .section img {
-                max-width: 100%;
-                height: auto;
-                display: block;
-                margin: 0 auto 10px auto;
-            }
+
 
             .cont {
                 display: flex;
@@ -151,7 +159,71 @@
     </style>
 </head>
     <!-- Portada -->
-    <body>
+    <body>@php
+    // Lista blanca de etiquetas (igual que antes)
+    $ALLOWED = '<p><div><span><br><ol><ul><li><strong><em><u><a>'
+             . '<h1><h2><h3><h4><h5><h6>'
+             . '<img><table><thead><tbody><tr><th><td>';
+
+    /**
+     * Normaliza el HTML de Quill ANTES de strip_tags:
+     * - Convierte ql-align-* en estilos inline (p/div/img),
+     *   porque Dompdf respeta mejor los estilos inline que las clases.
+     */
+    $normalize_quill = function (?string $html) {
+
+        if (!$html) return '';
+
+        // 1) Párrafos o DIV con ql-align-center/right/justify -> style="text-align:...;"
+        $map = [
+            'center'  => 'center',
+            'right'   => 'right',
+            'justify' => 'justify'
+        ];
+        foreach ($map as $class => $align) {
+            // p con clase
+            $html = preg_replace(
+                '/<p([^>]*)class="([^"]*?\bql-align-' . $class . '\b[^"]*?)"([^>]*)>/i',
+                '<p$1$3 style="text-align:' . $align . ';">',
+                $html
+            );
+            // div con clase
+            $html = preg_replace(
+                '/<div([^>]*)class="([^"]*?\bql-align-' . $class . '\b[^"]*?)"([^>]*)>/i',
+                '<div$1$3 style="text-align:' . $align . ';">',
+                $html
+            );
+        }
+
+        // 2) IMG con ql-align-center/right/justify -> estilos inline apropiados
+        //    (Dompdf centra mejor con display:block + margin auto)
+        $html = preg_replace(
+            '/<img([^>]*)class="([^"]*?\bql-align-center\b[^"]*?)"([^>]*)>/i',
+            '<img$1$3 style="display:block;margin-left:auto;margin-right:auto;">',
+            $html
+        );
+        $html = preg_replace(
+            '/<img([^>]*)class="([^"]*?\bql-align-right\b[^"]*?)"([^>]*)>/i',
+            '<img$1$3 style="display:block;margin-left:auto;margin-right:0;">',
+            $html
+        );
+        $html = preg_replace(
+            '/<img([^>]*)class="([^"]*?\bql-align-justify\b[^"]*?)"([^>]*)>/i',
+            '<img$1$3 style="display:block;margin-left:auto;margin-right:auto;">',
+            $html
+        );
+
+        return $html;
+    };
+
+    // Envuelve: normaliza primero y luego aplica strip_tags (lista blanca)
+    $q = function ($html) use ($ALLOWED, $normalize_quill) {
+        $html = $normalize_quill($html);
+        return strip_tags($html, $ALLOWED);
+    };
+@endphp
+
+
         <style>
             label{
                 font-size: 20pt;
@@ -357,37 +429,48 @@
             
         </div>
         <div class="contenido">
-            <h2>1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JUSTIFICACIÓN DEL PROYECTO</h2>
-            <p>{!!$proyt->justificacion!!}</p>
-            <br>
-            <h2>2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ANTECEDENTES</h2>
-            <p>{!!$proyt->antecedente!!}</p>
-            <br>
-            <h2>3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS</h2>
-            <p>{!!$proyt->objetivo!!}</p>
-            <br>
-            <h3>3.1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS ESPECÍFICOS</h3>
-            <p>{!!$proyt->objespecifico!!}</p>
-            <br>
-            <h2>4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALCANCES</h2>
-            <p>{!!$proyt->alcance!!}</p>
-            <br>
-            <h2>5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;METODOLOGÍA</h2>
-            <p>{!!$proyt->metodologia!!}</p>
-            <br>
-            <h2>6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PRODUCTOS POR OBTENER</h2>
-            <p>{!!$proyt->producto!!}</p>
-            <br>
-            <h2>7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMPROMISOS DEL CLIENTE</h2>
-            <p>{!!$proyt->comcliente!!}</p>
-            <br>
-            <h2>8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BENEFICIOS ESPERADOS</h2>
-            <p>{!!$proyt->beneficios!!}</p>
-            <br>
-            <h2>9&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PLAN DE ACTIVIDADES</h2>
-            {!!$protocolocrono!!}
-            <br>
-            <h2>10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROPUESTA ECONÓMICA</h2>
+           <h2>1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JUSTIFICACIÓN DEL PROYECTO</h2>
+        <div class="contenido-quill">{!! $q($proyt->justificacion) !!}</div>
+        <br>
+
+        <h2>2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ANTECEDENTES</h2>
+        <div class="contenido-quill">{!! $q($proyt->antecedente) !!}</div>
+        <br>
+
+        <h2>3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS</h2>
+        <div class="contenido-quill">{!! $q($proyt->objetivo) !!}</div>
+        <br>
+
+        <h3>3.1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS ESPECÍFICOS</h3>
+        <div class="contenido-quill">{!! $q($proyt->objespecifico) !!}</div>
+        <br>
+
+        <h2>4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALCANCES</h2>
+        <div class="contenido-quill">{!! $q($proyt->alcance) !!}</div>
+        <br>
+
+        <h2>5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;METODOLOGÍA</h2>
+        <div class="contenido-quill">{!! $q($proyt->metodologia) !!}</div>
+        <br>
+
+        <h2>6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PRODUCTOS POR OBTENER</h2>
+        <div class="contenido-quill">{!! $q($proyt->producto) !!}</div>
+        <br>
+
+        <h2>7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMPROMISOS DEL CLIENTE</h2>
+        <div class="contenido-quill">{!! $q($proyt->comcliente) !!}</div>
+        <br>
+
+        <h2>8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BENEFICIOS ESPERADOS</h2>
+        <div class="contenido-quill">{!! $q($proyt->beneficios) !!}</div>
+        <br>
+
+        <h2>9&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PLAN DE ACTIVIDADES</h2>
+        {!! $protocolocrono !!}
+        <br>
+
+        <h2>10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROPUESTA ECONÓMICA</h2>
+
                 <h3> Recursos Financieros </h3>
                 @if ($subtotalf != 0)
                     <div>
@@ -668,7 +751,7 @@
         </div>
         <div class="section">
             <h2>REFERENCIAS</h2>
-            <div>{!! $proyt->referencias !!}</div>
+            <div class="contenido-quill">{!! $q($proyt->referencias) !!}</div>
             @if ($proyt->notasmetodologia != '')
                 <br>
                 <h2>NOTAS</h2>

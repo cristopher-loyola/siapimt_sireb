@@ -95,10 +95,8 @@
         textarea:focus {
             border-color: #3498db;
         }
-        textarea::placeholder {
-            color: #84abf4;
-            font-style: italic;
-        }
+        
+        
         select {
             border: 3px solid transparent;
             outline: none;
@@ -668,6 +666,10 @@
                 $("#fallo").fadeOut(1500);
             },3000);
         });
+         document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionamos todos los input y textarea en la página
+        const inputs = document.querySelectorAll("input, textarea, select");
+    });
     </script>
 
     <link href="{{ asset('vendor/quill/quill.snow.css') }}" rel="stylesheet">
@@ -1182,7 +1184,7 @@
     </div>
     <br>
            @php
-    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+$soloLectura = in_array($proyt->estado, [2, 3, 4]); // Proyectos concluidos (2), cancelados (3) y no aceptados (4)
 @endphp
     <div id="formulario">
         <div>
@@ -1200,12 +1202,15 @@
                 {{$proyt->nomproy}}
             </div>
             <br>
-           <label> Producto por obtener</label>
+           <label> Producto por obtener
+             <span class="hint-inline" title="Describe los productos que se obtendrán como resultado de la investigación, así como sus características, de acuerdo con el contenido que resuelva los requerimientos del cliente o las expectativas de la investigación interna conforme al Manual del COSPIII vigente.">
+                        <img src="{{ asset('/img/noteimp.png') }}" alt="Nota">  
+           </label>
 <div style="height: 10px;"></div>
 
 @php
     $prodobt = old('prodobt', $proyt->producto ?? '');
-    $placeholderProd = 'Describe los productos que se obtendrán como resultado de la investigación, así como sus características, de acuerdo con el contenido que resuelva los requerimientos del cliente o las expectativas de la investigación interna conforme al Manual del COSPIII vigente.';
+    $placeholderProd = '';
 @endphp
 
 <div class="form-group">
@@ -1312,12 +1317,15 @@
             @endif
             
             <br>
-           <label> Compromisos del cliente </label>
+           <label> Compromisos del cliente 
+             <span class="hint-inline" title="Describe los insumos necesarios para el desarrollo del proyecto que serán proporcionados por el cliente, por ejemplo: información técnica, planos, especificaciones, muestras, equipos, recursos, etc.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota">  
+           </label>
 <div style="height: 10px;"></div>
 
 @php
     $comcliente = old('comcliente', $proyt->comcliente ?? '');
-    $placeholderComp = 'Describe los insumos necesarios para el desarrollo del proyecto que serán proporcionados por el cliente, por ejemplo: información técnica, planos, especificaciones, muestras, equipos, recursos, etc.';
+    $placeholderComp = '';
 @endphp
 
 <div class="form-group">
@@ -1461,12 +1469,14 @@
             @endif
 
             <br>
-            <label> Beneficios esperados </label>
+            <label> Beneficios esperados
+            <span class="hint-inline" title="Describir la utilidad y/o contribución de la investigación; usualmente se consideran, al menos, tres puntos de vista: el cliente, el país y el IMT.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota"></label>
 <div style="height: 10px;"></div>
 
 @php
     $beneficios = old('beneficios', $proyt->beneficios ?? '');
-    $placeholderBen = 'Describir la utilidad y/o contribución de la investigación; usualmente se consideran, al menos, tres puntos de vista: el cliente, el país y el IMT.';
+    $placeholderBen = '';
 @endphp
 
 <div class="form-group">

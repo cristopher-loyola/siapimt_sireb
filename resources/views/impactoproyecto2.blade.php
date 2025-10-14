@@ -394,37 +394,59 @@
             gap: 50px;
         }
 
-        /* Botón pequeño en esquina */
-.info-btn-corner {
-    position: fixed; /* Fijo en pantalla */
-    top: 20px; /* Espacio desde arriba */
-    right: 20px; /* Espacio desde la derecha */
-    background-color: #007bff;
-    color: #fff;
-    font-size: 13px; /* Más discreto */
-    padding: 6px 12px;
-    border-radius: 5px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000; /* Siempre encima del contenido */
-    transition: background-color 0.3s, transform 0.2s;
+        /* Botón de Información del Proyecto en esquina superior izquierda */
+.corner-icon {
+  position: fixed;
+  top: 20px;       /* Ajuste vertical (en este caso 20px desde arriba) */
+  left: 20px;      /* Ajuste horizontal (20px desde la izquierda) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #808080; /* Gris */
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;          /* Compacto */
+  height: 32px;               /* Altura compacta */
+  text-decoration: none;
+  z-index: 1000;
+  transition: background-color .2s, transform .2s; /* Animación */
+  overflow: visible;          /* Deja visible el texto al expandir */
 }
 
-
-.info-btn-corner img {
-    width: 16px;
-    height: 16px;
-    margin-right: 5px;
+.corner-icon img {
+  width: 16px;
+  height: 16px;
 }
 
-
-.info-btn-corner:hover {
-    background-color: #0056b3;
-    transform: scale(1.05); /* Pequeño efecto hover */
+/* Texto oculto inicialmente, aparece al hover/focus */
+.corner-icon .label {
+  margin-left: 8px;      /* Espacio entre ícono y texto */
+  font-size: 12px;       /* Tamaño de fuente pequeño */
+  line-height: 1;
+  white-space: nowrap;
+  
+  max-width: 0;          /* Oculto por defecto */
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width .25s ease, opacity .2s ease;
 }
 
+/* Hover/focus: anima y revela el texto */
+.corner-icon:hover {
+  background-color: #6c6c6c;  /* Gris más oscuro */
+  transform: scale(1.05);
+}
+
+.corner-icon:hover .label,
+.corner-icon:focus .label {
+  max-width: 220px;     /* Espacio para el texto */
+  opacity: 1;
+}
+
+/* Accesibilidad con teclado */
+.corner-icon:focus-visible {
+  outline: 2px solid #0065d0;  /* Resaltado con borde azul */
+}
 
 
 
@@ -499,9 +521,13 @@
     </header>
     <br>
     {{-- Navegadir nuevas vistta Inicio --}}
-        <a href="{{ route('infoproys', $proyt->id) }}" class="info-btn-corner">
-    <img src="{{asset('/img/info-chat.png')}}" alt="Información del Proyecto"> Info Proyecto
+<a href="{{ route('infoproys', $proyt->id) }}"
+   class="corner-icon"
+   aria-label="Información del Proyecto">
+  <img src="{{asset('/img/info-chat.png')}}" alt="Información del Proyecto">
+  <span class="label">Información del Proyecto</span>
 </a>
+
 
 
 

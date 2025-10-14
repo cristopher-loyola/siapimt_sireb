@@ -23,7 +23,6 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border: 1px solid #ddd;
             box-sizing: border-box;
-            text-align: center;
         }
 
         .hoja {
@@ -60,7 +59,6 @@
         .cont {
             display: flex;
             justify-content: space-between;
-            text-align: center; /* Opcional: centra los divs dentro del contenedor */
         }
 
         .div1, .div2 {
@@ -110,6 +108,19 @@
             background: #f8cb17;
             transform: scale(1.1); /* Aumenta el tamaño del botón */
         }
+        /* === Respeta la alineación de Quill (pantalla y PDF) === */
+        .ql-align-left    { text-align: left    !important; }
+        .ql-align-center  { text-align: center  !important; }
+        .ql-align-right   { text-align: right   !important; }
+        .ql-align-justify { text-align: justify !important; }
+
+        /* Indentaciones (opcional) */
+        .ql-indent-1 { padding-left: 3em !important; }
+        .ql-indent-2 { padding-left: 6em !important; }
+        .ql-indent-3 { padding-left: 9em !important; }
+
+        /* RTL (opcional) */
+        .ql-direction-rtl { direction: rtl !important; }
 
         /* Impresión */
         @media print {
@@ -173,16 +184,33 @@
                 padding: 0;
             }
             th, td {
-                border: 1px solid #000;
-                padding: 8px 12px;
-                text-align: center;
-                word-wrap: break-word;
-                white-space: normal;
+            border: 1px solid #000;
+            padding: 8px 12px;
+            word-wrap: break-word;
+            white-space: normal;
+            vertical-align: top;
+            /* sin text-align global, o si quieres default: */
+            text-align: left; /* ✅ opcional */
             }
             th {
                 font-weight: bold;
             }
             /* Estilo tabla FIN */
+           /* === Respeta la alineación de Quill === */
+            .ql-align-left    { text-align: left    !important; }
+            .ql-align-center  { text-align: center  !important; }
+            .ql-align-right   { text-align: right   !important; }
+            .ql-align-justify { text-align: justify !important; }
+
+            /* Indentaciones de Quill (opcional) */
+            .ql-indent-1 { padding-left: 3em !important; }
+            .ql-indent-2 { padding-left: 6em !important; }
+            .ql-indent-3 { padding-left: 9em !important; }
+
+            /* Texto derecha-a-izquierda (opcional) */
+            .ql-direction-rtl { direction: rtl !important; }
+
+
         }
     </style>
 </head>
@@ -209,8 +237,7 @@
     </div>
     <div class="hojap">
         <div class="contenido">
-            <img src="/img/header_imt.png" alt="Logo IMT"  width=600" height="65">
-
+            <img src="/img/header_imt.png" alt="Logo IMT"  width="600" height="65">
             <div style="padding-top: 2in">
             </div>
 
@@ -241,13 +268,11 @@
                     setlocale(LC_TIME, 'es_MX.UTF-8'); // Establecer el idioma a español
                     echo strftime("%d de %m de %Y"); // Muestra la fecha en el formato deseado
                 ?>
-            </p>
-            <!-- Puedes agregar más contenido aquí -->
-        </div>
+            </p>        </div>
     </div>
     <div class="hojap">
         <div class="contenido">
-            <img src="/img/header_imt.png" alt="Logo IMT"  width=600" height="65">
+            <img src="/img/header_imt.png" alt="Logo IMT"  width="600" height="65">
 
             <div style="padding-top: 2in">
             </div>
@@ -282,7 +307,7 @@
                     </p>
                 </div>
             </div>
-            <!-- Puedes agregar más contenido aquí -->
+            
         </div>
     </div>
 </body>

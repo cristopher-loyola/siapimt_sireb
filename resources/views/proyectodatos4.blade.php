@@ -620,6 +620,38 @@
   border-color: #aacfe7;
   opacity: 1;
 }
+/* Para el textarea en modo solo lectura */
+.readonly-textarea {
+    background-color: white !important;  /* Fondo blanco para evitar gris */
+    color: #333 !important;  /* Color normal del texto */
+    border: 1px solid #ccc;  /* Borde gris normal */
+    font-size: 16px; /* Tamaño de fuente */
+    padding: 10px;  /* Relleno estándar */
+    font-family: 'Arial', sans-serif; /* Familia de fuente común */
+    resize: none; /* Para evitar el redimensionamiento */
+}
+
+/* Para asegurar que no haya fondo gris cuando el campo está en foco (solo lectura) */
+.readonly-textarea:focus {
+    background-color: white !important;  /* Fondo blanco */
+    border: 1px solid #0076c5ff !important; /* Borde azul al enfocarse */
+    outline: none; /* Eliminar el contorno del navegador */
+}
+
+/* Estilo para los elementos de Quill (solo edición) */
+.editor-quill {
+    background-color: white; /* Fondo blanco para la edición */
+    border: 1px solid #ccc; /* Borde gris */
+    padding: 10px; /* Relleno dentro del editor */
+}
+
+/* Estilo para el placeholder en Quill */
+.ql-placeholder {
+    color: #080808ff; /* Gris claro para el placeholder */
+    font-style: italic; /* Cursiva */
+    font-weight: normal; /* No negrita */
+}
+
 
 
 
@@ -734,7 +766,19 @@
                     $("#fallo").fadeOut(1500);
                 },3000);
             });
-            
+             document.addEventListener("DOMContentLoaded", function () {
+        // Seleccionamos todos los input y textarea en la página
+        const inputs = document.querySelectorAll("input, textarea");
+
+        // Iteramos sobre cada uno de ellos
+        inputs.forEach(input => {
+            // Aseguramos que estamos trabajando con el placeholder
+            input.style.setProperty('color', '#000000ff', 'important'); // Cambia el color
+            input.style.setProperty('font-weight', 'bold', 'important'); // Negrita
+            input.style.setProperty('text-transform', 'uppercase', 'important'); // Mayúsculas
+            input.style.setProperty('font-style', 'normal', 'important'); // Quitar cursiva
+        });
+    });
         </script>
 
         <link href="{{ asset('vendor/quill/quill.snow.css') }}" rel="stylesheet">
@@ -1263,7 +1307,7 @@
         </div>
         <br>
          @php
-    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+$soloLectura = in_array($proyt->estado, [2, 3, 4]); // Proyectos concluidos (2), cancelados (3) y no aceptados (4)
 @endphp
         <div id="formulario">
             <div class="container" style="max-width: 800px; width: 100%; margin: 0 auto;">
@@ -1438,16 +1482,19 @@
     <span class="text-danger">@error('otran') {{$message}} @enderror</span>
 </div>
                     <br>
-<label> Referencias </label>
+<label> Referencias 
+     <span class="hint-inline" title="Describe las fuentes, libros, artículos, normativas o cualquier otro recurso relevante que haya sido consultado o que se utilice como base en la investigación.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota">
+</label>
 <br>
 <div class="form-group">
     @php
         $referencias = old('referencias', $proyt->referencias ?? '');
-        $placeholderRef = 'Describe las fuentes, libros, artículos, normativas o cualquier otro recurso relevante que haya sido consultado o que se utilice como base en la investigación.';
+        $placeholderRef = '';
     @endphp
 
     @if($soloLectura)
-        <!-- Modo solo lectura: Mostrar el contenido con estilo sin fondo gris, con bordes azules -->
+        <!-- Modo solo lectura: Mostrar el contenido con estilo normal, sin fondo gris -->
         <textarea class="form-control readonly-textarea" rows="5" readonly>{{ html_entity_decode(strip_tags($referencias)) ?: $placeholderRef }}</textarea>
     @else
         <!-- Modo edición con Quill -->
@@ -1460,6 +1507,8 @@
         </div>
     @endif
 </div>
+
+
 
 
     <!-- Valor para enviar al backend -->

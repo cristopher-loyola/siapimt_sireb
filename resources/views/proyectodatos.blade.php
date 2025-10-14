@@ -830,9 +830,9 @@
     </div>
     <div style="height: 30px"></div>
     <br>
-  @php
-    // Verifica si el proyecto está concluido (estado '2')
-    $soloLectura = ($proyt->estado == 2); // Solo lectura cuando el estado es '2' (concluido)
+@php
+    // Definir el estado de solo lectura si el proyecto no está en ejecución
+    $soloLectura = ($proyt->estado != 1);  // Estado 1 significa en ejecución
 @endphp
 
 <div id="formulario">
@@ -855,13 +855,14 @@
         <!-- Nombre del Proyecto (textarea) -->
         <div>
             <textarea name="nameproy" maxlength="200" 
-                      style="text-transform:uppercase" 
-                      id="nameproy" 
-                      oninput="autoResize(this)" 
-                      onkeyup="javascript:this.value=this.value.toUpperCase();"
-                      @if($soloLectura) readonly @endif>
-                {{$proyt->nomproy}}
-            </textarea>
+          style="text-transform:uppercase" 
+          id="nameproy" 
+          oninput="autoResize(this)" 
+          onkeyup="javascript:this.value=this.value.toUpperCase();"
+          @if($soloLectura) readonly @endif>
+        {{$proyt->nomproy}}
+        </textarea>
+
         </div>
         <div style="height: 30px"></div>
 
@@ -889,7 +890,8 @@
             <div class="columna">
                 Aprobó
                 <p></p>
-                <select name="aprobo" id="aprobo" onchange="cambioa(this)" @if($soloLectura) readonly @endif>
+<select name="aprobo" id="aprobo" onchange="cambio(this)" 
+        @if($soloLectura) class="readonly" @endif>
                     <option value="{{$respon->id}}">
                         {{$respon->Nombre.' '.$respon->Apellido_Paterno.' '.$respon->Apellido_Materno}}
                     </option>

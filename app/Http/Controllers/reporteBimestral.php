@@ -34,7 +34,7 @@ use App\Mail\notificationCursos;
 use App\Mail\notificationElimCursos;
 use App\Mail\notificationOtraActividad;
 use App\Mail\notificationElimOtraActividad;
-
+use Carbon\Carbon;
 use App\Mail\notificaractivarimpacto;
 //modelos de MySQL//
 use App\Models\User;
@@ -3589,6 +3589,13 @@ public function cursosRecibidos(request $request)
 
     // Crear una cadena que combine el bimestre y el año
     $periodoConsultado = $bimestreActual . " - " . $añoActual;
+    // Fin del bimestre vigente segun tabla 'fechabimestres' (id=2)
+    $refYear     = $fechabimestre2->año;
+    $refBimester = $fechabimestre2->bimestre;
+
+    $endMonth = $this->getEndMonthOfBimester($refBimester); // ya tienes este helper
+    $bimestreEndDate = Carbon::create($refYear, $endMonth, 1)->endOfMonth()->toDateString();
+
 
 
     // Crear un arreglo de datos
@@ -3604,6 +3611,7 @@ public function cursosRecibidos(request $request)
         'fechabimestre2' => $fechabimestre2,
         'periodoConsultado' => $periodoConsultado,
         'fechabimestreP' => $fechabimestreP,
+        'bimestreEndDate' => $bimestreEndDate,
         'userID' => $userID
     ];
 
@@ -3616,6 +3624,22 @@ return view('SIRB/cursosRecividos', $data);
 public function nuevocursoRecibido(request $request)
 {
     //dd($request->all());
+    // Bimestre vigente del sistema para topar la fecha de fin
+    $ref = DB::table('fechabimestres')->where('id', 2)->select('año', 'bimestre')->first();
+    $endMonth = $this->getEndMonthOfBimester($ref->bimestre);
+    $bimestreEndDate = Carbon::create($ref->año, $endMonth, 1)->endOfMonth()->toDateString();
+
+    $request->validate([
+        'fechainicio' => ['required','date'],
+        'fechafin'    => ['required','date','after_or_equal:fechainicio', function($attribute, $value, $fail) use ($bimestreEndDate) {
+            if ($value > $bimestreEndDate) {
+                $fail('La fecha de fin debe ser a más tardar ' . $bimestreEndDate . '.');
+            }
+        }],
+    ],[
+        'fechafin.after_or_equal' => 'La fecha de fin no puede ser anterior a la fecha de inicio.',
+    ]);
+
 
     $data = ['LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first()];
 
@@ -3674,6 +3698,21 @@ public function nuevocursoRecibido(request $request)
 //funcion para editar
 public function cursoRecibidoEditar(request $request, $id)
 {
+    $ref = DB::table('fechabimestres')->where('id', 2)->select('año', 'bimestre')->first();
+    $endMonth = $this->getEndMonthOfBimester($ref->bimestre);
+    $bimestreEndDate = Carbon::create($ref->año, $endMonth, 1)->endOfMonth()->toDateString();
+
+    $request->validate([
+        'fechainicio' => ['required','date'],
+        'fechafin'    => ['required','date','after_or_equal:fechainicio', function($attribute, $value, $fail) use ($bimestreEndDate) {
+            if ($value > $bimestreEndDate) {
+                $fail('La fecha de fin debe ser a más tardar ' . $bimestreEndDate . '.');
+            } 
+        }],
+    ],[
+        'fechafin.after_or_equal' => 'La fecha de fin no puede ser anterior a la fecha de inicio.',
+    ]);
+
 
     $cursoR = cursorecibido::find($id);
     $cursoR->nombre_curso = $request->nombrecurso;

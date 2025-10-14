@@ -81,6 +81,19 @@
         vertical-align: middle;
         padding: 10px;
     }
+     .btn-custom {
+        background-color: #a0835eff; /* Café claro */
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-custom:hover {
+        background-color: #C29C6A; /* Un tono más oscuro al pasar el mouse */
+    }
 </style>
 <div>
     <h3 class="fw-bold text-center py-5" id="tituloform">Información del Proyecto </h3>
@@ -207,12 +220,11 @@
 
 <form action="{{ route('proydatos', $proyt->id) }}" method="GET">
     {{-- sin crear=1 => solo lectura --}}
-    <button type="submit" class="btn btn-secondary" id="redondb">
+    <button type="submit" class="btn btn-custom" id="redondb">
         <i class='bx bx-show-alt bx-sm bx-fw bx-flashing-hover'></i>
         Ver detalles
     </button>
 </form>
-
             @if ($proyt->actimpacto == 1)
                 <div class="mb-2">
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

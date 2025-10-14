@@ -338,7 +338,7 @@
 
         <div class="modal-body">
             <div class="row">
-                <div class="col-md-12 ">
+                <div class="col-md-12 " hidden>
                     <div class="mb-3">
                         <label class="form-label">Nombre del participante</label>
                             <p type="text" class="form-control" id="encargadoservicioviz" readonly></p>
@@ -776,9 +776,95 @@
 @stop
 @push('scripts')
 <script>
+(function () {
+  function escapeHtml(s){
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+  function normaliza(s){
+    return String(s)
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // quita acentos
+      .toLowerCase().replace(/\s+/g,' ').trim();
+  }
+
+  // Delegación para todos los #btnviz en la tabla
+  document.addEventListener('click', function (ev) {
+    const btn = ev.target.closest('#btnviz');
+    if (!btn) return;
+
+    const participantesEl = document.getElementById('selected-options-paragraph-editar');
+    if (!participantesEl) return;
+
+    // Encargado (sale primero y en negritas)
+    const encargado = (btn.getAttribute('data-encargado') || '').trim();
+
+    // Puede venir como JSON ["1","2"] o como "1,2" / "1\n2"
+    let raw = (btn.getAttribute('data-usuariosseleccionados') || participantesEl.textContent || '').trim();
+
+    let items = [];
+    try {
+      const maybe = JSON.parse(raw);
+      if (Array.isArray(maybe)) items = maybe;
+    } catch (_) { /* no es JSON, seguimos */ }
+
+    if (items.length === 0) {
+      items = raw
+        .replace(/\r/g, '')
+        .split(/\n|,|;|•/g)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    // Traducimos IDs a nombres si existen en usersById
+    const nombres = items.map(t => {
+      const token = String(t).replace(/^\[?"+?|\]?"+?$/g, '').trim(); // quita [] y comillas sueltas
+      if (/^\d+$/.test(token) && usersById[token]) return usersById[token];
+      return token; // ya era nombre
+    }).filter(Boolean);
+
+    // Dedupe y poner encargado arriba si no está repetido
+    const final = [];
+    const seen = new Set();
+
+    if (encargado) {
+      final.push(encargado);
+      seen.add(normaliza(encargado));
+    }
+    for (const n of nombres) {
+      const k = normaliza(n);
+      if (!seen.has(k)) {
+        seen.add(k);
+        final.push(n);
+      }
+    }
+
+    // Render: primero en <strong>, resto en nuevas líneas
+    participantesEl.innerHTML = final
+      .map((p, i) => i === 0 ? '<strong>' + escapeHtml(p) + '</strong>' : escapeHtml(p))
+      .join('\n');
+  });
+})();
+</script>
+
+<script>
     const nombreCompletoUsuario = @json($nombreCompleto); // Convierte el valor PHP en un valor JavaScript
 </script>
 <script src="{{ asset('js/comites.js') }}"></script>
+@php
+  $usersMap = [];
+  foreach ($usuarios as $u) {
+      $usersMap[$u->id] = trim($u->Apellido_Paterno.' '.$u->Apellido_Materno.' '.$u->Nombre);
+  }
+@endphp
+<script>
+  // Mapa disponible en JS para traducir IDs a nombres
+  const usersById = @json($usersMap);
+</script>
+
 <script>
   resp = document.getElementById('resp').value;
   team = document.getElementById('team').value;

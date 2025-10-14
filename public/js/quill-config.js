@@ -109,9 +109,13 @@ document.addEventListener("DOMContentLoaded", function(){
                         ['bold', 'italic', 'underline'],
                         ['link', 'image'],
                         [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        [{ align: [] }],
                         [{ script: 'sub' }, { script: 'super' }],
                         [{ 'color': [] }, { 'background': [] }],
-                        ['clean']
+                        ['clean'],
+                        ['table'],
+                        
                     ],
                     handlers: {
                         image: manejadorImagen

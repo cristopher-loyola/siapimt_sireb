@@ -79,7 +79,7 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                     <label class="form-label bold" for="fechafin">Fecha de fin</label>
-                    <input id="fechafin" type="date" class="form-control" name="fechafin" required disabled>
+                    <input id="fechafin" type="date" class="form-control" name="fechafin" required>
                     </div>
                 </div>
                 </div>
@@ -927,4 +927,58 @@
   team = document.getElementById('team').value;
   ref = document.getElementById('ref').value;
 </script>
+<script>
+  // Corre al final de TODO (después de cursosRecibidos.js y lo que empuje el layout)
+  window.addEventListener('load', function () {
+    const BIMESTRE_END = @json($bimestreEndDate) || '2099-12-31';
+
+    const unlockDate = (start, end) => {
+      if (!start || !end) return;
+
+      // Quita cualquier candado previo
+      ['min','max','readonly','disabled'].forEach(a => {
+        start.removeAttribute(a);
+        end.removeAttribute(a);
+      });
+
+      // Política: inicio puede ser bien atrás; fin topa en fin de bimestre
+      start.setAttribute('min', '1900-01-01');
+      start.setAttribute('max', BIMESTRE_END);
+      end.setAttribute('max', BIMESTRE_END);
+
+      // fin >= inicio
+      start.addEventListener('change', (e) => {
+        end.min = e.target.value || '1900-01-01';
+        if (end.value && end.value < e.target.value) end.value = e.target.value;
+      });
+
+      // Si algún script intenta reimponer min/disabled, lo reventamos
+      const obs = new MutationObserver(() => {
+        if (start.getAttribute('min') !== '1900-01-01') start.setAttribute('min','1900-01-01');
+        if (start.hasAttribute('disabled')) start.removeAttribute('disabled');
+      });
+      obs.observe(start, { attributes: true, attributeFilter: ['min','disabled']});
+    };
+
+    // Crear
+    unlockDate(document.getElementById('fechainicio'), document.getElementById('fechafin'));
+    // Editar
+    unlockDate(document.getElementById('fechainicioedit'), document.getElementById('fechafinedit'));
+
+    // Reaplica el unlock cuando abres el modal de "Nuevo"
+    document.querySelector('#five button')?.addEventListener('click', () => {
+      // espera a que el DOM del modal esté visible
+      setTimeout(() => unlockDate(
+        document.getElementById('fechainicio'),
+        document.getElementById('fechafin')
+      ), 0);
+    });
+
+    // Debug rápido
+    const si = document.getElementById('fechainicio');
+    console.debug('fechainicio => min:', si?.getAttribute('min'), 'max:', si?.getAttribute('max'));
+  });
+</script>
+
+
 @endpush

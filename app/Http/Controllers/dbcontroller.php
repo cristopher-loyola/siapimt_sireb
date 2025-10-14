@@ -3128,8 +3128,9 @@ class dbcontroller extends Controller
                 return response()->json(['success'=>false]);
             }
 
-            $ruta = $archivo->store('public/quill-images');
-            $url = Storage::url($ruta);
+            $ruta = $archivo->store('quill-images', 'public'); // guarda en disco 'public'
+            $url  = Storage::disk('public')->url($ruta);       // devuelve /storage/...
+
              return response()->json(['success' => true, 'url' => $url]);
         }
         return response()->json(['success' => false]);
@@ -3178,47 +3179,96 @@ class dbcontroller extends Controller
 
             $ruta = $directorio . '/' . $nombre;
             Storage::disk('public')->put($ruta, $data);
-            $url = Storage::url('public/' . $ruta);
-            return response()->json(['success' => true, 'url' => '..'.$url]);
-        } else {
-            return response()->json(['success' => false]);
-        }
+            $url = Storage::disk('public')->url($ruta);
+            return response()->json(['success' => true, 'url' => $url]);
+            } else {
+                return response()->json(['success' => false]);
+            }
     }
 
     public function gprotocolo2($id){
         $uniq = User::where('id', '=', session('LoginId'))->first();
         $proyt = Proyecto::where('id', $id)->first();
 
-        // PERMITE MOSTRAR LAS IMAGENES EN EL PDF
-        $camposHtml = ['justificacion', 'antecedente', 'objetivo', 'objespecifico', 'alcance', 'metodologia', 'producto', 'comcliente', 'beneficios'];
-        foreach ($camposHtml as $campo) {
-            if (!empty($proyt->$campo)) {
-                $proyt->$campo = preg_replace_callback(
-                    '/<img[^>]+src=["\\\']([^"\\\']+)["\\\'][^>]*>/i',
-                    function ($matches) {
-                        $src = $matches[1];
+// PERMITE MOSTRAR LAS IMAGENES EN EL PDF
 
-                        // Detecta rutas como "/storage/...", "./storage/...", "../storage/..."
-                        if (preg_match('#(\.\./)*storage/#', $src)) {
-                            // Normaliza la ruta quitando los puntos relativos (../ o ./)
-                            $rutaRelativa = preg_replace('#^(\.\./)*#', '', $src); // quita ../ o ./
-                            $ruta = public_path($rutaRelativa);
+$camposHtml = [
+    'justificacion', 'antecedente', 'objetivo', 'objespecifico',
+    'alcance', 'metodologia', 'producto', 'comcliente',
+    'beneficios', 'referencias'
+];
 
-                            if (file_exists($ruta)) {
-                                // Convertimos a base64 por compatibilidad (recomendado para PDFs)
-                                $tipoMime = mime_content_type($ruta);
-                                $contenido = base64_encode(file_get_contents($ruta));
-                                $nuevoSrc = 'data:' . $tipoMime . ';base64,' . $contenido;
-                                return str_replace($src, $nuevoSrc, $matches[0]);
-                            }
-                        }
+foreach ($camposHtml as $campo) {
+    if (!empty($proyt->$campo)) {
+        $proyt->$campo = preg_replace_callback(
+            '/<img[^>]+src=["\']([^"\']+)["\'][^>]*>/i',
+            function ($matches) {
+                $src = $matches[1];
 
-                        return $matches[0]; // no se cambia si no se encuentra o no coincide
-                    },
-                    $proyt->$campo
-                );
-            }
-        }
+                // 0) Ya es data URI -> no tocar
+                if (stripos($src, 'data:') === 0) {
+                    return $matches[0];
+                }
+
+                // 1) Rutas tipo /storage..., ./storage..., ../storage..., storage/...
+                if (
+                    preg_match('#^/(?:storage)/#i', $src) ||
+                    preg_match('#^(?:\./|\.\./)+(?:storage)/#i', $src) ||
+                    preg_match('#^(?:storage)/#i', $src)
+                ) {
+                    // Normaliza: quita / inicial y ./ o ../
+                    $rutaRelativa = ltrim($src, '/');
+                    $rutaRelativa = preg_replace('#^(?:\./|\.\./)+#', '', $rutaRelativa);
+
+                    // Intento 1: public/storage/...
+                    $ruta = public_path($rutaRelativa);
+
+                    // Intento 2: storage/app/public/... (si no hay symlink)
+                    if (!file_exists($ruta)) {
+                        $ruta = storage_path('app/public/' . preg_replace('#^storage/#i', '', $rutaRelativa));
+                    }
+
+                    if (file_exists($ruta)) {
+                        $tipoMime = @mime_content_type($ruta) ?: 'image/png';
+                        $contenido = base64_encode(file_get_contents($ruta));
+                        $nuevoSrc = 'data:' . $tipoMime . ';base64,' . $contenido;
+                        return str_replace($src, $nuevoSrc, $matches[0]);
+                    }
+
+                    return $matches[0];
+                }
+
+                // 2) Otras rutas absolutas dentro de public (/img/..., /uploads/..., etc.)
+                if (strpos($src, '/') === 0) {
+                    $ruta = public_path(ltrim($src, '/'));
+                    if (file_exists($ruta)) {
+                        $tipoMime = @mime_content_type($ruta) ?: 'image/png';
+                        $contenido = base64_encode(file_get_contents($ruta));
+                        $nuevoSrc = 'data:' . $tipoMime . ';base64,' . $contenido;
+                        return str_replace($src, $nuevoSrc, $matches[0]);
+                    }
+                }
+
+                // 3) URLs http/https -> intenta inline
+                if (preg_match('#^https?://#i', $src)) {
+                    $bin = @file_get_contents($src);
+                    if ($bin !== false) {
+                        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                        $tipoMime = $finfo->buffer($bin) ?: 'image/png';
+                        $contenido = base64_encode($bin);
+                        $nuevoSrc = 'data:' . $tipoMime . ';base64,' . $contenido;
+                        return str_replace($src, $nuevoSrc, $matches[0]);
+                    }
+                }
+
+                // 4) Por defecto, no cambiar
+                return $matches[0];
+            },
+            $proyt->$campo
+        );
+    }
+}
+
 
         $users = User::where('id', $proyt->idusuarior)->first();
         $respon = User::where('id', $proyt->aprobo)->first();

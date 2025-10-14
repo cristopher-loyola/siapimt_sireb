@@ -110,7 +110,7 @@
             overflow: hidden;
             resize: none;
             width: 100%;
-            max-width: 800px;
+            max-width: 500px;
             border-color: #aacfe7;
         }
         select:hover {
@@ -516,7 +516,7 @@
                 margin-right: 10px;
             }
         }
-
+        
         #justifica-container{
             min-height: 100px;
         }
@@ -590,11 +590,11 @@
             margin: 0 auto;
         }
         /* Estilo para simular solo lectura */
-.readonly {
-    pointer-events: none;  /* Deshabilita la interacción del mouse */
-    background-color: #f7f7f7;  /* Cambia el fondo para reflejar el estado de solo lectura */
-    color: #999;  /* Cambia el color del texto para reflejar el estado de solo lectura */
-}
+        .readonly {
+            pointer-events: none;  /* Deshabilita la interacción del mouse */
+            background-color: #f7f7f7;  /* Cambia el fondo para reflejar el estado de solo lectura */
+            color: #999;  /* Cambia el color del texto para reflejar el estado de solo lectura */
+        }
 
 
 
@@ -689,7 +689,6 @@
                 element.style.display = "none";
             }
         }
-0
         $(document).ready(function() {
             setTimeout(function() {
                 $("#exito").fadeOut(1500);
@@ -704,9 +703,10 @@
     
 </head>
 @php
-    // Modo solo lectura si NO viene ?crear=1
-    $soloLectura = request('crear') != 1;
+    // Proyectos con estado '0' (no iniciado), '2' (concluido) y '3' (cancelado) estarán en solo lectura
+    $soloLectura = in_array($proyt->estado, [0, 2, 3]); // '0' no iniciado, '2' concluido, '3' cancelado
 @endphp
+
 
 @if($soloLectura)
 <style>
@@ -725,10 +725,11 @@
 @endif
 
 <body>
-      @php
-        // Definir la variable $soloLectura para verificar el estado del proyecto
-        $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
-    @endphp
+  @php
+    // Proyectos con estado '0' (no iniciado), '2' (concluido) y '3' (cancelado) estarán en solo lectura
+    $soloLectura = in_array($proyt->estado, [0, 2, 3]); // '0' no iniciado, '2' concluido, '3' cancelado
+@endphp
+
     <header>
         <img src="../img/Logo_IMT.png" alt="" height="100px" width="120px">
         <table>
@@ -1284,10 +1285,11 @@
         </button>
     </div>
     <br>
-    
-    @php
-    $soloLectura = ($proyt->estado == 2); // Proyectos concluidos en estado '2'
+@php
+    // Proyectos concluidos (estado '2') estarán en solo lectura
+    $soloLectura = ($proyt->estado == 2);  // '2' es el estado de proyecto concluido
 @endphp
+
 
     <div id="formulario">
         <div>
@@ -1305,26 +1307,17 @@
                 {{$proyt->nomproy}}
             </div>
             <br>
-            <label>Justificación</label>
+            <label>Justificación
+             <span class="hint-inline" title="Justificar la realización de la investigación, refiriéndose a la solicitud de una Unidad Administrativa de la SICT o de un cliente externo.">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota"></label>
             <div style="height: 10px;"></div>
 
-            <div class="form-group">
-                @php
-                    $justificacion = old('justificacion', $proyt->justificacion ?? '');
-                    if($proyt->clavet == 'I'){
-                        $placeholder = 'Justificar su realización, indicando la necesidad o problemática que se busca atender en referencia a su alineación al Plan Nacional de Desarrollo, a las estrategias, las líneas de acción y objetivo del Programa Sectorial de la SICT vigentes, así como a su contribución al Decreto de creación vigente.';
-                    }else{
-                        $placeholder = 'Justificar la realización de la investigación, refiriéndose a la solicitud de una Unidad Administrativa de la SICT o de un cliente externo.';
-                    }
-                @endphp
+          <div class="form-group">
+    @php
+        $justificacion = old('justificacion', $proyt->justificacion ?? '');
+        $placeholder = 'Escribe la justificación aquí...';  // Placeholder si no hay justificación
+    @endphp
 
-<div style="height: 10px;"></div>
-@php
-    $justificacion = old('justificacion', $proyt->justificacion ?? '');
-    $placeholder = 'Justificar su realización, indicando la necesidad o problemática que se busca atender en referencia a su alineación al Plan Nacional de Desarrollo, a las estrategias, las líneas de acción y objetivo del Programa Sectorial de la SICT vigentes, así como a su contribución al Decreto de creación vigente.';
-@endphp
-
-<div class="form-group">
     @if($soloLectura)
         <!-- Modo solo lectura: Mostrar el contenido en un textarea solo lectura sin etiquetas HTML -->
         <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($justificacion)) ?: $placeholder }}</textarea>
@@ -1332,9 +1325,8 @@
         <!-- Modo edición: Mostrar el editor Quill -->
         <div class="editor-quill" data-input="justificacion">
             @if(empty(strip_tags($justificacion)))
-                <div class="ql-placeholder">{{$placeholder}}</div>  <!-- Esto es solo una visualización inicial -->
             @else
-                {!! $justificacion !!}  <!-- Muestra el contenido de la justificación si está disponible -->
+                {!! $justificacion !!}
             @endif
         </div>
     @endif
@@ -1345,17 +1337,18 @@
 
 
 
+
                 <span class="text-danger">@error('justificacion') {{$message}} @enderror</span>
                 <br>
             {{--<div>
                 @if ($proyt->justificacion == '')
                     @if ($proyt->clavet == 'I')
                         <div="justifica-container" class="quill-editor" classtype="text" id="justifica" name="justifica" rows="5" oninput="autoResize(this)"
-                        placeholder="Justificar su realización, indicando la necesidad o problemática que se busca atender en referencia a su alineación al Plan Nacional de Desarrollo, a las estrategias, las líneas de acción y objetivo del Programa Sectorial de la SICT vigentes, así como a su contribución al Decreto de creación vigente."
+                        placeholder=""
                         >{{old('justifica')}}</textarea>
                     @else
                         <textarea type="text" id="justifica" name="justifica" rows="5" oninput="autoResize(this)"
-                        placeholder="Justificar la realización de la investigación, refiriéndose a la solicitud de una Unidad Administrativa de la SICT o de un cliente externo."
+                        placeholder=""
                         >{{old('justifica')}}</textarea>
                     @endif
                 @else
@@ -1485,9 +1478,9 @@
                 @endif
             @endif
             <br>
-           <label class="form-label"> Materia </label>
-<div class="mb-4 col">
-    <select name="materia" id="materia" onchange="cambio(this)" 
+            <label class="form-label"> Materia </label>
+            <div class="mb-4 col">
+                <select name="materia" id="materia" onchange="cambio(this)" 
     @if($soloLectura) class="readonly" @endif>  <!-- Añadir clase 'readonly' para simular solo lectura -->
     @if ($proyt->materia != '')
         @foreach ($materia as $mat)
@@ -1503,8 +1496,6 @@
         </option>
     @endforeach
 </select>
-</div>
-
 
                 <span class="text-danger">@error('materia') {{$message}} @enderror</span>
             </div>
@@ -1551,6 +1542,36 @@
                 <span class="text-danger">@error('nivel') {{$message}} @enderror</span>
             </div>--}}
             <br>
+<label> Antecedentes 
+ <span class="hint-inline" title="Describir en un máximo de dos cuartillas el conocimiento existente sobre el tema de investigación, su evolución histórica y su relación con las aportaciones esperadas de la investigación."">
+            <img src="{{ asset('/img/noteimp.png') }}" alt="Nota"></label>
+<div style="height: 10px;"></div>
+
+@php
+    $antecedente   = old('antecedente', $proyt->antecedente ?? '');
+    $placeholderAnt = '';
+@endphp
+
+<div class="form-group">
+    @if($soloLectura)
+        {{-- Modo solo lectura: texto plano, sin HTML --}}
+        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($antecedente)) ?: $placeholderAnt }}</textarea>
+    @else
+        {{-- Modo edición: Quill --}}
+        <div class="editor-quill"
+             data-input="antecedente"
+             data-ph="{{ $placeholderAnt }}">
+            @if(!empty(strip_tags($antecedente)))
+                {!! $antecedente !!}
+            @endif
+        </div>
+    @endif
+
+    {{-- Campo real que envía el form --}}
+    <input type="hidden" name="antecedente" value="{{ $antecedente }}">
+    <span class="text-danger">@error('antecedente') {{ $message }} @enderror</span>
+</div>
+
 
 
             <script>

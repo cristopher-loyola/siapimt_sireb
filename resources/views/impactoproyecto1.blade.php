@@ -374,6 +374,64 @@
     background-color: #0056b3;
     transform: scale(1.05); /* Pequeño efecto hover */
 }
+/* Botón de info: por defecto SOLO ícono; en hover/focus se expande y muestra el texto */
+.info-btn-left{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  height:32px;          /* más pequeño */
+  max-width:32px;       /* solo ícono por defecto */
+  padding:6px;
+  border-radius:8px;
+  background:#808080;
+  color:#fff;
+  text-decoration:none;
+  overflow:hidden;       /* oculta el texto hasta expandir */
+  white-space:nowrap;
+  transition:max-width .25s ease, background-color .2s ease, transform .2s ease;
+  margin-left:0;
+}
+
+/* Ícono pequeño y fijo */
+.info-btn-left img{
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+}
+
+/* Texto oculto inicialmente */
+.info-btn-left .label{
+  font-size:12px;        /* más chico */
+  line-height:1;
+  opacity:0;
+  transition:opacity .15s ease;
+}
+
+/* Al pasar el cursor o enfocar con teclado: expandir y mostrar texto */
+.info-btn-left:hover,
+.info-btn-left:focus{
+  background:#6c6c6c;
+  max-width:220px;       /* espacio para el texto */
+  transform:scale(1.02);
+  outline:none;
+}
+.info-btn-left:hover .label,
+.info-btn-left:focus .label{
+  opacity:1;
+}
+
+/* Accesibilidad teclado */
+.info-btn-left:focus-visible{
+  box-shadow:0 0 0 3px rgba(0,123,255,.35);
+}
+
+/* En pantallas táctiles (sin hover), mantener compacto */
+@media (hover:none){
+  .info-btn-left{
+    max-width:32px;
+  }
+}
+
 
     </style>
     <script>
@@ -453,9 +511,13 @@
     <br>
     {{-- Navegadir nuevas vistta Inicio --}}
 
-   <a href="{{ route('infoproys', $proyt->id) }}" class="info-btn-corner">
-    <img src="{{asset('/img/info-chat.png')}}" alt="Información del Proyecto"> Info Proyecto
-</a>
+<li class="sidebar-item-cancel" id="item6">
+  <a href="{{route('infoproys', $proyt->id)}}" class="info-btn-left" aria-label="Información del Proyecto">
+    <img src="{{asset('/img/info-chat.png')}}" alt="">
+    <span class="label">Información del Proyecto</span>
+  </a>
+</li>
+
 
     </div>
     <form action="{{ route('upimpactoproy1', $proyt->id) }}" method="POST">

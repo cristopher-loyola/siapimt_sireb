@@ -311,16 +311,31 @@ $(document).ready(function() {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
-      if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
-      } else {
+      // Obtener el nombre del organizador
+      const nombreOrganizador = nombrepersona || nombreCompletoUsuario;
+      
+      // Normalizar nombres para evitar duplicados
+      const normalizarNombre = (nombre) => nombre.toLowerCase().trim();
+      const nombreOrganizadorNormalizado = normalizarNombre(nombreOrganizador);
+      
+      // Crear lista de participantes empezando con el organizador
+      const participantes = [`Organizador: ${nombreOrganizador}`];
+      
+      if (usuariosSeleccionadosInputEdit.value) {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}`);
+          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
           return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
         });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        
+        // Agregar solo usuarios que no sean el organizador
+        usuariosSeleccionadosNombres.forEach(nombre => {
+          if (normalizarNombre(nombre) !== nombreOrganizadorNormalizado) {
+            participantes.push(nombre);
+          }
+        });
       }
+      
+      selectedOptionsParrafoEdit.textContent = participantes.join("\n");
     }
 
 

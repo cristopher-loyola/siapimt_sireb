@@ -291,15 +291,47 @@ removeSelectedButtonedit.addEventListener("click", function () {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
-      if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
+      // Crear array para almacenar los nombres finales
+      const nombresFinales = [];
+      const nombresVistos = new Set();
+      
+      // Función para normalizar nombres (remover acentos y convertir a minúsculas)
+      function normalizarNombre(nombre) {
+        return nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      }
+      
+      // Siempre incluir al organizador como primer participante
+       // Usar el nombreCompletoUsuario si está disponible, sino usar nombrepersona como fallback
+       const nombreOrganizador = nombreCompletoUsuario || nombrepersona;
+      if (nombreOrganizador) {
+        const textoOrganizador = nombreOrganizador;
+        nombresFinales.push(textoOrganizador);
+        nombresVistos.add(normalizarNombre(nombreOrganizador));
+      }
+      
+      // Agregar otros participantes seleccionados, evitando duplicados
+      if (usuariosSeleccionadosInputEdit.value) {
+        const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
+          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
+          return selectOption ? selectOption.getAttribute("data-nombre") : null;
+        }).filter(function(nombre) {
+          if (!nombre) return false;
+          const nombreNormalizado = normalizarNombre(nombre);
+          if (nombresVistos.has(nombreNormalizado)) {
+            return false; // Evitar duplicados
+          }
+          nombresVistos.add(nombreNormalizado);
+          return true;
+        });
+        
+        nombresFinales.push(...usuariosSeleccionadosNombres);
+      }
+      
+      // Mostrar la lista final
+      if (nombresFinales.length === 0) {
         selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
       } else {
-        const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
-        });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        selectedOptionsParrafoEdit.textContent = nombresFinales.join("\n");
       }
     }
 

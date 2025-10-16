@@ -873,6 +873,9 @@
     // Hacemos que el mapa de usuarios de PHP esté disponible en JavaScript
     const usersMap = @json($usersMap);
 
+    // COMENTADO: Este código está duplicado con el de otrasactividades.js
+    // El JavaScript externo maneja la funcionalidad del btnviz
+    /*
     document.addEventListener('click', function (ev) {
         const btn = ev.target.closest('#btnviz');
         if (!btn) return;
@@ -918,6 +921,7 @@
             .map((p, i) => i === 0 ? '<strong>' + escapeHtml(p) + '</strong>' : escapeHtml(p))
             .join('\n');
     });
+    */
 
     function normaliza(s) {
         return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();

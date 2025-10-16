@@ -704,8 +704,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}"> 
 </head>
 @php
-    // Modo solo lectura si NO viene ?crear=1
-    $soloLectura = request('crear') != 1;
+    // Definir el estado de solo lectura si el proyecto no está en ejecución
+    $soloLectura = ($proyt->estado != 1);  // Estado 1 significa en ejecución
 @endphp
 
 @if($soloLectura)
@@ -1259,9 +1259,9 @@
     </div>
     <br>
        @php
-$soloLectura = in_array($proyt->estado, [2, 3, 4]); // Proyectos concluidos (2), cancelados (3) y no aceptados (4)
+$soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en ejecución)
 @endphp
-    <div id="formulario">
+    <div id="formulario" @if($soloLectura) class="solo-lectura" @endif>
         <div>
             @if (Session::has('success'))
                 <div id="exito">{{Session::get('success')}}</div>

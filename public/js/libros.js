@@ -296,15 +296,30 @@ removeSelectedButtonedit.addEventListener("click", function () {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
+      // Crear array para mostrar participantes con el usuario loggeado primero
+      let participantesToShow = [];
+      
+      // Agregar el usuario loggeado como primer participante (Autor)
+      if (nombreCompletoUsuario) {
+        participantesToShow.push( nombreCompletoUsuario);
+      }
+      
       if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
+        // Si no hay usuarios seleccionados, solo mostrar el autor
+        selectedOptionsParrafoEdit.textContent = participantesToShow.length > 0 ? participantesToShow.join("\n") : "No hay ningún participante seleccionado";
       } else {
+        // Agregar otros participantes seleccionados (evitando duplicados con el usuario loggeado)
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
           const selectOption = selectedit.querySelector(`option[value="${userId}`);
           return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
+        }).filter(function(nombre) {
+          // Filtrar para evitar duplicar el nombre del usuario loggeado
+          return nombre !== nombreCompletoUsuario;
         });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        
+        // Combinar el autor con otros participantes
+        participantesToShow = participantesToShow.concat(usuariosSeleccionadosNombres);
+        selectedOptionsParrafoEdit.textContent = participantesToShow.join("\n");
       }
     }
 

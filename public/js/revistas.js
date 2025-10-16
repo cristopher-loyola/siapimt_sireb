@@ -311,16 +311,28 @@ $(document).ready(function() {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
-      if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
-      } else {
+      // Crear array con todos los participantes, empezando por el autor
+      const todosLosParticipantes = [];
+      
+      // Agregar el autor al inicio
+      todosLosParticipantes.push(encargadoservicio);
+      
+      // Agregar otros participantes si existen
+      if (usuariosSeleccionadosInputEdit.value) {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
           const selectOption = selectedit.querySelector(`option[value="${userId}`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
+          return selectOption ? selectOption.getAttribute("data-nombre") : "Usuario desconocido";
         });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        
+        // Filtrar participantes que no sean duplicados del autor
+        usuariosSeleccionadosNombres.forEach(function(nombre) {
+          if (nombre && nombre !== encargadoservicio) {
+            todosLosParticipantes.push(nombre);
+          }
+        });
       }
+      
+      selectedOptionsParrafoEdit.textContent = todosLosParticipantes.join("\n");
     }
 
 
@@ -337,11 +349,6 @@ $(document).ready(function() {
     modalContainer.style.display = 'none';
     window.location.reload();
   });
-
-
-
-
-
 
 // Javascript para la selecion de los participantes con el Select
 document.addEventListener("DOMContentLoaded", function () {

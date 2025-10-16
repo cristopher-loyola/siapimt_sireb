@@ -300,16 +300,19 @@ $(document).ready(function() {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
-      if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
-      } else {
+      // Siempre incluir al usuario logueado como primer participante
+      const participantes = [nombreCompletoUsuario];
+
+      if (usuariosSeleccionadosInputEdit.value) {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
-        });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
+          return selectOption ? selectOption.getAttribute("data-nombre") : "";
+        }).filter(nombre => nombre && nombre !== nombreCompletoUsuario); // Evitar duplicados
+        
+        participantes.push(...usuariosSeleccionadosNombres);
       }
+
+      selectedOptionsParrafoEdit.textContent = participantes.join("\n");
     }
 
 

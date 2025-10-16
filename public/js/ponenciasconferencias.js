@@ -360,15 +360,30 @@ $(document).ready(function() {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
-      if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
-      } else {
+      // Crear un array para todos los participantes
+      const todosLosParticipantes = [];
+      
+      // Agregar primero a la persona loggeada (encargado del servicio)
+      todosLosParticipantes.push( encargadoservicio);
+
+      if (usuariosSeleccionadosInputEdit.value) {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
           const selectOption = selectedit.querySelector(`option[value="${userId}`);
           return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
+        }).filter(function(nombre) {
+          // Filtrar para evitar duplicados del encargado del servicio
+          return nombre !== encargadoservicio;
         });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        
+        // Agregar los otros participantes
+        todosLosParticipantes.push(...usuariosSeleccionadosNombres);
+      }
+
+      if (todosLosParticipantes.length === 1) {
+        // Solo está el autor
+        selectedOptionsParrafoEdit.textContent = todosLosParticipantes[0];
+      } else {
+        selectedOptionsParrafoEdit.textContent = todosLosParticipantes.join("\n");
       }
     }
 

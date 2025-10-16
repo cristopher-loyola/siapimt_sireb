@@ -703,8 +703,8 @@
     
 </head>
 @php
-    // Proyectos con estado '0' (no iniciado), '2' (concluido) y '3' (cancelado) estarán en solo lectura
-    $soloLectura = in_array($proyt->estado, [0, 2, 3]); // '0' no iniciado, '2' concluido, '3' cancelado
+    // Definir el estado de solo lectura si el proyecto no está en ejecución
+    $soloLectura = ($proyt->estado != 1);  // Estado 1 significa en ejecución
 @endphp
 
 
@@ -725,10 +725,7 @@
 @endif
 
 <body>
-  @php
-    // Proyectos con estado '0' (no iniciado), '2' (concluido) y '3' (cancelado) estarán en solo lectura
-    $soloLectura = in_array($proyt->estado, [0, 2, 3]); // '0' no iniciado, '2' concluido, '3' cancelado
-@endphp
+
 
     <header>
         <img src="../img/Logo_IMT.png" alt="" height="100px" width="120px">
@@ -1285,13 +1282,10 @@
         </button>
     </div>
     <br>
-@php
-    // Proyectos concluidos (estado '2') estarán en solo lectura
-    $soloLectura = ($proyt->estado == 2);  // '2' es el estado de proyecto concluido
-@endphp
 
 
-    <div id="formulario">
+
+    <div id="formulario" class="{{ $soloLectura ? 'solo-lectura' : '' }}">
         <div>
             @if (Session::has('success'))
                 <div id="exito">{{Session::get('success')}}</div>
@@ -1315,7 +1309,7 @@
           <div class="form-group">
     @php
         $justificacion = old('justificacion', $proyt->justificacion ?? '');
-        $placeholder = 'Escribe la justificación aquí...';  // Placeholder si no hay justificación
+        $placeholder = '';  // Placeholder si no hay justificación
     @endphp
 
     @if($soloLectura)

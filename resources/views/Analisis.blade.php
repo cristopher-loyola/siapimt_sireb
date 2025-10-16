@@ -2,8 +2,31 @@
 @section('contenido')
 <title>Análisis de riesgos  {{$proyt->nomproy}}</title>
 
+@php
+  // Solo es editable si el estado del proyecto es 1 (en ejecución)
+  $soloLectura = ($proyt->estado != 1);
+@endphp
+
 {{-- Navegadir nuevas vistta Inicio --}}
 <style>
+  /* Estilos para modo solo lectura */
+  .solo-lectura {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+  
+  .solo-lectura .btn {
+    display: none !important;
+  }
+  
+  .solo-lectura input,
+  .solo-lectura select,
+  .solo-lectura textarea {
+    background-color: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+    color: #6c757d !important;
+    cursor: not-allowed !important;
+  }
   .sidebar {
       width: 150px;
       height: 100vh;
@@ -432,7 +455,7 @@
 	?>
 	</td>
       <br>
-      <div>
+      <div @if($soloLectura) class="solo-lectura" @endif>
         <div class="mb-4">
           <div class="mb-1 input-group">
           </div>
@@ -519,6 +542,7 @@
             <tr style="background: rgba(221, 221, 221, 0.241)">
               <td hidden></td>
               <td>
+                @if(!$soloLectura)
                 <a href="{{ route('addriesgo', [$proyt->id, $idt = 1])}}">
                   <button type="submit" class="btn btn-success" id="redondb">
                     <img src="{{URL::asset('img/plus.png')}}" width="22em" height="22em"
@@ -526,6 +550,7 @@
                     Nuevo riesgo interno
                   </button>
                 </a>
+                @endif
               </td>
               <td colspan="9"></td>
             </tr>
@@ -582,6 +607,7 @@
             <tr style="background: rgba(221, 221, 221, 0.241)">
               <td hidden></td>
               <td>
+                @if(!$soloLectura)
                 <a href="{{ route('addriesgo', [$proyt->id, $idt = 2])}}">
                   <button type="submit" class="btn btn-success" id="redondb">
                     <img src="{{URL::asset('img/plus.png')}}" width="22em" height="22em"
@@ -589,6 +615,7 @@
                     Nuevo riesgo externo
                   </button>
                 </a>
+                @endif
               </td>
               <td colspan="9"></td>
             </tr>

@@ -297,15 +297,39 @@ $('.button').click(function(){
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
-      if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
-      } else {
+      // Array para almacenar todos los participantes
+      const todosLosParticipantes = [];
+      
+      // Agregar el autor al principio de la lista
+      if (encargadoservicio) {
+        todosLosParticipantes.push(encargadoservicio);
+      }
+      
+      // Agregar el organizador
+      if (organizador) {
+        todosLosParticipantes.push(organizador);
+      }
+      
+      // Agregar otros participantes seleccionados
+      if (usuariosSeleccionadosInputEdit.value) {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
           const selectOption = selectedit.querySelector(`option[value="${userId}`);
           return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
         });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        
+        // Filtrar para evitar duplicados del autor y organizador
+        usuariosSeleccionadosNombres.forEach(function(nombre) {
+          if (nombre && nombre !== encargadoservicio && nombre !== organizador) {
+            todosLosParticipantes.push(nombre);
+          }
+        });
+      }
+      
+      // Mostrar la lista completa de participantes
+      if (todosLosParticipantes.length > 0) {
+        selectedOptionsParrafoEdit.textContent = todosLosParticipantes.join("\n");
+      } else {
+        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
       }
     }
 

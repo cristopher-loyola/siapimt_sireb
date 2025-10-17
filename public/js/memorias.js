@@ -305,10 +305,8 @@ $('.button').click(function(){
         todosLosParticipantes.push(encargadoservicio);
       }
       
-      // Agregar el organizador
-      if (organizador) {
-        todosLosParticipantes.push(organizador);
-      }
+      // NO agregar el organizador a la lista de participantes
+      // El organizador se muestra en su propio campo separado
       
       // Agregar otros participantes seleccionados
       if (usuariosSeleccionadosInputEdit.value) {

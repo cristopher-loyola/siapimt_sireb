@@ -311,31 +311,32 @@ $(document).ready(function() {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
-      // Obtener el nombre del organizador
-      const nombreOrganizador = nombrepersona || nombreCompletoUsuario;
-      
-      // Normalizar nombres para evitar duplicados
-      const normalizarNombre = (nombre) => nombre.toLowerCase().trim();
-      const nombreOrganizadorNormalizado = normalizarNombre(nombreOrganizador);
-      
-      // Crear lista de participantes empezando con el organizador
-      const participantes = [`Organizador: ${nombreOrganizador}`];
-      
-      if (usuariosSeleccionadosInputEdit.value) {
+      if (!usuariosSeleccionadosInputEdit.value) {
+        // Si no hay usuarios seleccionados
+        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
+      } else {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
+          const selectOption = selectedit.querySelector(`option[value="${userId}`);
           return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
         });
         
-        // Agregar solo usuarios que no sean el organizador
-        usuariosSeleccionadosNombres.forEach(nombre => {
-          if (normalizarNombre(nombre) !== nombreOrganizadorNormalizado) {
-            participantes.push(nombre);
+        // Crear la lista final con el encargado al inicio
+        let listaFinal = [];
+        
+        // Agregar el encargado al inicio si existe y no está vacío
+        if (encargadoservicio && encargadoservicio.trim() !== '') {
+          listaFinal.push(encargadoservicio);
+        }
+        
+        // Agregar los demás participantes, excluyendo al encargado si ya está en la lista
+        usuariosSeleccionadosNombres.forEach(function(nombre) {
+          if (nombre !== encargadoservicio) {
+            listaFinal.push(nombre);
           }
         });
+        
+        selectedOptionsParrafoEdit.textContent = listaFinal.join("\n");
       }
-      
-      selectedOptionsParrafoEdit.textContent = participantes.join("\n");
     }
 
 
@@ -1030,7 +1031,6 @@ placeholderOption.selected = true;
 
 // Agregar la opción de marcador de posición al principio del select
 selectElement.prepend(placeholderOption);
-
 
 
 

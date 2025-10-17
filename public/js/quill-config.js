@@ -99,11 +99,15 @@ document.addEventListener("DOMContentLoaded", function(){
             return;
         }
         let valorOriginal = inputOculto.value.trim();
+        // Verificar si está en modo solo lectura
+        let esReadonly = contenedor.hasAttribute('data-readonly');
+        
         let quill = new Quill(contenedor,{
             theme: 'snow',
             placeholder: contenedor.getAttribute('placeholder') || '',
+            readOnly: esReadonly, // Activar modo solo lectura si es necesario
             modules: {
-                toolbar: {
+                toolbar: { // Mantener toolbar siempre para mismo tamaño
                     container: [
                         [{ 'header': [1, 2, 3, false] }],
                         ['bold', 'italic', 'underline'],
@@ -114,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function(){
                         [{ script: 'sub' }, { script: 'super' }],
                         [{ 'color': [] }, { 'background': [] }],
                         ['clean'],
-                        ['table'],
+                        
                         
                     ],
                     handlers: {
@@ -123,6 +127,17 @@ document.addEventListener("DOMContentLoaded", function(){
                 }
             }
         });
+        
+        // Si es readonly, deshabilitar toolbar después de crear Quill
+        if (esReadonly) {
+            let toolbar = contenedor.previousElementSibling;
+            if (toolbar && toolbar.classList.contains('ql-toolbar')) {
+                // Deshabilitar todos los botones del toolbar
+                toolbar.style.pointerEvents = 'none';
+                toolbar.style.opacity = '0.5';
+                toolbar.style.cursor = 'not-allowed';
+            }
+        }
         editoresQuill.push({ quill, inputOculto });
 
         // TOOLTIPS PARA LOS BOOTONES DE LA BARRA DE HERRAMIENTAS

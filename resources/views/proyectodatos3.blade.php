@@ -678,7 +678,7 @@
 </head>
 @php
     // Definir el estado de solo lectura si el proyecto no está en ejecución
-    $soloLectura = ($proyt->estado != 1);  // Estado 1 significa en ejecución
+    $soloLectura = !($proyt->estado == 0 || $proyt->estado == 1);  // Solo editable si el estado es 0 (no iniciado) o 1 (en ejecución)
 @endphp
 
 @if($soloLectura)
@@ -687,12 +687,41 @@
   .solo-lectura input:not([type="hidden"]),
   .solo-lectura select,
   .solo-lectura textarea {
-    background:#f7f7f7;
-    pointer-events:none; /* bloquea clicks/ediciones */
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none; /* bloquea clicks/ediciones */
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+  .solo-lectura textarea {
+    resize: none;
+  }
+  .solo-lectura select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
   }
   .solo-lectura button[type="submit"],
   .solo-lectura input[type="submit"] {
-    display:none !important; /* no mostrar guardar/envíos */
+    display: none !important; /* no mostrar guardar/envíos */
+  }
+  /* Estilos específicos para editores Quill en modo solo lectura */
+  .solo-lectura .editor-quill {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+  .solo-lectura .ql-toolbar {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.8;
   }
 </style>
 @endif
@@ -1184,7 +1213,7 @@
     </div>
     <br>
            @php
-$soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en ejecución)
+$soloLectura = !($proyt->estado == 0 || $proyt->estado == 1); // Solo editable si el estado es 0 (no iniciado) o 1 (en ejecución)
 @endphp
     <div id="formulario" @if($soloLectura) class="solo-lectura" @endif>
         <div>
@@ -1214,19 +1243,14 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)
-        <!-- Solo lectura -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($prodobt)) ?: $placeholderProd }}</textarea>
-    @else
-        <!-- Edición con Quill -->
-        <div id="editor-prodobt" class="editor-quill" data-input="prodobt">
-            @if(empty(strip_tags($prodobt)))
-                <div class="ql-placeholder">{{ $placeholderProd }}</div>
-            @else
-                {!! $prodobt !!}
-            @endif
-        </div>
-    @endif
+    <!-- Quill editor que funciona tanto en modo lectura como edición -->
+    <div id="editor-prodobt" class="editor-quill" data-input="prodobt" @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($prodobt)))
+            <div class="ql-placeholder">{{ $placeholderProd }}</div>
+        @else
+            {!! $prodobt !!}
+        @endif
+    </div>
 
     <!-- Valor para enviar al backend -->
     <input type="hidden" name="prodobt" value="{{ $prodobt }}">
@@ -1329,19 +1353,14 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)
-        <!-- Solo lectura -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($comcliente)) ?: $placeholderComp }}</textarea>
-    @else
-        <!-- Edición con Quill -->
-        <div id="editor-comcliente" class="editor-quill" data-input="comcliente">
-            @if(empty(strip_tags($comcliente)))
-                <div class="ql-placeholder">{{ $placeholderComp }}</div>
-            @else
-                {!! $comcliente !!}
-            @endif
-        </div>
-    @endif
+    <!-- Quill editor que funciona tanto en modo lectura como edición -->
+    <div id="editor-comcliente" class="editor-quill" data-input="comcliente" @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($comcliente)))
+            <div class="ql-placeholder">{{ $placeholderComp }}</div>
+        @else
+            {!! $comcliente !!}
+        @endif
+    </div>
 
     <!-- Valor para enviar al backend -->
     <input type="hidden" name="comcliente" value="{{ $comcliente }}">
@@ -1480,19 +1499,14 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)
-        <!-- Solo lectura -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($beneficios)) ?: $placeholderBen }}</textarea>
-    @else
-        <!-- Edición con Quill -->
-        <div id="editor-beneficios" class="editor-quill" data-input="beneficios">
-            @if(empty(strip_tags($beneficios)))
-                <div class="ql-placeholder">{{ $placeholderBen }}</div>
-            @else
-                {!! $beneficios !!}
-            @endif
-        </div>
-    @endif
+    <!-- Quill editor que funciona tanto en modo lectura como edición -->
+    <div id="editor-beneficios" class="editor-quill" data-input="beneficios" @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($beneficios)))
+            <div class="ql-placeholder">{{ $placeholderBen }}</div>
+        @else
+            {!! $beneficios !!}
+        @endif
+    </div>
 
     <!-- Valor para enviar al backend -->
     <input type="hidden" name="beneficios" value="{{ $beneficios }}">

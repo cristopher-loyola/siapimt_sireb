@@ -278,7 +278,6 @@ removeSelectedButtonedit.addEventListener("click", function () {
     $('#fechaviz').text(fecha);
     $('#tipoviz').text(tipoactividad);
     $('#descripcionviz').text(descripcion);
-    $('#nombre_personaviz').text(nombrepersona);
     $('#encargadoservicioviz').text(encargadoservicio);
 
     // Declaración de variables para los elementos y arreglos
@@ -291,47 +290,34 @@ removeSelectedButtonedit.addEventListener("click", function () {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
-      // Crear array para almacenar los nombres finales
-      const nombresFinales = [];
-      const nombresVistos = new Set();
+      // Array para almacenar todos los participantes
+      const todosLosParticipantes = [];
       
-      // Función para normalizar nombres (remover acentos y convertir a minúsculas)
-      function normalizarNombre(nombre) {
-        return nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      // Agregar el organizador al principio de la lista
+      if (encargadoservicio) {
+        todosLosParticipantes.push(encargadoservicio);
       }
       
-      // Siempre incluir al organizador como primer participante
-       // Usar el nombreCompletoUsuario si está disponible, sino usar nombrepersona como fallback
-       const nombreOrganizador = nombreCompletoUsuario || nombrepersona;
-      if (nombreOrganizador) {
-        const textoOrganizador = nombreOrganizador;
-        nombresFinales.push(textoOrganizador);
-        nombresVistos.add(normalizarNombre(nombreOrganizador));
-      }
-      
-      // Agregar otros participantes seleccionados, evitando duplicados
+      // Agregar otros participantes seleccionados
       if (usuariosSeleccionadosInputEdit.value) {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : null;
-        }).filter(function(nombre) {
-          if (!nombre) return false;
-          const nombreNormalizado = normalizarNombre(nombre);
-          if (nombresVistos.has(nombreNormalizado)) {
-            return false; // Evitar duplicados
-          }
-          nombresVistos.add(nombreNormalizado);
-          return true;
+          const selectOption = selectedit.querySelector(`option[value="${userId}`);
+          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
         });
         
-        nombresFinales.push(...usuariosSeleccionadosNombres);
+        // Filtrar para evitar duplicados del organizador
+        usuariosSeleccionadosNombres.forEach(function(nombre) {
+          if (nombre && nombre !== encargadoservicio) {
+            todosLosParticipantes.push(nombre);
+          }
+        });
       }
       
-      // Mostrar la lista final
-      if (nombresFinales.length === 0) {
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
+      // Mostrar la lista completa de participantes
+      if (todosLosParticipantes.length > 0) {
+        selectedOptionsParrafoEdit.textContent = todosLosParticipantes.join("\n");
       } else {
-        selectedOptionsParrafoEdit.textContent = nombresFinales.join("\n");
+        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
       }
     }
 
@@ -655,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
     habilitarFechasBimestreActualEdit();
   }
 });
-
 
 
 

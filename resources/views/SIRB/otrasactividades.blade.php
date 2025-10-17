@@ -343,15 +343,17 @@
           <div class="modal-body">
 
             <div class="row">
-
-                <div class="col-md-6 " hidden>
+                <!-- Campo del organizador ocultado - ahora aparece en la lista de participantes -->
+                <!--
+                <div class="col-md-6 ">
                     <div class="mb-3">
                         <label class="form-label">Organizador</label>
                         <p type="text" class="form-control" id="encargadoservicioviz" readonly></p>
                     </div>
                 </div>
+                -->
 
-                <div class="col-md-6"> <!-- Cambiamos a 12 columnas para que "Descripción" ocupe toda la fila -->
+                <div class="col-md-12"> <!-- Cambiado a 12 columnas ya que se eliminó el campo del organizador -->
                     <div class="mb-3">
                     <label class="form-label">Actividad</label>
                     <p type="text" class="form-control" id="actividadviz" readonly></p>
@@ -378,14 +380,13 @@
             </div>
 
             <div class="row">
-    <div class="col-md-12">
-        <div class="mb-3">
-            <label class="form-label">Participantes:</label>
-            <pre type="text" class="form-control" id="selected-options-paragraph-editar" readonly></pre>
-        </div>
-    </div>
-</div>
-
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">Participantes:</label>
+                    <pre type="text" class="form-control" id="selected-options-paragraph-editar" readonly></pre>
+                  </div>
+                </div>
+              </div>
 
             <div class="row">
               <div class="col-md-12"> <!-- Cambiamos a 12 columnas para que "Descripción" ocupe toda la fila -->
@@ -856,85 +857,19 @@
 
 @stop
 @push('scripts')
-{{-- ESTOS DOS PRIMEROS SE QUEDAN IGUAL --}}
 <script>
-    const nombreCompletoUsuario = @json($nombreCompleto);
+    const nombreCompletoUsuario = @json($nombreCompleto); // Convierte el valor PHP en un valor JavaScript
 </script>
 <script src="{{ asset('js/otrasactividades.js') }}"></script>
-
-{{-- EL BLOQUE PHP TAMBIÉN SE QUEDA IGUAL --}}
-@php
-  $usersMap = [];
-  foreach ($usuarios as $u) {
-      $usersMap[$u->id] = trim($u->Apellido_Paterno.' '.$u->Apellido_Materno.' '.$u->Nombre);
-  }
-@endphp
 <script>
-    // Hacemos que el mapa de usuarios de PHP esté disponible en JavaScript
-    const usersMap = @json($usersMap);
+  resp = document.getElementById('resp').value;
+  team = document.getElementById('team').value;
+  ref = document.getElementById('ref').value;
 
-    // COMENTADO: Este código está duplicado con el de otrasactividades.js
-    // El JavaScript externo maneja la funcionalidad del btnviz
-    /*
-    document.addEventListener('click', function (ev) {
-        const btn = ev.target.closest('#btnviz');
-        if (!btn) return;
+  function autoResizeTextarea(element) {
+    element.style.height = "auto";
+    element.style.height = (element.scrollHeight) + "px";
+}
 
-        const participantesEl = document.getElementById('selected-options-paragraph-editar');
-        if (!participantesEl) return;
-
-        const encargado = (btn.getAttribute('data-encargado') || '').trim();
-        let raw = (btn.getAttribute('data-usuariosseleccionados') || '').trim();
-        let items = []; // Aquí guardaremos los IDs de los participantes
-
-        try {
-            const maybe = JSON.parse(raw);
-            if (Array.isArray(maybe)) items = maybe.map(String);
-        } catch (_) {
-            items = raw
-                .replace(/\r/g, '')
-                .split(/\n|,|;|•/g)
-                .map(s => s.trim())
-                .filter(Boolean);
-        }
-
-        const final = [];
-        const seen = new Set();
-
-        if (encargado && !seen.has(normaliza(encargado))) {
-            final.push(encargado);
-            seen.add(normaliza(encargado));
-        }
-
-        // Bucle para "traducir" cada ID a su nombre completo usando el mapa
-        for (const id of items) {
-            const participantName = usersMap[id.trim()] || `Usuario (ID: ${id})`; // Busca el nombre
-            const normalizedName = normaliza(participantName);
-            if (!seen.has(normalizedName)) {
-                seen.add(normalizedName);
-                final.push(participantName); // Agrega el NOMBRE a la lista final
-            }
-        }
-
-        // Renderizamos la lista final con los NOMBRES
-        participantesEl.innerHTML = final
-            .map((p, i) => i === 0 ? '<strong>' + escapeHtml(p) + '</strong>' : escapeHtml(p))
-            .join('\n');
-    });
-    */
-
-    function normaliza(s) {
-        return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-    }
-
-    function escapeHtml(s) {
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
 </script>
 @endpush
-

@@ -703,8 +703,8 @@
     
 </head>
 @php
-    // Definir el estado de solo lectura si el proyecto no está en ejecución
-    $soloLectura = ($proyt->estado != 1);  // Estado 1 significa en ejecución
+    // Definir el estado de solo lectura - Estados 0 (no iniciado) y 1 (en ejecución) permiten edición
+    $soloLectura = !($proyt->estado == 0 || $proyt->estado == 1);
 @endphp
 
 
@@ -714,12 +714,41 @@
   .solo-lectura input:not([type="hidden"]),
   .solo-lectura select,
   .solo-lectura textarea {
-    background:#f7f7f7;
-    pointer-events:none; /* bloquea clicks/ediciones */
+    background: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none !important; /* bloquea clicks/ediciones */
+    cursor: not-allowed !important;
+    opacity: 0.8 !important;
+  }
+  .solo-lectura textarea {
+    resize: none !important;
+  }
+  .solo-lectura select {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+  }
+  /* Estilo específico para Quill editors en modo solo lectura */
+  .solo-lectura .editor-quill {
+    background: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.8 !important;
+  }
+  /* Estilo para la toolbar de Quill en modo solo lectura */
+  .solo-lectura .ql-toolbar {
+    background: #e9ecef !important;
+    border-color: #ced4da !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.8 !important;
   }
   .solo-lectura button[type="submit"],
   .solo-lectura input[type="submit"] {
-    display:none !important; /* no mostrar guardar/envíos */
+    display: none !important; /* no mostrar guardar/envíos */
   }
 </style>
 @endif
@@ -1312,18 +1341,15 @@
         $placeholder = '';  // Placeholder si no hay justificación
     @endphp
 
-    @if($soloLectura)
-        <!-- Modo solo lectura: Mostrar el contenido en un textarea solo lectura sin etiquetas HTML -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($justificacion)) ?: $placeholder }}</textarea>
-    @else
-        <!-- Modo edición: Mostrar el editor Quill -->
-        <div class="editor-quill" data-input="justificacion">
-            @if(empty(strip_tags($justificacion)))
-            @else
-                {!! $justificacion !!}
-            @endif
-        </div>
-    @endif
+    <!-- Usar el mismo campo Quill en ambos modos -->
+    <div class="editor-quill" 
+         data-input="justificacion"
+         @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($justificacion)))
+        @else
+            {!! $justificacion !!}
+        @endif
+    </div>
 
     <input type="hidden" name="justificacion" value="{{$justificacion}}">
     <span class="text-danger">@error('justificacion') {{$message}} @enderror</span>
@@ -1547,19 +1573,15 @@
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)
-        {{-- Modo solo lectura: texto plano, sin HTML --}}
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($antecedente)) ?: $placeholderAnt }}</textarea>
-    @else
-        {{-- Modo edición: Quill --}}
-        <div class="editor-quill"
-             data-input="antecedente"
-             data-ph="{{ $placeholderAnt }}">
-            @if(!empty(strip_tags($antecedente)))
-                {!! $antecedente !!}
-            @endif
-        </div>
-    @endif
+    {{-- Usar el mismo campo Quill en ambos modos --}}
+    <div class="editor-quill"
+         data-input="antecedente"
+         data-ph="{{ $placeholderAnt }}"
+         @if($soloLectura) data-readonly="true" @endif>
+        @if(!empty(strip_tags($antecedente)))
+            {!! $antecedente !!}
+        @endif
+    </div>
 
     {{-- Campo real que envía el form --}}
     <input type="hidden" name="antecedente" value="{{ $antecedente }}">

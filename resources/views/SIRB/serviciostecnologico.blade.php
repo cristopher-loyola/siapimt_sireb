@@ -1,3 +1,4 @@
+@ -0,0 +1,1236 @@
 @extends('plantillas/plantillaresp')
 @section('contenido')
 
@@ -456,7 +457,7 @@
           <div class="modal-body">
 
                 <div class="row">
-                <div class="col-md-6 ">
+                <div class="col-md-6 " style="display: none;">
                     <div class="mb-3">
                         <label class="form-label">Encargado del servicio</label>
                         <p type="text" class="form-control" id="encargadoservicioviz" readonly></p>
@@ -1225,6 +1226,85 @@
 @push('scripts')
 <script>
     const nombreCompletoUsuario = @json($nombreCompleto); // Convierte el valor PHP en un valor JavaScript
+    
+    // Crear mapa de usuarios para la visualización de participantes
+    @php
+    $usersMap = [];
+    foreach ($usuarios as $u) {
+        $usersMap[$u->id] = trim($u->Apellido_Paterno.' '.$u->Apellido_Materno.' '.$u->Nombre);
+    }
+    @endphp
+    const usersById = @json($usersMap);
+    
+    // Función mejorada para mostrar participantes en el modal de visualización
+    function mostrarParticipantesEnVisualizacion(btn, encargado) {
+        const participantesEl = document.getElementById('selected-options-paragraph-editar');
+        if (!participantesEl) return;
+
+        // Obtener datos de participantes del botón
+        let raw = (btn.getAttribute('data-usuariosseleccionados') || '').trim();
+
+        // Procesar los IDs de participantes
+        let items = [];
+        try {
+            const maybe = JSON.parse(raw);
+            if (Array.isArray(maybe)) items = maybe;
+        } catch (_) {
+            items = raw
+                .replace(/\r/g, '')
+                .split(/\n|,|;/g)
+                .map(s => s.trim())
+                .filter(Boolean);
+        }
+
+        // Convertir IDs a nombres
+        const nombres = items.map(t => {
+            const token = String(t).replace(/^\[?"+?|\]?"+?$/g, '').trim();
+            if (/^\d+$/.test(token) && usersById[token]) return usersById[token];
+            return token;
+        }).filter(Boolean);
+
+        // Crear lista final sin duplicados, con encargado al inicio
+        const final = [];
+        const seen = new Set();
+        
+        // Función para normalizar nombres para comparación
+        const normaliza = (s) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+        
+        // Función para escapar HTML
+        const escapeHtml = (text) => {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, (m) => map[m]);
+        };
+        
+        if (encargado) {
+            final.push(encargado);
+            seen.add(normaliza(encargado));
+        }
+        
+        for (const n of nombres) {
+            const k = normaliza(n);
+            if (!seen.has(k)) {
+                seen.add(k);
+                final.push(n);
+            }
+        }
+
+        // Mostrar participantes: encargado en negrita, resto en líneas nuevas
+        if (final.length > 0) {
+            participantesEl.innerHTML = final
+                .map((p, i) => i === 0 ? '<strong>' + escapeHtml(p) + '</strong>' : escapeHtml(p))
+                .join('\n');
+        } else {
+            participantesEl.textContent = "No hay ningún participante seleccionado";
+        }
+    }
 </script>
 <script src="{{ asset('js/serviciostecnologicos.js') }}"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

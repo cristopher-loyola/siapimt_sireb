@@ -714,12 +714,41 @@
   .solo-lectura input:not([type="hidden"]),
   .solo-lectura select,
   .solo-lectura textarea {
-    background:#f7f7f7;
-    pointer-events:none; /* bloquea clicks/ediciones */
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none; /* bloquea clicks/ediciones */
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+  .solo-lectura textarea {
+    resize: none;
+  }
+  .solo-lectura select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  /* Estilo específico para Quill editors en modo solo lectura */
+  .solo-lectura .editor-quill {
+    background: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.8 !important;
+  }
+  /* Estilo para la toolbar de Quill en modo solo lectura */
+  .solo-lectura .ql-toolbar {
+    background: #e9ecef !important;
+    border-color: #ced4da !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.8 !important;
   }
   .solo-lectura button[type="submit"],
   .solo-lectura input[type="submit"] {
-    display:none !important; /* no mostrar guardar/envíos */
+    display: none !important; /* no mostrar guardar/envíos */
   }
 </style>
 @endif
@@ -1259,7 +1288,7 @@
     </div>
     <br>
        @php
-$soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en ejecución)
+$soloLectura = !($proyt->estado == 0 || $proyt->estado == 1); // Solo editable si el estado es 0 (no iniciado) o 1 (en ejecución)
 @endphp
     <div id="formulario" @if($soloLectura) class="solo-lectura" @endif>
         <div>
@@ -1289,21 +1318,18 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)  <!-- Verifica si está en modo solo lectura (proyecto concluido) -->
-        <!-- Modo solo lectura: Mostrar el contenido en un textarea solo lectura -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($objetivo)) ?: $placeholderObj }}</textarea>
-    @else
-        <!-- Modo edición: Mostrar el editor Quill -->
-        <div id="editor-objetivo" class="editor-quill" data-input="objetivo">
-            @if(empty(strip_tags($objetivo)))
-                <!-- Si no hay contenido, se muestra el placeholder -->
-                <div class="ql-placeholder">{{ $placeholderObj }}</div>
-            @else
-                <!-- Si hay contenido, se muestra en el editor Quill -->
-                {!! $objetivo !!}
-            @endif
-        </div>
-    @endif
+    <!-- Usar el mismo campo Quill en ambos modos -->
+    <div id="editor-objetivo" class="editor-quill" 
+         data-input="objetivo"
+         @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($objetivo)))
+            <!-- Si no hay contenido, se muestra el placeholder -->
+            <div class="ql-placeholder">{{ $placeholderObj }}</div>
+        @else
+            <!-- Si hay contenido, se muestra en el editor Quill -->
+            {!! $objetivo !!}
+        @endif
+    </div>
 
     <input type="hidden" name="objetivo" value="{{ $objetivo }}">
     <span class="text-danger">@error('objetivo') {{$message}} @enderror</span>
@@ -1411,19 +1437,16 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)
-        <!-- Solo lectura -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($objetivoespc)) ?: $placeholderObjEsp }}</textarea>
-    @else
-        <!-- Edición con Quill -->
-        <div id="editor-objetivoespc" class="editor-quill" data-input="objetivoespc">
-            @if(empty(strip_tags($objetivoespc)))
-                <div class="ql-placeholder">{{ $placeholderObjEsp }}</div>
-            @else
-                {!! $objetivoespc !!}
-            @endif
-        </div>
-    @endif
+    <!-- Usar el mismo campo Quill en ambos modos -->
+    <div id="editor-objetivoespc" class="editor-quill" 
+         data-input="objetivoespc"
+         @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($objetivoespc)))
+            <div class="ql-placeholder">{{ $placeholderObjEsp }}</div>
+        @else
+            {!! $objetivoespc !!}
+        @endif
+    </div>
 
     <!-- Donde se envía al servidor -->
     <input type="hidden" name="objetivoespc" value="{{ $objetivoespc }}">
@@ -1531,19 +1554,16 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)
-        <!-- Solo lectura -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($alcance)) ?: $placeholderAlc }}</textarea>
-    @else
-        <!-- Edición con Quill -->
-        <div id="editor-alcance" class="editor-quill" data-input="alcance">
-            @if(empty(strip_tags($alcance)))
-                <div class="ql-placeholder">{{ $placeholderAlc }}</div>
-            @else
-                {!! $alcance !!}
-            @endif
-        </div>
-    @endif
+    <!-- Usar el mismo campo Quill en ambos modos -->
+    <div id="editor-alcance" class="editor-quill" 
+         data-input="alcance"
+         @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($alcance)))
+            <div class="ql-placeholder">{{ $placeholderAlc }}</div>
+        @else
+            {!! $alcance !!}
+        @endif
+    </div>
 
     <!-- Valor para enviar al backend -->
     <input type="hidden" name="alcance" value="{{ $alcance }}">
@@ -1651,19 +1671,16 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
 @endphp
 
 <div class="form-group">
-    @if($soloLectura)
-        <!-- Solo lectura -->
-        <textarea class="form-control" rows="5" readonly>{{ html_entity_decode(strip_tags($metodologia)) ?: $placeholderMet }}</textarea>
-    @else
-        <!-- Edición con Quill -->
-        <div id="editor-metodologia" class="editor-quill" data-input="metodologia">
-            @if(empty(strip_tags($metodologia)))
-                <div class="ql-placeholder">{{ $placeholderMet }}</div>
-            @else
-                {!! $metodologia !!}
-            @endif
-        </div>
-    @endif
+    <!-- Usar el mismo campo Quill en ambos modos -->
+    <div id="editor-metodologia" class="editor-quill" 
+         data-input="metodologia"
+         @if($soloLectura) data-readonly="true" @endif>
+        @if(empty(strip_tags($metodologia)))
+            <div class="ql-placeholder">{{ $placeholderMet }}</div>
+        @else
+            {!! $metodologia !!}
+        @endif
+    </div>
 
     <!-- Valor para enviar al backend -->
     <input type="hidden" name="metodologia" value="{{ $metodologia }}">

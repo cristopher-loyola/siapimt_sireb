@@ -84,13 +84,24 @@
 
 
            <div class="row">
-              <div class="col">
+              <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">Número del registro</label>
                   <input id="numeroregistro" type="text" class="form-control" name="numeroregistro" placeholder="Número del registro" required>
                 </div>
               </div>
-
+              <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Nombre del cliente</label>
+                    <select name="nombrecliente" id="nombrecliente" class="form-control" required>
+                        @foreach ($Cliente as $Clientes)
+                            <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
+                                {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
             </div>
 
 
@@ -127,7 +138,7 @@
 
 
             <div class="row">
-              <div class="col">
+              <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">Descripción del servicio</label>
                   <textarea id="servicio" type="text" class="form-control" name="servicio" placeholder="Descripción del servicio" required></textarea>
@@ -143,10 +154,6 @@
                 </div>
               </div>
 
-            </div>
-
-            <div class="col mb-3">
-              <x-select-client label="Nombre del cliente" nameField='nombrecliente' :categories="$categoriesN1"/>
             </div>
 
             <input id="nombre_persona" type="hidden" class="form-control" name="nombre_persona" value="{{ $LoggedUserInfo['usuario']}}">
@@ -249,27 +256,25 @@
            </div>
 
            <div class="row">
-              <div class="col">
+              <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">Número del registro</label>
                   <input id="numeroregistroedit" type="text" class="form-control" name="numeroregistro" placeholder="Número del registro" required>
                 </div>
               </div>
 
-            </div>
-            
-            <div class="row pb-3">
-              <div class="col">
-                <label class="form-label">Nombre del cliente actual</label>
-                <input type="text" class="form-control" value="" id="nombreclienteedit" readonly/>
-              </div>
-            </div>
-
-
-            <div class="row">
-              <div class="col">
-                <x-select-client label="Cambiar cliente" nameField='nombrecliente' :categories="$categoriesN1" />
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Nombre del cliente</label>
+                  <select name="nombrecliente" id="nombreclienteedit" class="form-control" required>
+                    @foreach ($Cliente as $Clientes)
+                    <option value="{{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}">
+                        {{ $Clientes->nivel1 }} | {{ $Clientes->nivel2 }} | {{ $Clientes->nivel3 }}
+                    </option>
+                    @endforeach
+                  </select>
                 </div>
+              </div>
             </div>
 
 
@@ -308,7 +313,7 @@
 
 
             <div class="row">
-              <div class="col">
+              <div class="col-md-6">
                 <div class="mb-3">
                   <label class="form-label">Descripción del servicio</label>
                   <textarea id="servicioedit" type="text" class="form-control" name="servicio" placeholder="Servicio" required></textarea>
@@ -450,22 +455,21 @@
 
           <div class="modal-body">
 
-               <div class="row">
-                  <div class="col-md-6" hidden>
+                <div class="row">
+                <div class="col-md-6 " style="display: none;">
                     <div class="mb-3">
-                      <label class="form-label">Encargado del servicio</label>
-                      <p type="text" class="form-control" id="encargadoservicioviz" readonly></p>
+                        <label class="form-label">Encargado del servicio</label>
+                        <p type="text" class="form-control" id="encargadoservicioviz" readonly></p>
                     </div>
-                  </div>
-
-                  <div class="col-md-6 ">
-                    <div class="mb-3">
-                      <label class="form-label">Tipo de servicio</label>
-                      <p type="text" class="form-control" id="nombreservicioviz" readonly></p>
-                    </div>
-                  </div>
                 </div>
 
+                <div class="col-md-6 ">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de servicio</label>
+                        <p type="text" class="form-control" id="nombreservicioviz" readonly></p>
+                    </div>
+                </div>
+                </div>
 
 
                <div class="row">
@@ -1220,96 +1224,9 @@
 </script>
 <script src="{{ asset('js/serviciostecnologicos.js') }}"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-@php
-  $usersMap = [];
-  foreach ($usuarios as $u) {
-      $usersMap[$u->id] = trim($u->Apellido_Paterno.' '.$u->Apellido_Materno.' '.$u->Nombre);
-  }
-@endphp
-<script>
-  // Mapa de IDs a nombres accesible desde JS
-  const usersById = @json($usersMap);
-</script>
-
 <script>
   resp = document.getElementById('resp').value;
   team = document.getElementById('team').value;
   ref = document.getElementById('ref').value;
 </script>
-<script>
-(function () {
-  function escapeHtml(s){
-    return String(s)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#39;');
-  }
-  function normaliza(s){
-    return String(s)
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // sin acentos
-      .toLowerCase().replace(/\s+/g,' ').trim();
-  }
-
-  document.addEventListener('click', function (ev) {
-    const btn = ev.target.closest('#btnviz');
-    if (!btn) return;
-
-    const encargado = (btn.getAttribute('data-encargado') || '').trim();
-    const participantesEl = document.getElementById('selected-options-paragraph-editar');
-    if (!participantesEl) return;
-
-    // 1) Fuente principal: data-usuariosseleccionados (puede ser '1,2,3' o JSON '["1","2"]')
-    let raw = (btn.getAttribute('data-usuariosseleccionados') || participantesEl.textContent || '').trim();
-
-    // 2) Intentamos parsear como JSON; si no, caemos a split por separadores
-    let items = [];
-    try {
-      const maybe = JSON.parse(raw);
-      if (Array.isArray(maybe)) items = maybe;
-    } catch (_) {
-      items = raw
-        .replace(/\r/g, '')
-        .split(/\n|,|;|•/g)
-        .map(s => s.trim())
-        .filter(Boolean);
-    }
-
-    // 3) Convertimos cada token: si es ID numérico y existe en usersById => nombre; si no, lo dejamos tal cual
-    const nombres = items.map(t => {
-      const token = String(t).replace(/^\[?"+?|\]?"+?$/g, '').trim(); // quita [] y comillas sueltas
-      if (/^\d+$/.test(token) && usersById[token]) return usersById[token];
-      return token;
-    }).filter(Boolean);
-
-    // 4) Dedupe e inserta encargado al inicio (sin duplicarlo)
-    const final = [];
-    const seen = new Set();
-    if (encargado) {
-      final.push(encargado);
-      seen.add(normaliza(encargado));
-    }
-    for (const n of nombres) {
-      const k = normaliza(n);
-      if (!seen.has(k)) {
-        seen.add(k);
-        final.push(n);
-      }
-    }
-
-    // 5) Render: primero en <strong>, resto en líneas nuevas
-    participantesEl.innerHTML = final
-      .map((p, i) => i === 0 ? '<strong>' + escapeHtml(p) + '</strong>' : escapeHtml(p))
-      .join('\n');
-
-    // (opcional) limpiamos el campo oculto del encargado si existe
-    const encEl = document.getElementById('encargadoservicioviz');
-    if (encEl) encEl.textContent = '';
-  });
-})();
-</script>
-
-
-
 @endpush

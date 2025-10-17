@@ -395,57 +395,63 @@
         }
 
         /* Botón de Información del Proyecto en esquina superior izquierda */
-.corner-icon {
-  position: fixed;
-  top: 20px;       /* Ajuste vertical (en este caso 20px desde arriba) */
-  left: 20px;      /* Ajuste horizontal (20px desde la izquierda) */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #808080; /* Gris */
-  color: #fff;
-  border-radius: 8px;
-  padding: 6px 10px;          /* Compacto */
-  height: 32px;               /* Altura compacta */
-  text-decoration: none;
-  z-index: 1000;
-  transition: background-color .2s, transform .2s; /* Animación */
-  overflow: visible;          /* Deja visible el texto al expandir */
+.info-btn-corner {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: 120px;
+    height: 60px;
+    background-color: #6c757d;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+    position: relative;
+    padding: 8px;
+    text-align: center;
 }
 
-.corner-icon img {
-  width: 16px;
-  height: 16px;
+.info-btn-corner:hover {
+    background-color: #5a6268;
+    color: white;
+    text-decoration: none;
 }
 
-/* Texto oculto inicialmente, aparece al hover/focus */
-.corner-icon .label {
-  margin-left: 8px;      /* Espacio entre ícono y texto */
-  font-size: 12px;       /* Tamaño de fuente pequeño */
-  line-height: 1;
-  white-space: nowrap;
-  
-  max-width: 0;          /* Oculto por defecto */
-  opacity: 0;
-  overflow: hidden;
-  transition: max-width .25s ease, opacity .2s ease;
+.info-btn-corner .sidebar-image {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    margin-bottom: 5px;
 }
 
-/* Hover/focus: anima y revela el texto */
-.corner-icon:hover {
-  background-color: #6c6c6c;  /* Gris más oscuro */
-  transform: scale(1.05);
+.info-btn-corner .tooltip {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    height: 120%;
+    transform: translateY(-50%);
+    background-color: #5a6268;
+    padding: 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    margin-left: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
 }
 
-.corner-icon:hover .label,
-.corner-icon:focus .label {
-  max-width: 220px;     /* Espacio para el texto */
-  opacity: 1;
-}
-
-/* Accesibilidad con teclado */
-.corner-icon:focus-visible {
-  outline: 2px solid #0065d0;  /* Resaltado con borde azul */
+.info-btn-corner:hover .tooltip {
+    opacity: 1;
 }
 
 
@@ -520,13 +526,11 @@
         </table>
     </header>
     <br>
-    {{-- Navegadir nuevas vistta Inicio --}}
-<a href="{{ route('infoproys', $proyt->id) }}"
-   class="corner-icon"
-   aria-label="Información del Proyecto">
-  <img src="{{asset('/img/info-chat.png')}}" alt="Información del Proyecto">
-  <span class="label">Información del Proyecto</span>
-</a>
+    {{-- Botón de información del proyecto en esquina superior izquierda --}}
+    <a href="{{route('infoproys',$proyt->id)}}" class="info-btn-corner"> 
+        <img src="{{asset('/img/info-chat.png')}}" alt="Regresar" class="sidebar-image"> 
+        <span class="tooltip">Información del Proyecto</span> 
+    </a>
 
 
 

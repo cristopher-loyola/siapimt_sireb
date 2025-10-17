@@ -411,33 +411,64 @@
         }
 
 
-        /* Botón pequeño en esquina */
+        /* Botón de información del proyecto en esquina superior izquierda */
 .info-btn-corner {
-    position: fixed; /* Fijo en pantalla */
-    top: 20px; /* Espacio desde arriba */
-    right: 20px; /* Espacio desde la derecha */
-    background-color: #007bff;
-    color: #fff;
-    font-size: 13px; /* Más discreto */
-    padding: 6px 12px;
-    border-radius: 5px;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: 120px;
+    height: 60px;
+    background-color: #6c757d;
+    color: white;
     text-decoration: none;
-    display: inline-flex;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 1000; /* Siempre encima del contenido */
-    transition: background-color 0.3s, transform 0.2s;
-}
-
-.info-btn-corner img {
-    width: 16px;
-    height: 16px;
-    margin-right: 5px;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+    position: relative;
+    padding: 8px;
+    text-align: center;
 }
 
 .info-btn-corner:hover {
-    background-color: #0056b3;
-    transform: scale(1.05); /* Pequeño efecto hover */
+    background-color: #5a6268;
+    color: white;
+    text-decoration: none;
+}
+
+.info-btn-corner .sidebar-image {
+    width: 30px;
+    height: 30px;
+    object-fit: cover;
+    margin-bottom: 5px;
+}
+
+.info-btn-corner .tooltip {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    height: 120%;
+    transform: translateY(-50%);
+    background-color: #5a6268;
+    padding: 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    margin-left: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.info-btn-corner:hover .tooltip {
+    opacity: 1;
 }
     </style>
     <script>
@@ -516,15 +547,11 @@
         </table>
     </header>
     <br>
-    {{-- Navegadir nuevas vistta Inicio --}}
-    </div>
-        <li class="sidebar-item-cancel" id="item6">
-    <a href="{{route('infoproys', $proyt->id)}}" class="info-btn-left" aria-label="Información del Proyecto">
-  <img src="{{asset('/img/info-chat.png')}}" alt="" />
-  <span class="label">Información del Proyecto</span>
-</a>
-
-</li>
+    {{-- Botón de información del proyecto en esquina superior izquierda --}}
+    <a href="{{route('infoproys',$proyt->id)}}" class="info-btn-corner"> 
+        <img src="{{asset('/img/info-chat.png')}}" alt="Regresar" class="sidebar-image"> 
+        <span class="tooltip">Información del Proyecto</span> 
+    </a>
 
 
 

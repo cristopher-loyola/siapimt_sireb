@@ -321,7 +321,7 @@
     <script src="{{ asset('js/quill-config.js') }}"></script>
 </head>
 @php
-    // Modo solo lectura si NO viene ?crear=1
+    // Modo solo lectura si NO viene ?crear=1 Y el proyecto no está en estado editable
     $soloLectura = request('crear') != 1;
 @endphp
 
@@ -331,12 +331,24 @@
   .solo-lectura input:not([type="hidden"]),
   .solo-lectura select,
   .solo-lectura textarea {
-    background:#f7f7f7;
-    pointer-events:none; /* bloquea clicks/ediciones */
+    background: #e9ecef !important; /* Gris más claro y visible */
+    color: #6c757d !important; /* Texto gris */
+    border-color: #ced4da !important; /* Borde gris */
+    pointer-events: none; /* bloquea clicks/ediciones */
+    cursor: not-allowed; /* cursor que indica no editable */
+    opacity: 0.8; /* ligera transparencia para indicar deshabilitado */
   }
   .solo-lectura button[type="submit"],
   .solo-lectura input[type="submit"] {
-    display:none !important; /* no mostrar guardar/envíos */
+    display: none !important; /* no mostrar guardar/envíos */
+  }
+  /* Estilo específico para textareas en modo lectura */
+  .solo-lectura textarea {
+    resize: none !important;
+  }
+  /* Estilo para selects en modo lectura */
+  .solo-lectura select {
+    background-image: none !important; /* quitar flecha del select */
   }
 </style>
 @endif
@@ -831,11 +843,11 @@
     <div style="height: 30px"></div>
     <br>
 @php
-    // Definir el estado de solo lectura si el proyecto no está en ejecución
-    $soloLectura = ($proyt->estado != 1);  // Estado 1 significa en ejecución
+    // Definir el estado de solo lectura - permitir edición para proyectos no iniciados (0) y en ejecución (1)
+    $soloLectura = !($proyt->estado == 0 || $proyt->estado == 1);  // Estados 0 (no iniciado) y 1 (en ejecución) permiten edición
 @endphp
 
-<div id="formulario">
+<div id="formulario" @if($soloLectura) class="solo-lectura" @endif>
     <div>
         @if (Session::has('success'))
             <div id="exito">{{ Session::get('success') }}</div>

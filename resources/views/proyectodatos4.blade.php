@@ -787,7 +787,7 @@
     </head>
     @php
     // Definir el estado de solo lectura si el proyecto no está en ejecución
-    $soloLectura = ($proyt->estado != 1);  // Estado 1 significa en ejecución
+    $soloLectura = !($proyt->estado == 0 || $proyt->estado == 1);  // Solo editable si el estado es 0 (no iniciado) o 1 (en ejecución)
 @endphp
 
 @if($soloLectura)
@@ -796,12 +796,41 @@
   .solo-lectura input:not([type="hidden"]),
   .solo-lectura select,
   .solo-lectura textarea {
-    background:#f7f7f7;
-    pointer-events:none; /* bloquea clicks/ediciones */
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none; /* bloquea clicks/ediciones */
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+  .solo-lectura textarea {
+    resize: none;
+  }
+  .solo-lectura select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
   }
   .solo-lectura button[type="submit"],
   .solo-lectura input[type="submit"] {
-    display:none !important; /* no mostrar guardar/envíos */
+    display: none !important; /* no mostrar guardar/envíos */
+  }
+  /* Estilos específicos para editores Quill en modo solo lectura */
+  .solo-lectura .editor-quill {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+  .solo-lectura .ql-toolbar {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+    border-color: #ced4da !important;
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.8;
   }
 </style>
 @endif
@@ -1307,7 +1336,7 @@
         </div>
         <br>
          @php
-$soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en ejecución)
+$soloLectura = !($proyt->estado == 0 || $proyt->estado == 1); // Solo editable si el estado es 0 (no iniciado) o 1 (en ejecución)
 @endphp
         <div id="formulario" @if($soloLectura) class="solo-lectura" @endif>
             <div class="container" style="max-width: 800px; width: 100%; margin: 0 auto;">
@@ -1493,19 +1522,14 @@ $soloLectura = ($proyt->estado != 1); // Solo editable si el estado es 1 (en eje
         $placeholderRef = '';
     @endphp
 
-    @if($soloLectura)
-        <!-- Modo solo lectura: Mostrar el contenido con estilo normal, sin fondo gris -->
-        <textarea class="form-control readonly-textarea" rows="5" readonly>{{ html_entity_decode(strip_tags($referencias)) ?: $placeholderRef }}</textarea>
-    @else
-        <!-- Modo edición con Quill -->
-        <div id="editor-referencias" class="editor-quill" data-input="referencias" style="min-height:120px;">
-            @if(empty(strip_tags($referencias)))
-                <div class="ql-placeholder">{{ $placeholderRef }}</div>
-            @else
-                {!! $referencias !!}
-            @endif
-        </div>
-    @endif
+    <!-- Quill editor que funciona tanto en modo lectura como edición -->
+    <div id="editor-referencias" class="editor-quill" data-input="referencias" @if($soloLectura) data-readonly="true" @endif style="min-height:120px;">
+        @if(empty(strip_tags($referencias)))
+            <div class="ql-placeholder">{{ $placeholderRef }}</div>
+        @else
+            {!! $referencias !!}
+        @endif
+    </div>
 </div>
 
 

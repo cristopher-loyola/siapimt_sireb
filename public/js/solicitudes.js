@@ -312,39 +312,27 @@ $(document).on("click", "#btnviz",function(){
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
-      // Crear array para almacenar todos los participantes
-      let todosLosParticipantes = [];
-      
-      // Agregar la persona logueada (responsable de la solicitud)
-      todosLosParticipantes.push(nombreCompletoUsuario);
-      
-      // Agregar la persona atendida
-      if (encargadoservicio && encargadoservicio.trim() !== '') {
-        todosLosParticipantes.push(encargadoservicio);
-      }
-
-      // Agregar otros participantes seleccionados
-      if (usuariosSeleccionadosInputEdit.value && usuariosSeleccionadosInputEdit.value.trim() !== '') {
-        const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
-          return selectOption ? selectOption.getAttribute("data-nombre") || selectOption.textContent : null;
-        }).filter(nombre => nombre !== null && nombre.trim() !== '');
-        
-        // Agregar solo los participantes que no estén ya incluidos
-        usuariosSeleccionadosNombres.forEach(function(nombreParticipante) {
-          if (!todosLosParticipantes.includes(nombreParticipante)) {
-            todosLosParticipantes.push(nombreParticipante);
-          }
-        });
-      }
-
-      // Mostrar todos los participantes
-      if (todosLosParticipantes.length > 0) {
-        selectedOptionsParrafoEdit.textContent = todosLosParticipantes.join("\n");
+      if (!usuariosSeleccionadosInputEdit.value) {
+        // Si no hay usuarios seleccionados
+        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
       } else {
-        selectedOptionsParrafoEdit.textContent = "No hay participantes registrados";
+        // Filtrar el encargado del servicio de la lista de participantes
+        const usuariosFiltrados = usuariosSeleccionados.filter(function(userId) {
+          return userId !== encargadoservicio;
+        });
+        
+        if (usuariosFiltrados.length === 0) {
+          selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
+        } else {
+          const usuariosSeleccionadosNombres = usuariosFiltrados.map(function (userId) {
+            const selectOption = selectedit.querySelector(`option[value="${userId}`);
+            return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
+          });
+          selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        }
       }
     }
+
 
     actualizarUsuariosSeleccionadosEnParrafo();
 
@@ -359,7 +347,6 @@ cancelButton.addEventListener('click', function () {
   modalContainer.style.display = 'none';
   window.location.reload();
 });
-
 
 
 
@@ -502,16 +489,6 @@ $(document).ready(function() {
       if (!$(event.target).closest("#searchInput, .select-container").length) {
           // Cierra el select y ajusta la altura
           $("#oprt").removeAttr("size");
-      }
-  });
-
-  // Actualizar preview de persona atendida en tiempo real
-  $('#encargadoservicio').on('input', function() {
-      const nombrePersonaAtendida = $(this).val();
-      if (nombrePersonaAtendida.trim() !== '') {
-          $('#persona-atendida-preview').text(nombrePersonaAtendida);
-      } else {
-          $('#persona-atendida-preview').text('Se mostrará al escribir el nombre');
       }
   });
 });

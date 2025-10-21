@@ -127,10 +127,10 @@
             <div class="left">
               <div class="mb-3">
                   <label class="form-label">Otros participantes</label>
-                  <input type="text" id="searchInput" class="form-control" placeholder="Buscar participantes">
-                  <div class="select-container">
-                      <select name="participantes[]" id="oprt" class="form-control">
-                          <option value="">Seleccione los participantes</option>
+                <input type="text" id="searchInput" class="form-control" placeholder="Buscar participantes">
+                <div class="select-container">
+                    <select name="participantes[]" id="oprt" class="form-control">
+                        <option value="">Seleccione los participantes</option>
                           @foreach ($usuarios as $usuario)
                               <option value="{{ $usuario->id }}">
                                   {{ $usuario->Apellido_Paterno }} {{ $usuario->Apellido_Materno }} {{ $usuario->Nombre }}
@@ -142,7 +142,7 @@
           </div>
           <div class="right">
             <div class="selected-box">
-                <label class="form-label">Participantes</label>
+                <label class="form-label">Coautores</label>
                 <ul id="selected-options-solicitudes">
                 </ul>
                 <div class="button-container">
@@ -282,7 +282,7 @@
                 <input type="text" id="searchInputedit" class="form-control" placeholder="Buscar participantes">
                 <div class="select-container-edit">
                     <select name="participantes[]" id="oprtedit" class="form-control">
-                        <option value="">Seleccione los participantes</option>
+                        <option value="">Seleccione los coautores</option>
                         @foreach ($usuarios as $usuario)
                             <option value="{{ $usuario->id }}" data-nombre="{{ $usuario->Apellido_Paterno }} {{ $usuario->Apellido_Materno }} {{ $usuario->Nombre }}">
                                 {{ $usuario->Apellido_Paterno }} {{ $usuario->Apellido_Materno }} {{ $usuario->Nombre }}
@@ -384,7 +384,7 @@
 
           <div class="modal-body">
 
-            <div class="row">
+            <div class="row" hidden>
                 <div class="col-md-12">
                   <div class="mb-3">
                     <label class="form-label">Autor</label>

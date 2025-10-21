@@ -70,13 +70,14 @@
                 word-wrap: break-word;
             }
 
-           /* Permitir que Quill controle la alineación de imágenes */
             .contenido img {
                 max-width: 100%;
                 height: auto;
-                display: inline-block;   /* << antes era block */
-                vertical-align: middle;
+                display: block;
+                margin: 0 auto;
+                /* border: #000 1px solid; */
             }
+
             .footer {
                 position: fixed;
                 bottom: -4mm;
@@ -107,14 +108,19 @@
                 font-weight: bold;
             }
 
-            
             .section p {
                 font-size: 12pt;
                 color: #000000;
                 margin-bottom: 0.5px;
-                text-align: inherit;  /* o elimina esta línea */
+                text-align: justify;
             }
-
+            /* Centrar imágenes dentro de las secciones (contenido generado por Quill) */
+            .section img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+                margin: 0 auto 10px auto;
+            }
 
             .cont {
                 display: flex;
@@ -159,70 +165,17 @@
     </style>
 </head>
     <!-- Portada -->
-    <body>@php
-    // Lista blanca de etiquetas (igual que antes)
-    $ALLOWED = '<p><div><span><br><ol><ul><li><strong><em><u><a>'
-             . '<h1><h2><h3><h4><h5><h6>'
-             . '<img><table><thead><tbody><tr><th><td>';
+    <body>
+        @php
+            // Lista blanca de etiquetas que conserva bloques y estilos de Quill
+            $ALLOWED = '<p><div><span><br><ol><ul><li><strong><em><u><a>'
+                    . '<h1><h2><h3><h4><h5><h6>'
+                    . '<img><table><thead><tbody><tr><th><td>';
 
-    /**
-     * Normaliza el HTML de Quill ANTES de strip_tags:
-     * - Convierte ql-align-* en estilos inline (p/div/img),
-     *   porque Dompdf respeta mejor los estilos inline que las clases.
-     */
-    $normalize_quill = function (?string $html) {
-
-        if (!$html) return '';
-
-        // 1) Párrafos o DIV con ql-align-center/right/justify -> style="text-align:...;"
-        $map = [
-            'center'  => 'center',
-            'right'   => 'right',
-            'justify' => 'justify'
-        ];
-        foreach ($map as $class => $align) {
-            // p con clase
-            $html = preg_replace(
-                '/<p([^>]*)class="([^"]*?\bql-align-' . $class . '\b[^"]*?)"([^>]*)>/i',
-                '<p$1$3 style="text-align:' . $align . ';">',
-                $html
-            );
-            // div con clase
-            $html = preg_replace(
-                '/<div([^>]*)class="([^"]*?\bql-align-' . $class . '\b[^"]*?)"([^>]*)>/i',
-                '<div$1$3 style="text-align:' . $align . ';">',
-                $html
-            );
-        }
-
-        // 2) IMG con ql-align-center/right/justify -> estilos inline apropiados
-        //    (Dompdf centra mejor con display:block + margin auto)
-        $html = preg_replace(
-            '/<img([^>]*)class="([^"]*?\bql-align-center\b[^"]*?)"([^>]*)>/i',
-            '<img$1$3 style="display:block;margin-left:auto;margin-right:auto;">',
-            $html
-        );
-        $html = preg_replace(
-            '/<img([^>]*)class="([^"]*?\bql-align-right\b[^"]*?)"([^>]*)>/i',
-            '<img$1$3 style="display:block;margin-left:auto;margin-right:0;">',
-            $html
-        );
-        $html = preg_replace(
-            '/<img([^>]*)class="([^"]*?\bql-align-justify\b[^"]*?)"([^>]*)>/i',
-            '<img$1$3 style="display:block;margin-left:auto;margin-right:auto;">',
-            $html
-        );
-
-        return $html;
-    };
-
-    // Envuelve: normaliza primero y luego aplica strip_tags (lista blanca)
-    $q = function ($html) use ($ALLOWED, $normalize_quill) {
-        $html = $normalize_quill($html);
-        return strip_tags($html, $ALLOWED);
-    };
-@endphp
-
+            $q = function ($html) use ($ALLOWED) {
+                return strip_tags($html ?? '', $ALLOWED);
+            };
+        @endphp
 
         <style>
             label{
@@ -297,8 +250,16 @@
             <div class="footerport">
                 <p style="text-align: right">
                     <?php
-                        setlocale(LC_TIME, 'es_MX.UTF-8');
-                        echo strftime("%d de %m de %Y");
+                        $fecha = new DateTime();
+                        $formatter = new IntlDateFormatter(
+                            'es_MX', // Idioma y región
+                            IntlDateFormatter::LONG, // Estilo de fecha (puedes cambiarlo)
+                            IntlDateFormatter::NONE, // No mostrar la hora
+                            'America/Mexico_City', // Zona horaria
+                            IntlDateFormatter::GREGORIAN, // Calendario
+                            "d 'de' MMMM 'de' y" // Formato personalizado
+                        );
+                        echo $formatter->format($fecha);
                     ?>
                 </p>
             </div>
@@ -309,7 +270,7 @@
 
         <div class="contenido" style="text-align: center">
             <br>
-            <img src="{{asset('/img/header_imt.png')}}" alt="Logo IMT"  width="600" height="65">
+            <img src="{{asset('/img/header_imt.png')}}" alt="Logo IMT"  width=600" height="65">
 
             <div style="padding-top: 2in">
             </div>
@@ -323,43 +284,81 @@
                 Teléfonos: +52(442) 2 16 97 77
             </p>
 
-            <div style="padding-top: .5in">
-            </div>
-                
-            <!--</div>
-                <p class="rnadl" style="text-align: center">Autorizó:</p>
-                <p style="text-align: center"></p>
-                <hr style="width: 500px; color:#000">
-                <p style="text-align: center; font-weight:bold">
-                    {{--{{$director->Apellido_Paterno.' '.$director->Apellido_Materno.' '.$director->Nombre}} <br>--}}  
-                    Director General
-                </p>
-            <div>-->
-            
-            <div style="padding-top: .2in">
+            <div style="padding-top: .7in">
             </div>
 
-            </div>
-                <p class="rnadl" style="text-align: center">Responsable del proyecto:</p>
-                <p style="text-align: center"></p>
-                <hr style="width: 500px; color:#000">
-                <p style="text-align: center; font-weight:bold">
-                    {{$users->Apellido_Paterno.' '.$users->Apellido_Materno.' '.$users->Nombre}}
-                </p>
-            <div>
+            <style>
+                .div-fila {
+                    display:flexbox;
+                    align-items: center;
+                    gap: 20px;
+                    padding-left: 80px;
+                    padding-right: 80px;
+                    margin-left: 100px;
+                    margin-right: 100px
+                }
+            </style>
             
-            <div style="padding-top: .2in">
+            <div class="div-fila">
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+                <div>
+                <p class="rnadl" style="text-align: center">Responsable del proyecto</p>
+                @if (empty($obs->fobsresponsble))
+                    <p style="text-align: center"></p>
+                @else
+                    <p style="text-align: center">{{$obs->fobsresponsble}}</p>
+                @endif
+                <hr>
+                <p style="text-align: center">
+                    {{$users->Apellido_Paterno.' '.$users->Apellido_Materno.' '.$users->Nombre}} <br>
+                    @foreach ($puesto as $pst)
+                        @if ($pst->id == $users->idpuesto)
+                            {{$pst->puesto}}
+                        @endif
+                    @endforeach
+                </p>
+                </div>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </div>
 
+            <div style="padding-top: .3in">
             </div>
-                <p class="rnadl" style="text-align: center">Aprobó</p>
-                <p style="text-align: center"></p>
-                <hr style="width: 500px; color:#000">
-                <p style="text-align: center; font-weight:bold">
-                    {{$respon->Apellido_Paterno.' '.$respon->Apellido_Materno.' '.$respon->Nombre}} <br>
-                    {{$areas->nombre_area}}
-                </p>
-            <div>
+
+            <div class="contport">
+                <div class="div1port2">
+                    <p class="rnadl" style="text-align: center">Aprobó</p>
+                    @if (empty($obs->fobsmando))
+                        <p style="text-align: center"></p>
+                    @else
+                        <p style="text-align: center">{{$obs->fobsmando}}</p>
+                    @endif
+                    <hr>
+                    <p style="text-align: center">
+                        {{$respon->Apellido_Paterno.' '.$respon->Apellido_Materno.' '.$respon->Nombre}} <br>
+                        {{$areas->nombre_area}}
+                    </p>
+                </div>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <div class="div2port2">
+                    <p class="rnadl" style="text-align: center">Autorizó</p>
+                    @if (empty($obs->fobsdirectorg))
+                        <p style="text-align: center"></p>
+                    @else
+                        <p style="text-align: center">{{$obs->fobsdirectorg}}</p>
+                    @endif
+                    <hr style="width: auto; color:#000">
+                    <p style="text-align: center">
+                    @if (empty($director))
+                        <br>
+                    @else
+                        {{$director->Apellido_Paterno.' '.$director->Apellido_Materno.' '.$director->Nombre}} <br>
+                    @endif
+                        Director General
+                    </p>
+                </div>
+            </div>
 
             
             {{-- <div class="contport">
@@ -430,46 +429,46 @@
         </div>
         <div class="contenido">
            <h2>1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JUSTIFICACIÓN DEL PROYECTO</h2>
-        <div class="contenido-quill">{!! $q($proyt->justificacion) !!}</div>
-        <br>
+<div class="contenido-quill">{!! $q($proyt->justificacion) !!}</div>
+<br>
 
-        <h2>2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ANTECEDENTES</h2>
-        <div class="contenido-quill">{!! $q($proyt->antecedente) !!}</div>
-        <br>
+<h2>2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ANTECEDENTES</h2>
+<div class="contenido-quill">{!! $q($proyt->antecedente) !!}</div>
+<br>
 
-        <h2>3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS</h2>
-        <div class="contenido-quill">{!! $q($proyt->objetivo) !!}</div>
-        <br>
+<h2>3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS</h2>
+<div class="contenido-quill">{!! $q($proyt->objetivo) !!}</div>
+<br>
 
-        <h3>3.1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS ESPECÍFICOS</h3>
-        <div class="contenido-quill">{!! $q($proyt->objespecifico) !!}</div>
-        <br>
+<h3>3.1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OBJETIVOS ESPECÍFICOS</h3>
+<div class="contenido-quill">{!! $q($proyt->objespecifico) !!}</div>
+<br>
 
-        <h2>4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALCANCES</h2>
-        <div class="contenido-quill">{!! $q($proyt->alcance) !!}</div>
-        <br>
+<h2>4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALCANCES</h2>
+<div class="contenido-quill">{!! $q($proyt->alcance) !!}</div>
+<br>
 
-        <h2>5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;METODOLOGÍA</h2>
-        <div class="contenido-quill">{!! $q($proyt->metodologia) !!}</div>
-        <br>
+<h2>5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;METODOLOGÍA</h2>
+<div class="contenido-quill">{!! $q($proyt->metodologia) !!}</div>
+<br>
 
-        <h2>6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PRODUCTOS POR OBTENER</h2>
-        <div class="contenido-quill">{!! $q($proyt->producto) !!}</div>
-        <br>
+<h2>6&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PRODUCTOS POR OBTENER</h2>
+<div class="contenido-quill">{!! $q($proyt->producto) !!}</div>
+<br>
 
-        <h2>7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMPROMISOS DEL CLIENTE</h2>
-        <div class="contenido-quill">{!! $q($proyt->comcliente) !!}</div>
-        <br>
+<h2>7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;COMPROMISOS DEL CLIENTE</h2>
+<div class="contenido-quill">{!! $q($proyt->comcliente) !!}</div>
+<br>
 
-        <h2>8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BENEFICIOS ESPERADOS</h2>
-        <div class="contenido-quill">{!! $q($proyt->beneficios) !!}</div>
-        <br>
+<h2>8&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BENEFICIOS ESPERADOS</h2>
+<div class="contenido-quill">{!! $q($proyt->beneficios) !!}</div>
+<br>
 
-        <h2>9&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PLAN DE ACTIVIDADES</h2>
-        {!! $protocolocrono !!}
-        <br>
+<h2>9&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PLAN DE ACTIVIDADES</h2>
+{!! $protocolocrono !!}
+<br>
 
-        <h2>10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROPUESTA ECONÓMICA</h2>
+<h2>10&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PROPUESTA ECONÓMICA</h2>
 
                 <h3> Recursos Financieros </h3>
                 @if ($subtotalf != 0)
@@ -696,6 +695,7 @@
                 </div>
             <br>
             <h2>11&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ANÁLISIS DE RIESGOS</h2>
+            <p style="text-align: justify">{{$proyt->notapresupuesto}}</p>
             <style>
                 #riesgotabla{
                   text-align: center;
@@ -729,7 +729,7 @@
                         <td>{{$ari->calificacion}}</td>
                         <td>{{$ari->respriesgo}}</td>
                         <td>{{$ari->acciones}}</td>
-                        <td>{{$ari->fechaproable}}</td>
+                        <td>{{$ari->probocurrencia}}</td>
                     </tr>
                 @endforeach
                 @foreach ($riesgose as $ari)
@@ -751,7 +751,7 @@
         </div>
         <div class="section">
             <h2>REFERENCIAS</h2>
-            <div class="contenido-quill">{!! $q($proyt->referencias) !!}</div>
+            <div>{!! $proyt->referencias !!}</div>
             @if ($proyt->notasmetodologia != '')
                 <br>
                 <h2>NOTAS</h2>

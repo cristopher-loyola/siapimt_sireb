@@ -3,8 +3,9 @@
 <title>Análisis de riesgos  {{$proyt->nomproy}}</title>
 
 @php
-  // Solo es editable si el estado del proyecto es 1 (en ejecución)
-  $soloLectura = ($proyt->estado != 1);
+// Solo es editable si el estado del proyecto es 0 (no iniciado) o 1 (en ejecución)
+// Estados 2 (concluido), 3 (cancelado), 4 y 5 (no aceptado) son solo lectura
+$soloLectura = !($proyt->estado == 0 || $proyt->estado == 1);
 @endphp
 
 {{-- Navegadir nuevas vistta Inicio --}}

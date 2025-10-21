@@ -297,37 +297,24 @@ $('.button').click(function(){
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
-      // Array para almacenar todos los participantes
-      const todosLosParticipantes = [];
+      // Siempre mostrar el autor primero
+      let participantesTexto = `<strong>${nombreCompletoUsuario}</strong>`;
       
-      // Agregar el autor al principio de la lista
-      if (encargadoservicio) {
-        todosLosParticipantes.push(encargadoservicio);
-      }
-      
-      // NO agregar el organizador a la lista de participantes
-      // El organizador se muestra en su propio campo separado
-      
-      // Agregar otros participantes seleccionados
-      if (usuariosSeleccionadosInputEdit.value) {
+      if (!usuariosSeleccionadosInputEdit.value) {
+        // Si no hay otros usuarios seleccionados, solo mostrar el autor
+        selectedOptionsParrafoEdit.innerHTML = participantesTexto;
+      } else {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
           const selectOption = selectedit.querySelector(`option[value="${userId}`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
-        });
+          return selectOption ? selectOption.getAttribute("data-nombre") : null;
+        }).filter(nombre => nombre !== null);
         
-        // Filtrar para evitar duplicados del autor y organizador
-        usuariosSeleccionadosNombres.forEach(function(nombre) {
-          if (nombre && nombre !== encargadoservicio && nombre !== organizador) {
-            todosLosParticipantes.push(nombre);
-          }
-        });
-      }
-      
-      // Mostrar la lista completa de participantes
-      if (todosLosParticipantes.length > 0) {
-        selectedOptionsParrafoEdit.textContent = todosLosParticipantes.join("\n");
-      } else {
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
+        // Agregar otros participantes después del autor
+        if (usuariosSeleccionadosNombres.length > 0) {
+          participantesTexto += "<br>" + usuariosSeleccionadosNombres.join("<br>");
+        }
+        
+        selectedOptionsParrafoEdit.innerHTML = participantesTexto;
       }
     }
 

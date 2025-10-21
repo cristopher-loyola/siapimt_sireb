@@ -311,15 +311,18 @@ $(document).ready(function() {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
-      if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
+      if (!usuariosSeleccionados.length || (usuariosSeleccionados.length === 1 && usuariosSeleccionados[0] === '')) {
+        // Si no hay usuarios seleccionados, mostrar solo el organizador
+        selectedOptionsParrafoEdit.innerHTML = `<strong>${nombreCompletoUsuario}</strong>`;
       } else {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
-        });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
+          return selectOption ? selectOption.getAttribute("data-nombre") : null;
+        }).filter(nombre => nombre !== null);
+        
+        // Crear la lista final con el organizador primero
+        const listaFinal = [`<strong>${nombreCompletoUsuario}</strong>`, ...usuariosSeleccionadosNombres];
+        selectedOptionsParrafoEdit.innerHTML = listaFinal.join("<br>");
       }
     }
 

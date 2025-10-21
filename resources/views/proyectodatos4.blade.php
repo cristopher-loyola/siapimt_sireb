@@ -555,7 +555,7 @@
             padding: 10px;
         }
         .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
-            border-color: #6bb3e3 !important;
+            border-color: #ced4da !important;
         }
         .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
             border-color: #e74c3c !important;

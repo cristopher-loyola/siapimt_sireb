@@ -355,7 +355,7 @@
           </div>
 
           <div class="modal-body">
-            <div class="row">
+            <div class="row" hidden>
                 <div class="col-md-12 ">
                   <div class="mb-3">
                     <label class="form-label">Autor</label>

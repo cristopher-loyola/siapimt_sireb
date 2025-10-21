@@ -62,7 +62,7 @@
             padding: 0 15px;
         }
         input {
-            border: 3px solid transparent;
+            border: 3px solid #aacfe7;
             outline: none;
             padding: 10px;
             font-size: 16px;
@@ -101,7 +101,7 @@
             font-style: italic;
         }
         select {
-            border: 3px solid transparent;
+            border: 3px solid #aacfe7;
             outline: none;
             font-size: 1em;
             transition: border-color 0.3s;
@@ -111,7 +111,6 @@
             resize: none;
             width: 100%;
             max-width: 500px;
-            border-color: #aacfe7;
         }
         select:hover {
             border-color: #3498db;
@@ -516,7 +515,7 @@
                 margin-right: 10px;
             }
         }
-        
+
         #justifica-container{
             min-height: 100px;
         }
@@ -552,7 +551,7 @@
             padding: 10px;
         }
         .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
-            border-color: #6bb3e3 !important;
+            border-color: #aacfe7 !important;
         }
         .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
             border-color: #e74c3c !important;
@@ -589,15 +588,6 @@
             max-width: 500px;
             margin: 0 auto;
         }
-        /* Estilo para simular solo lectura */
-        .readonly {
-            pointer-events: none;  /* Deshabilita la interacción del mouse */
-            background-color: #f7f7f7;  /* Cambia el fondo para reflejar el estado de solo lectura */
-            color: #999;  /* Cambia el color del texto para reflejar el estado de solo lectura */
-        }
-
-
-
     </style>
     <script>
         function autoResize(textarea) {

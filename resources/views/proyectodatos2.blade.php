@@ -527,7 +527,7 @@
             margin: 0 auto;
             border-width: 3px !important;
             border-style: solid !important;
-            border-color: #aacfe7 !important; 
+            border-color:rgb(125, 186, 226) !important; 
             box-sizing: border-box;
             margin-bottom: 6px !important;
         }
@@ -547,12 +547,12 @@
             overflow-y: auto;
             background: #fff;
             border-radius: 0 0 10px 10px;
-            border: 3px solid #aacfe7;
+            border: 3px solid #ced4da;
             border-top: none;
             padding: 10px;
         }
         .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
-            border-color: #6bb3e3 !important;
+            border-color: #aacfe7 !important;
         }
         .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
             border-color: #e74c3c !important;
@@ -986,7 +986,7 @@
                 margin: 0 auto;
                 border-width: 3px !important;
                 border-style: solid !important;
-                border-color: #aacfe7 !important; 
+                border-color: #ced4da !important; 
                 box-sizing: border-box;
                 margin-bottom: 6px !important;
             }
@@ -1006,7 +1006,7 @@
                 overflow-y: auto;
                 background: #fff;
                 border-radius: 0 0 10px 10px;
-                border: 3px solid #aacfe7;
+                border: 3px solid #ced4da;
                 border-top: none;
                 padding: 10px;
             }

@@ -535,15 +535,7 @@
 
 
 
-{{-- Botón para generar PDF --}}
-    <a 
-    href="{{ url('impactoproyecto/pdf/'.$proyt->id) }}" 
-    class="pdf-btn-corner"
-    target="_blank"
-    rel="noopener"
-    title="Generar PDF de Impacto Socioeconómico">
-     Generar PDF
-    </a>
+
 
     
     <form action="{{ route('upimpactoproy2', $proyt->id) }}" method="POST">
@@ -678,6 +670,17 @@
                                 <label>{{$proytImp->nivelImp}}</label>
                             </div>
                             <div style="height: 20px"></div>
+                            {{-- Botón para generar PDF --}}
+                            <a 
+                                href="{{ url('impactoproyecto/pdf/'.$proyt->id) }}" 
+                                class="btn btn-danger"
+                                target="_blank"
+                                rel="noopener"
+                                title="Generar PDF de Impacto Socioeconómico"
+                                style="background-color: #dc3545; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; font-weight: bold;">
+                                📄 Generar PDF
+                            </a>
+                            <div style="height: 10px"></div>
                         </div>
                     </div>
                 </div>

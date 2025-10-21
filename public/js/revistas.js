@@ -311,28 +311,19 @@ $(document).ready(function() {
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
-      // Crear array con todos los participantes, empezando por el autor
-      const todosLosParticipantes = [];
-      
-      // Agregar el autor al inicio
-      todosLosParticipantes.push(encargadoservicio);
-      
-      // Agregar otros participantes si existen
-      if (usuariosSeleccionadosInputEdit.value) {
+      if (!usuariosSeleccionados.length || (usuariosSeleccionados.length === 1 && usuariosSeleccionados[0] === '')) {
+        // Si no hay usuarios seleccionados, mostrar solo el autor
+        selectedOptionsParrafoEdit.innerHTML = `<strong>${nombreCompletoUsuario}</strong>`;
+      } else {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : "Usuario desconocido";
-        });
+          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
+          return selectOption ? selectOption.getAttribute("data-nombre") : null;
+        }).filter(nombre => nombre !== null);
         
-        // Filtrar participantes que no sean duplicados del autor
-        usuariosSeleccionadosNombres.forEach(function(nombre) {
-          if (nombre && nombre !== encargadoservicio) {
-            todosLosParticipantes.push(nombre);
-          }
-        });
+        // Crear la lista final con el autor primero
+        const listaFinal = [`<strong>${nombreCompletoUsuario}</strong>`, ...usuariosSeleccionadosNombres];
+        selectedOptionsParrafoEdit.innerHTML = listaFinal.join("<br>");
       }
-      
-      selectedOptionsParrafoEdit.textContent = todosLosParticipantes.join("\n");
     }
 
 
@@ -349,6 +340,11 @@ $(document).ready(function() {
     modalContainer.style.display = 'none';
     window.location.reload();
   });
+
+
+
+
+
 
 // Javascript para la selecion de los participantes con el Select
 document.addEventListener("DOMContentLoaded", function () {

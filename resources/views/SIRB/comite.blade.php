@@ -30,7 +30,7 @@
           <div class="container">
             <div class="row">
                 <div class="col-md-6 ">
-                  <div class="mb-3">
+                  <div class="mb-3" hidden>
                     <label class="form-label">Nombre del participante</label>
                     <input id="encargadoservicio" class="form-control" name="encargadoservicio" value="{{$LoggedUserInfo['Nombre']}} {{$LoggedUserInfo['Apellido_Paterno']}} {{$LoggedUserInfo['Apellido_Materno']}}" required readonly>
                   </div>
@@ -153,7 +153,7 @@
 
             <div class="row">
                 <div class="col-md-6 ">
-                <div class="mb-3">
+                <div class="mb-3"hidden>
                     <label class="form-label">Nombre del participante</label>
                     <input id="encargadoservicioedit" class="form-control" name="encargadoservicio" value="{{$LoggedUserInfo['Nombre']}} {{$LoggedUserInfo['Apellido_Paterno']}} {{$LoggedUserInfo['Apellido_Materno']}}" required readonly>
                 </div>

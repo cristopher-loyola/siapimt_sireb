@@ -36,7 +36,7 @@
 
           <div class="row">
 
-            <div class="col-md-6 ">
+            <div class="col-md-6 "hidden >
                 <div class="mb-3">
                   <label class="form-label">Nombre del participante</label>
                   <input id="encargadoservicio" class="form-control" name="encargadoservicio" value="{{$LoggedUserInfo['Nombre']}} {{$LoggedUserInfo['Apellido_Paterno']}} {{$LoggedUserInfo['Apellido_Materno']}}" required readonly>
@@ -188,7 +188,7 @@
 
               <div class="row">
 
-                <div class="col-md-6 ">
+                <div class="col-md-6 "hidden >
                     <div class="mb-3">
                       <label class="form-label">Nombre del participante</label>
                       <input id="encargadoservicioedit" class="form-control" name="encargadoservicio" value="{{$LoggedUserInfo['Nombre']}} {{$LoggedUserInfo['Apellido_Paterno']}} {{$LoggedUserInfo['Apellido_Materno']}}" required readonly>
@@ -386,7 +386,7 @@
         <div class="modal-body">
 
             <div class="row">
-                <div class="col-md-12" hidden >
+                <div class="col-md-12" hidden>
                     <div class="mb-3">
                         <label class="form-label">Nombre del participante</label>
                         <p type="text" class="form-control" id="encargadoservicioviz" readonly></p>

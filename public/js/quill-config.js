@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function(){
                         [{ script: 'sub' }, { script: 'super' }],
                         [{ 'color': [] }, { 'background': [] }],
                         ['clean'],
-                        
+                    
                         
                     ],
                     handlers: {

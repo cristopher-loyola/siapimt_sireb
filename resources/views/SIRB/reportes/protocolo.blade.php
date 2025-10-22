@@ -311,12 +311,17 @@
                 @endif
                 <hr>
                 <p style="text-align: center">
-                    {{$users->Apellido_Paterno.' '.$users->Apellido_Materno.' '.$users->Nombre}} <br>
-                    @foreach ($puesto as $pst)
-                        @if ($pst->id == $users->idpuesto)
-                            {{$pst->puesto}}
-                        @endif
-                    @endforeach
+                    @if (!empty($users))
+                        {{$users->Apellido_Paterno.' '.$users->Apellido_Materno.' '.$users->Nombre}} <br>
+                        @foreach ($puesto as $pst)
+                            @if ($pst->id == $users->idpuesto)
+                                {{$pst->puesto}}
+                            @endif
+                        @endforeach
+                    @else
+                        <br>
+                        Responsable no asignado
+                    @endif
                 </p>
                 </div>
 
@@ -336,7 +341,11 @@
                     @endif
                     <hr>
                     <p style="text-align: center">
-                        {{$respon->Apellido_Paterno.' '.$respon->Apellido_Materno.' '.$respon->Nombre}} <br>
+                        @if (!empty($respon))
+                            {{$respon->Apellido_Paterno.' '.$respon->Apellido_Materno.' '.$respon->Nombre}} <br>
+                        @else
+                            <br>
+                        @endif
                         {{$areas->nombre_area}}
                     </p>
                 </div>
@@ -350,10 +359,10 @@
                     @endif
                     <hr style="width: auto; color:#000">
                     <p style="text-align: center">
-                    @if (empty($director))
-                        <br>
-                    @else
+                    @if (!empty($director))
                         {{$director->Apellido_Paterno.' '.$director->Apellido_Materno.' '.$director->Nombre}} <br>
+                    @else
+                        <br>
                     @endif
                         Director General
                     </p>
@@ -429,6 +438,16 @@
         </div>
         <div class="contenido">
            <h2>1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JUSTIFICACIÓN DEL PROYECTO</h2>
+<h3>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALINEACIÓN AL PROGRAMA SECTORIAL</h3>
+<p style="text-align: justify; margin-bottom: 10px;">
+    @if($alin)
+        {{ $alin->nombre }}
+    @else
+        No se ha seleccionado una alineación al programa sectorial.
+    @endif
+</p>
+<br>
+
 <div class="contenido-quill">{!! $q($proyt->justificacion) !!}</div>
 <br>
 

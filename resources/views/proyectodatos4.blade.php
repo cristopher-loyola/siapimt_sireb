@@ -1424,51 +1424,18 @@ $soloLectura = !($proyt->estado == 0 || $proyt->estado == 1); // Solo editable s
                 <span class="text-danger">@error('lins') {{$message}} @enderror</span>
             </div>
                     <br>
-                  <label>Objetivo sectorial</label>
-            <div>
-                <select name="objs" id="objs" onchange="cambio1(this)" style="width: 100%;" 
-                    @if($soloLectura) disabled @endif>  <!-- Usamos 'disabled' para simular solo lectura -->
-
-                    @if ($proyt->idobjt != '')
-                        @foreach ($objs as $obj)
-                            @if ($proyt->idobjt == $obj->id)
-                                <option value="{{ $proyt->idobjt }}" title="{{ $obj->nombre_objetivosec }}" selected
-                                    style="width: 100%;">{{ \Illuminate\Support\Str::limit($obj->nombre_objetivosec, 100, '...') }}</option>
-                            @endif
-                        @endforeach
-                    @endif
-
-                    <option value="{{ old('objs') }}">Selecciona...</option>
-
-                    @foreach ($objs as $obj)
-                        <option value="{{ $obj->id }}" title="{{ $obj->nombre_objetivosec }}"
-                            style="width: 100%;">{{ \Illuminate\Support\Str::limit($obj->nombre_objetivosec, 100, '...') }}</option>
-                    @endforeach
-                </select>
-                <span class="text-danger">@error('objs') {{$message}} @enderror</span>
-            </div>
-                    <br>
-                    <label>Alineación al programa sectorial</label>
-            <div>
-                <select name="alin" id="alin" onchange="cambio2(this)" style="width: 100%;" 
-                    @if($soloLectura) disabled @endif>  <!-- Usamos 'disabled' para simular solo lectura -->
-
-                    @if ($proyt->idalin != '')
-                        @foreach ($alins as $ali)
-                            @if ($proyt->idalin == $ali->id)
-                                <option value="{{ $proyt->idalin }}" selected>{{ $ali->nombre }}</option>
-                            @endif
-                        @endforeach
-                    @endif
-
-                    <option value="{{ old('alin') }}">Selecciona...</option>
-
-                    @foreach ($alins as $ali)
-                        <option value="{{ $ali->id }}">{{ $ali->nombre }}</option>
-                    @endforeach
-                </select>
-                <span class="text-danger">@error('alin') {{$message}} @enderror</span>
-            </div>
+                  {{-- Campos hidden para Objetivo sectorial y Alineación al programa sectorial --}}
+                  {{-- Siempre envían la primera opción disponible pero no se muestran visualmente --}}
+                  @php
+                      $firstObjId = $objs->first()->id ?? null;
+                      $selectedObjId = $proyt->idobjt ?: $firstObjId;
+                      
+                      $firstAlinId = $alins->first()->id ?? null;
+                      $selectedAlinId = $proyt->idalin ?: $firstAlinId;
+                  @endphp
+                  
+                  <input type="hidden" name="objs" value="{{ $selectedObjId }}">
+                  <input type="hidden" name="alin" value="{{ $selectedAlinId }}">
 
                     <br>
 

@@ -588,6 +588,61 @@
             max-width: 500px;
             margin: 0 auto;
         }
+        /* Asegurar que todos los elementos principales tengan el mismo ancho */
+#formulario > div {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Unificar el ancho de todos los inputs y selects */
+input:not([type="hidden"]),
+select,
+textarea {
+    width: 100%;
+    max-width: 800px !important;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Asegurar que los contenedores de select tengan el mismo ancho */
+.mb-4.col {
+    width: 100%;
+    max-width: 800px !important;
+    margin: 0 auto;
+}
+
+.mb-4.col select {
+    width: 100%;
+    max-width: 800px !important;
+}
+
+/* Unificar el ancho del div de alineación */
+#formulario > div > div[style*="background-color: #f8f9fa"] {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Asegurar que los post-it tengan el mismo ancho */
+.constpostick {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.post-it {
+    width: 100%;
+    max-width: 800px !important;
+}
+
+/* Labels también deben estar alineados */
+label {
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
     </style>
     <script>
         function autoResize(textarea) {
@@ -739,6 +794,38 @@
   .solo-lectura button[type="submit"],
   .solo-lectura input[type="submit"] {
     display: none !important; /* no mostrar guardar/envíos */
+  }
+</style>
+@else
+<style>
+  /* Estilo para modo edición - bordes azules */
+  input:not([type="hidden"]),
+  select,
+  textarea {
+    border-color: #3498db !important;
+  }
+  input:not([type="hidden"]):hover,
+  select:hover,
+  textarea:hover {
+    border-color: #3498db !important;
+  }
+  input:not([type="hidden"]):focus,
+  select:focus,
+  textarea:focus {
+    border-color: #3498db !important;
+  }
+  /* Estilo específico para Quill editors en modo edición */
+  .editor-quill,
+  .ql-toolbar {
+    border-color: #3498db !important;
+  }
+  .editor-quill:hover,
+  .ql-toolbar:hover {
+    border-color: #3498db !important;
+  }
+  .editor-quill:focus,
+  .ql-toolbar:focus {
+    border-color: #3498db !important;
   }
 </style>
 @endif
@@ -1323,6 +1410,25 @@
             <label>Justificación
              <span class="hint-inline" title="Justificar la realización de la investigación, refiriéndose a la solicitud de una Unidad Administrativa de la SICT o de un cliente externo.">
             <img src="{{ asset('/img/noteimp.png') }}" alt="Nota"></label>
+            
+            <!-- Contenido dinámico de Alineación al programa sectorial -->
+           <div style="margin: 8px 0; padding: 6px 8px; background-color: #f8f9fa; border-radius: 3px; border-left: 2px solid #007bff; font-size: 0.7em; color: #666; line-height: 1.2; text-align: justify;">
+                <strong style="color: #495057;">Alineación al Programa Sectorial:</strong>
+                @if($alin)
+                    {{ $alin->nombre }}
+                @else
+                   El presente proyecto está alineado al apartado III. “Economía Moral y Trabajo” del Plan Nacional de
+ Desarrollo, así como al objetivo prioritario 1 del Programa Sectorial de Comunicaciones y Transportes 2020
+2024, que consiste en “Mejorar la conectividad y accesibilidad territorial mediante la construcción,
+ modernización y conservación de infraestructura carretera con criterios de inclusión social, sostenibilidad y
+ eficiencia para garantizar la movilidad de personas y mercancías”. Este objetivo se alinea con la estrategia
+ prioritaria 1.4 “Mejorar los esquemas de planeación para detectar oportunamente las necesidades futuras de
+ construcción, modernización y ampliación de la infraestructura carretera nacional, con un enfoque de
+ intermodalidad.”, y con la acción puntual 1.4.2 “Promover la investigación científica y capacidad tecnológica
+ en materia de transporte a fin de satisfacer las necesidades del sector”.
+                @endif
+            </div>
+            
             <div style="height: 10px;"></div>
 
           <div class="form-group">

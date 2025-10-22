@@ -1691,6 +1691,19 @@ class dbcontroller extends Controller
             $users = User::where('id',$proyt->idusuarior)->first();
             $respon = User::where('id',$proyt->aprobo )->first();
 
+            // Obtener datos de alineación
+            $alin = Alineacion::where('id',$proyt->idalin)->first();
+            
+            // Si no hay alineación asignada, asignar la primera disponible
+            if (!$alin) {
+                $primeraAlineacion = Alineacion::where('status', 1)->first();
+                if ($primeraAlineacion) {
+                    $proyt->idalin = $primeraAlineacion->id;
+                    $proyt->save();
+                    $alin = $primeraAlineacion;
+                }
+            }
+
             $vimpacto= Impacto::where('idproyecto', $id)->count();
             $vtarea = Tarea::Where('idproyecto',$id)->count();
             $vrecurso = RecursosGeneral::Where('idproyecto',$id)->count();
@@ -1698,7 +1711,7 @@ class dbcontroller extends Controller
             $vcontri = ContribucionesProyecto::Where('idproyecto',$id)->count();
             $vequipo = Equipo::Where('idproyecto',$id)->count();
         }
-            return view('proyectodatos1',$data, compact('proyt','user','materia','orientacion', 'nivel', 'vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo','users','respon'));
+            return view('proyectodatos1',$data, compact('proyt','user','materia','orientacion', 'nivel', 'vimpacto','vtarea','vrecurso','vriesgo','vcontri','vequipo','users','respon','alin'));
     }
 
 
@@ -2985,7 +2998,7 @@ class dbcontroller extends Controller
         }
     }
 
-    public function gprotocolo($id){
+        public function gprotocolo($id){
         $uniq = User::where('id','=',session('LoginId'))->first();
         $proyt = Proyecto::where('id',$id)->first();
         $users = User::where('id',$proyt->idusuarior)->first();
@@ -3009,6 +3022,9 @@ class dbcontroller extends Controller
                 ->orderBy('nivel2', 'ASC')->orderBy('nivel3', 'ASC')->get();
         $materia = Materia::where('status', 1)->get();
         $orientacion = Orientacion::where('status', 1)->get();
+        
+        // Obtener datos de alineación
+        $alin = Alineacion::where('id',$proyt->idalin)->first();
         $nivel = Nivel::where('status', 1)->get();
         
         $tarea = Tarea::Where('idproyecto',$id)->orderBy('fecha_inicio', 'ASC')->get();
@@ -3091,6 +3107,7 @@ class dbcontroller extends Controller
         'clave', 'areas', 'obs'));
     }
 
+    
     public function cronogramaProtocolo($proyt, $tarea) {
         $fechaTarea = null;
         foreach ($tarea as $tar) {
@@ -3103,7 +3120,7 @@ class dbcontroller extends Controller
         }
 
         $inicio_proyecto = new \DateTime($proyt->fecha_inicio);
-        $fin_proyecto = $fechaTarea;
+        $fin_proyecto = $fechaTarea ?: new \DateTime($proyt->fecha_inicio);
         $diferencia = $inicio_proyecto->diff($fin_proyecto);
         $meses = ($diferencia->y * 12) + $diferencia->m;
         if ($diferencia->d > 0) {
@@ -3296,6 +3313,19 @@ foreach ($camposHtml as $campo) {
         $orientacion = Orientacion::where('status', 1)->get();
         $nivel = Nivel::where('status', 1)->get();
 
+        // Obtener datos de alineación
+        $alin = Alineacion::where('id',$proyt->idalin)->first();
+        
+        // Si no hay alineación asignada, asignar la primera disponible
+        if (!$alin) {
+            $primeraAlineacion = Alineacion::where('status', 1)->first();
+            if ($primeraAlineacion) {
+                $proyt->idalin = $primeraAlineacion->id;
+                $proyt->save();
+                $alin = $primeraAlineacion;
+            }
+        }
+
         $tarea = Tarea::where('idproyecto', $id)->orderBy('fecha_inicio', 'ASC')->get();
 
         $riesgos = Analisis::where('idproyecto', $id)
@@ -3380,7 +3410,7 @@ foreach ($camposHtml as $campo) {
             'clis', 'materia', 'orientacion', 'nivel', 'users', 'respon', 'tarea', 'riesgos', 'riesgose', 
             'criskint', 'criskext','rescf', 'rescm', 'resct', 'resch', 'resco', 'subtotalm', 'subtotalf',
             'subtotalh', 'subtotalo', 'subtotalt', 'total','obs', 'areas', 'clave', 'director', 'protocolocrono',
-            'puesto'));
+            'puesto', 'alin'));
         
         $pdf->setPaper('a4', 'portrait')
         ->setOption('margin-top', 5)->setOption('margin-bottom', 5)

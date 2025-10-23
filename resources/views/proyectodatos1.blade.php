@@ -796,38 +796,6 @@ label {
     display: none !important; /* no mostrar guardar/envíos */
   }
 </style>
-@else
-<style>
-  /* Estilo para modo edición - bordes azules */
-  input:not([type="hidden"]),
-  select,
-  textarea {
-    border-color: #3498db !important;
-  }
-  input:not([type="hidden"]):hover,
-  select:hover,
-  textarea:hover {
-    border-color: #3498db !important;
-  }
-  input:not([type="hidden"]):focus,
-  select:focus,
-  textarea:focus {
-    border-color: #3498db !important;
-  }
-  /* Estilo específico para Quill editors en modo edición */
-  .editor-quill,
-  .ql-toolbar {
-    border-color: #3498db !important;
-  }
-  .editor-quill:hover,
-  .ql-toolbar:hover {
-    border-color: #3498db !important;
-  }
-  .editor-quill:focus,
-  .ql-toolbar:focus {
-    border-color: #3498db !important;
-  }
-</style>
 @endif
 
 <body>

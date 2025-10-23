@@ -311,17 +311,12 @@
                 @endif
                 <hr>
                 <p style="text-align: center">
-                    @if (!empty($users))
-                        {{$users->Apellido_Paterno.' '.$users->Apellido_Materno.' '.$users->Nombre}} <br>
-                        @foreach ($puesto as $pst)
-                            @if ($pst->id == $users->idpuesto)
-                                {{$pst->puesto}}
-                            @endif
-                        @endforeach
-                    @else
-                        <br>
-                        Responsable no asignado
-                    @endif
+                    {{$users->Apellido_Paterno.' '.$users->Apellido_Materno.' '.$users->Nombre}} <br>
+                    @foreach ($puesto as $pst)
+                        @if ($pst->id == $users->idpuesto)
+                            {{$pst->puesto}}
+                        @endif
+                    @endforeach
                 </p>
                 </div>
 
@@ -341,11 +336,7 @@
                     @endif
                     <hr>
                     <p style="text-align: center">
-                        @if (!empty($respon))
-                            {{$respon->Apellido_Paterno.' '.$respon->Apellido_Materno.' '.$respon->Nombre}} <br>
-                        @else
-                            <br>
-                        @endif
+                        {{$respon->Apellido_Paterno.' '.$respon->Apellido_Materno.' '.$respon->Nombre}} <br>
                         {{$areas->nombre_area}}
                     </p>
                 </div>
@@ -359,10 +350,10 @@
                     @endif
                     <hr style="width: auto; color:#000">
                     <p style="text-align: center">
-                    @if (!empty($director))
-                        {{$director->Apellido_Paterno.' '.$director->Apellido_Materno.' '.$director->Nombre}} <br>
-                    @else
+                    @if (empty($director))
                         <br>
+                    @else
+                        {{$director->Apellido_Paterno.' '.$director->Apellido_Materno.' '.$director->Nombre}} <br>
                     @endif
                         Director General
                     </p>
@@ -734,34 +725,34 @@
                         <th scope="col">Calificación</th>
                         <th scope="col">Respuesta al riesgo</th>
                         <th scope="col">Acciones</th>
-                        <th scope="col">Fecha probable de ocurrencia</th>
+                        <th scope="col">Etapa probable de ocurrencia</th>
                     </tr>
                 </thead>
                 <tbody>
                 @foreach ($riesgos as $ari)
                     <tr>
                         <td>Internos</td>
-                        <td>{{$ari->riesgo}}</td>
+                        <td>{{$ari->nombre_riesgo ?? $ari->riesgo}}</td>
                         <td>{{$ari->probabilidad}}</td>
                         <td>{{$ari->impacto}}</td>
                         <td>{{$ari->vesperado}}</td>
                         <td>{{$ari->calificacion}}</td>
                         <td>{{$ari->respriesgo}}</td>
-                        <td>{{$ari->acciones}}</td>
-                        <td>{{$ari->probocurrencia}}</td>
+                        <td>{{(strtolower($ari->respriesgo) == 'pasiva' || strtolower($ari->respriesgo) == 'aceptación pasiva' || empty(trim($ari->acciones))) ? '-' : $ari->acciones}}</td>
+                        <td>{{$ari->nombre_ocurrencia ?? $ari->probocurrencia}}</td>
                     </tr>
                 @endforeach
                 @foreach ($riesgose as $ari)
                     <tr>
                         <td>Externos</td>
-                        <td>{{$ari->riesgo}}</td>
+                        <td>{{$ari->nombre_riesgo ?? $ari->riesgo}}</td>
                         <td>{{$ari->probabilidad}}</td>
                         <td>{{$ari->impacto}}</td>
                         <td>{{$ari->vesperado}}</td>
                         <td>{{$ari->calificacion}}</td>
                         <td>{{$ari->respriesgo}}</td>
-                        <td>{{$ari->acciones}}</td>
-                        <td>{{$ari->fechaproable}}</td>
+                        <td>{{(strtolower($ari->respriesgo) == 'pasiva' || strtolower($ari->respriesgo) == 'aceptación pasiva' || empty(trim($ari->acciones))) ? '-' : $ari->acciones}}</td>
+                        <td>{{$ari->nombre_ocurrencia ?? $ari->fechaproable}}</td>
                     </tr>
                 @endforeach
                 </tbody>

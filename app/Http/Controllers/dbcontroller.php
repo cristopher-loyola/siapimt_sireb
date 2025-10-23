@@ -3328,12 +3328,20 @@ foreach ($camposHtml as $campo) {
 
         $tarea = Tarea::where('idproyecto', $id)->orderBy('fecha_inicio', 'ASC')->get();
 
-        $riesgos = Analisis::where('idproyecto', $id)
-                            ->orderby('fechaproable', 'asc')
-                            ->where('tiporiesgo', 1)->get();
-        $riesgose = Analisis::where('idproyecto', $id)
-                            ->orderby('fechaproable', 'asc')
-                            ->where('tiporiesgo', 2)->get();
+        $riesgos = Analisis::leftJoin('riesgos', 'analisis.riesgo', '=', 'riesgos.id')
+                            ->leftJoin('ocurrencias', 'analisis.probocurrencia', '=', 'ocurrencias.id')
+                            ->where('analisis.idproyecto', $id)
+                            ->where('analisis.tiporiesgo', 1)
+                            ->orderby('analisis.fechaproable', 'asc')
+                            ->select('analisis.*', 'riesgos.tiporiesgo as nombre_riesgo', 'ocurrencias.nombre_ocurrencia')
+                            ->get();
+        $riesgose = Analisis::leftJoin('riesgos', 'analisis.riesgo', '=', 'riesgos.id')
+                            ->leftJoin('ocurrencias', 'analisis.probocurrencia', '=', 'ocurrencias.id')
+                            ->where('analisis.idproyecto', $id)
+                            ->where('analisis.tiporiesgo', 2)
+                            ->orderby('analisis.fechaproable', 'asc')
+                            ->select('analisis.*', 'riesgos.tiporiesgo as nombre_riesgo', 'ocurrencias.nombre_ocurrencia')
+                            ->get();
 
         $criskint = Analisis::where('idproyecto', $id)->where('tiporiesgo', 1)->count();
         $criskext = Analisis::where('idproyecto', $id)->where('tiporiesgo', 2)->count();

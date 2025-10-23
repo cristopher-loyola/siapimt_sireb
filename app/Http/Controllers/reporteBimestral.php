@@ -670,7 +670,7 @@ class reporteBimestral extends Controller
             en la base de datos, se obtiene el nombre para mantener la forma de registro
             del cliente y evitar inconsistencia de datos
         */
-        $nombreCliente = Cliente::select(
+        $cliente = Cliente::select(
             DB::raw("
             CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
             ")
@@ -678,7 +678,9 @@ class reporteBimestral extends Controller
         ->where([
             ['cliente.id','=',$request->input('nombrecliente')]
         ])
-        ->first()->clienteNombre;
+        ->first();
+        
+        $nombreCliente = $cliente ? $cliente->clienteNombre : 'Cliente no encontrado';
 
         $data = ['LoggedUserInfo' => User::where('id', '=', session('LoginId'))->first()];
 
@@ -760,7 +762,7 @@ class reporteBimestral extends Controller
 
         //solo se actualiza el cliente en caso de que se haya seleccionado uno nuevo
         if(isset($request->nombrecliente)){
-            $serviciot->nombrecliente = Cliente::select(
+            $cliente = Cliente::select(
                 DB::raw("
                 CONCAT(cliente.nivel1,' | ' ,cliente.nivel2, ' | ' ,cliente.nivel3) as clienteNombre
                 ")
@@ -768,7 +770,11 @@ class reporteBimestral extends Controller
             ->where([
                 ['cliente.id','=',$request->input('nombrecliente')]
             ])
-            ->first()->clienteNombre;
+            ->first();
+            
+            if($cliente) {
+                $serviciot->nombrecliente = $cliente->clienteNombre;
+            }
         }
 
         $serviciot->save();

@@ -3109,24 +3109,19 @@ class dbcontroller extends Controller
 
     
     public function cronogramaProtocolo($proyt, $tarea) {
-        $fechaTarea = null;
-        foreach ($tarea as $tar) {
-            $inicio = new \DateTime($tar->fecha_inicio);
-            $fin = new \DateTime($tar->fecha_inicio);
-            $fin->modify("+{$tar->duracion} months");
-            if (!$fechaTarea || $fin > $fechaTarea) {
-                $fechaTarea = $fin;
-            }
-        }
-
+        // Usar la fecha de fin real del proyecto en lugar de calcularla desde las tareas
         $inicio_proyecto = new \DateTime($proyt->fecha_inicio);
-        $fin_proyecto = $fechaTarea ?: new \DateTime($proyt->fecha_inicio);
+        $fin_proyecto = new \DateTime($proyt->fecha_fin);
+        
         $diferencia = $inicio_proyecto->diff($fin_proyecto);
         $meses = ($diferencia->y * 12) + $diferencia->m;
         if ($diferencia->d > 0) {
             $meses++;
         }
         $newDuracion = $meses;
+        
+        // Usar la fecha de fin real del proyecto
+        $fechaTarea = $fin_proyecto;
 
         return view('SIRB.reportes.cronogramaProtocolo', compact('proyt', 
         'tarea', 'newDuracion', 'fechaTarea'));
@@ -3425,8 +3420,7 @@ foreach ($camposHtml as $campo) {
         ->setOption('margin-left', 5)->setOption('margin-right', 5);
         $pdf->render();
 
-        $canvas = $pdf->getCanvas();
-        $canvas->page_text(300, 800, '{PAGE_NUM} DE {PAGE_COUNT}', null, 10, array(0, 0, 0));
+
         
         return $pdf->stream($unir . '.pdf');
     }
@@ -4674,6 +4668,16 @@ foreach ($camposHtml as $campo) {
     }
 
     public function upavance(Request $request, $id,$idt){
+        $request -> validate([
+            'avpor'=>'numeric',
+        ]);
+
+        // PRIMERO: Actualizar la tarea específica
+        $tarea = Tarea::find($idt);
+        $tarea->progreso = $request->get('avpor1');
+        $tarea->save();
+
+        // SEGUNDO: Recalcular el progreso general del proyecto
         $progres = Tarea::where('idproyecto',$id)->get();
         $total = 0;
         $actualfinal = 0;
@@ -4686,16 +4690,27 @@ foreach ($camposHtml as $campo) {
             $actual = (100*$total)/$final;//se multiplica por 100 la suma anterior y se divide entre el resultado de la primera opreracion
             $actualfinal = round($actual);//se redonde el resultado final
         }
+
+        // TERCERO: Actualizar el progreso y verificar si debe cambiar el estado
         $proy = Proyecto::find($id);
         $proy->progreso = $actualfinal;
+        
+        // Verificar si debe cambiar a estado "Concluido"
+        if ($actualfinal == 100) {
+            $todasCompletas = Tarea::where('idproyecto', $id)->where('progreso', '<', 100)->count() == 0;
+            if ($todasCompletas) {
+                if ($proy->Cliente == 1) { // Proyecto interno
+                    $tienePublicacion = \App\Models\Publicacion::where('idproyecto', $id)->exists();
+                    if ($tienePublicacion) {
+                        $proy->estado = 2; // Concluido
+                    }
+                } else { // Proyecto externo
+                    $proy->estado = 2; // Concluido
+                }
+            }
+        }
+        
         $proy->save();
-        $request -> validate([
-            'avpor'=>'numeric',
-        ]);
-
-        $tarea = Tarea::find($idt);
-        $tarea->progreso = $request->get('avpor1');
-        $tarea->save();
         return redirect('tareag/'.$id);
     }
 

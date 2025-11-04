@@ -1386,14 +1386,14 @@ label {
                     {{ $alin->nombre }}
                 @else
                    El presente proyecto está alineado al apartado III. “Economía Moral y Trabajo” del Plan Nacional de
- Desarrollo, así como al objetivo prioritario 1 del Programa Sectorial de Comunicaciones y Transportes 2020
-2024, que consiste en “Mejorar la conectividad y accesibilidad territorial mediante la construcción,
- modernización y conservación de infraestructura carretera con criterios de inclusión social, sostenibilidad y
- eficiencia para garantizar la movilidad de personas y mercancías”. Este objetivo se alinea con la estrategia
- prioritaria 1.4 “Mejorar los esquemas de planeación para detectar oportunamente las necesidades futuras de
- construcción, modernización y ampliación de la infraestructura carretera nacional, con un enfoque de
- intermodalidad.”, y con la acción puntual 1.4.2 “Promover la investigación científica y capacidad tecnológica
- en materia de transporte a fin de satisfacer las necesidades del sector”.
+                        Desarrollo, así como al objetivo prioritario 1 del Programa Sectorial de Comunicaciones y Transportes 2020
+                        2024, que consiste en “Mejorar la conectividad y accesibilidad territorial mediante la construcción,
+                        modernización y conservación de infraestructura carretera con criterios de inclusión social, sostenibilidad y
+                        eficiencia para garantizar la movilidad de personas y mercancías”. Este objetivo se alinea con la estrategia
+                        prioritaria 1.4 “Mejorar los esquemas de planeación para detectar oportunamente las necesidades futuras de
+                        construcción, modernización y ampliación de la infraestructura carretera nacional, con un enfoque de
+                        intermodalidad.”, y con la acción puntual 1.4.2 “Promover la investigación científica y capacidad tecnológica
+                        en materia de transporte a fin de satisfacer las necesidades del sector”.
                 @endif
             </div>
             

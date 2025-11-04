@@ -555,8 +555,8 @@
             padding: 10px;
         }
         .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
-            border-color: #ced4da !important;
-        }
+    border-color: #aacfe7 !important;  /* ← CAMBIO: era #ced4da */
+}
         .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
             border-color: #e74c3c !important;
         }

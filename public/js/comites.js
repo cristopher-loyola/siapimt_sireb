@@ -73,6 +73,16 @@ $('.button').click(function(){
 
         // Función para actualizar el campo oculto y la lista de usuarios
         function actualizarUsuariosSeleccionados() {
+          // Incluir automáticamente al organizador al principio si no está presente
+          const idUsuarioLogueadoEdit = document.getElementById('idUsuarioLogueadoEdit');
+          let organizadorId = '';
+          if (idUsuarioLogueadoEdit) {
+            organizadorId = idUsuarioLogueadoEdit.value;
+            if (organizadorId && !usuariosSeleccionados.includes(organizadorId)) {
+              usuariosSeleccionados.unshift(organizadorId);
+            }
+          }
+
           usuariosSeleccionadosInputedit.value = usuariosSeleccionados.join(",");
           selectedOptionsListedit.innerHTML = "";
 
@@ -84,9 +94,14 @@ $('.button').click(function(){
           } else {
           selectedOptionsListedit.innerHTML = ""; // Limpia la lista antes de agregar elementos nuevos
           usuariosSeleccionados.forEach(function (userId) {
+            // Omitir al organizador en la lista visual de selección manual
+            if (userId === organizadorId) {
+              return;
+            }
+            
             const listItem = document.createElement("li");
             listItem.dataset.userId = userId;
-            const selectOption = selectedit.querySelector(`option[value="${userId}`);
+            const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
 
             if (selectOption) {
               listItem.textContent = selectOption.getAttribute("data-nombre");
@@ -300,15 +315,27 @@ $('.button').click(function(){
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
+      // Crear array de nombres empezando con el organizador
+      let nombresParticipantes = [];
+      
+      // Agregar el organizador primero
+      if (encargadoservicio) {
+        nombresParticipantes.push(encargadoservicio);
+      }
+
       if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados
-        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
+        // Si no hay otros usuarios seleccionados, solo mostrar el organizador
+        selectedOptionsParrafoEdit.textContent = nombresParticipantes.length > 0 ? nombresParticipantes.join("\n") : "No hay ningún participante seleccionado";
       } else {
+        // Agregar los demás participantes después del organizador
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}`);
+          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
           return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
         });
-        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
+        
+        // Combinar organizador + otros participantes
+        nombresParticipantes = nombresParticipantes.concat(usuariosSeleccionadosNombres);
+        selectedOptionsParrafoEdit.textContent = nombresParticipantes.join("\n");
       }
     }
 
@@ -534,29 +561,62 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const usuariosSeleccionados = []; // Arreglo para almacenar los IDs de usuarios seleccionados
 
-  // Función para actualizar el campo oculto
+  // Función para actualizar el campo oculto y la lista visual
   function updateHiddenInput() {
+    // Incluir automáticamente al organizador al principio si no está presente
+    const idUsuarioLogueado = document.getElementById('idUsuarioLogueado');
+    if (idUsuarioLogueado) {
+      const organizadorId = idUsuarioLogueado.value;
+      if (organizadorId && !usuariosSeleccionados.includes(organizadorId)) {
+        usuariosSeleccionados.unshift(organizadorId);
+      }
+    }
+    
     usuariosSeleccionadosInput.value = usuariosSeleccionados.join(",");
+    
+    // Actualizar la lista visual para mostrar al organizador primero
+    updateVisualList();
+  }
+
+  // Función para actualizar la lista visual de participantes
+  function updateVisualList() {
+    selectedOptionsList.innerHTML = "";
+    
+    // Obtener el ID del organizador para omitirlo de la lista visual
+    const idUsuarioLogueado = document.getElementById('idUsuarioLogueado');
+    const organizadorId = idUsuarioLogueado ? idUsuarioLogueado.value : '';
+    
+    usuariosSeleccionados.forEach(function (userId) {
+      // Omitir al organizador en la lista visual de selección manual
+      if (userId === organizadorId) {
+        return;
+      }
+      
+      const listItem = document.createElement("li");
+      listItem.dataset.userId = userId;
+      
+      // Para otros participantes, buscar en el select
+      const selectOption = select.querySelector(`option[value="${userId}"]`);
+      if (selectOption) {
+        listItem.textContent = selectOption.textContent;
+      } else {
+        listItem.textContent = "Nombre del usuario desconocido";
+      }
+      
+      selectedOptionsList.appendChild(listItem);
+    });
   }
 
   select.addEventListener("change", function () {
     if (select.value) {
-      const optionText = select.options[select.selectedIndex].text;
       const optionValue = select.value;
 
-      const isDuplicate = Array.from(selectedOptionsList.children).some(function (item) {
-        return item.dataset.userId === optionValue;
-      });
+      const isDuplicate = usuariosSeleccionados.includes(optionValue);
 
       if (isDuplicate) {
         errorContainer.textContent = "Este elemento ya está en la lista.";
         return;
       }
-
-      const listItem = document.createElement("li");
-      listItem.textContent = optionText;
-      listItem.dataset.userId = optionValue;
-      selectedOptionsList.appendChild(listItem);
 
       usuariosSeleccionados.push(optionValue);
       updateHiddenInput(); // Actualizar el campo oculto
@@ -575,15 +635,12 @@ document.addEventListener("DOMContentLoaded", function () {
       if (index !== -1) {
         usuariosSeleccionados.splice(index, 1);
       }
-
-      item.remove();
     });
 
     updateHiddenInput(); // Actualizar el campo oculto después de eliminar usuarios
   });
 
   removeAllButton.addEventListener("click", function () {
-    selectedOptionsList.innerHTML = "";
     usuariosSeleccionados.length = 0; // Vaciar el arreglo
     updateHiddenInput(); // Actualizar el campo oculto al borrar todos los usuarios
   });
@@ -687,6 +744,33 @@ placeholderOption.selected = true;
 
 // Agregar la opción de marcador de posición al principio del select
 selectElement.prepend(placeholderOption);
+
+// Función para incluir automáticamente al organizador en participantes
+function incluirOrganizadorEnParticipantes() {
+  const idUsuarioLogueado = document.getElementById('idUsuarioLogueado');
+  const usuariosSeleccionadosInput = document.getElementById('usuarios_seleccionados');
+  
+  if (idUsuarioLogueado && usuariosSeleccionadosInput) {
+    const organizadorId = idUsuarioLogueado.value;
+    let usuariosSeleccionados = usuariosSeleccionadosInput.value ? usuariosSeleccionadosInput.value.split(',') : [];
+    
+    // Si el organizador no está en la lista, agregarlo al principio
+    if (organizadorId && !usuariosSeleccionados.includes(organizadorId)) {
+      usuariosSeleccionados.unshift(organizadorId);
+      usuariosSeleccionadosInput.value = usuariosSeleccionados.join(',');
+    }
+  }
+}
+
+// Event listener para incluir al organizador antes de enviar el formulario de nuevo comité
+document.addEventListener('DOMContentLoaded', function() {
+  const formNuevoComite = document.querySelector('form[action*="nuevocomite"]');
+  if (formNuevoComite) {
+    formNuevoComite.addEventListener('submit', function() {
+      incluirOrganizadorEnParticipantes();
+    });
+  }
+});
 
 // Obtener el elemento select
 var selectElement = document.getElementById('dependenciaedit');

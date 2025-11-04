@@ -254,12 +254,6 @@ removeSelectedButtonedit.addEventListener("click", function () {
     modalContainer.style.display = 'none';
     window.location.reload();
   });
-
-
-
-  
-
-
   // javascript para el modal de vizualizar
   $(document).on("click", "#btnviz",function(){
     console.log('Código JavaScript ejecutado.');

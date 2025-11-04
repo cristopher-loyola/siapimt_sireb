@@ -124,13 +124,45 @@
 
             .cont {
                 display: flex;
-                text-align: center; /* Opcional: centra los divs dentro del contenedor */
+                align-items: center;
+                position: relative;
+                gap: 8px;
+                text-align: center;
             }
 
             .div1, .div2, .div3, .div4, .div5{
                 display: inline-block;
                 border: 1px solid #000;
-                padding: 1px;
+                padding: 1px 6px;
+                font-family: Arial, sans-serif;
+                font-size: 9pt;
+                background: #f9f9f9;
+                box-sizing: border-box;
+                line-height: 16px;
+            }
+            /* columnas del footer: izquierda y derecha ocupan el resto, centro fijo */
+            .div1 { flex: 1 1 auto; text-align: left; }
+            .div5 { flex: 1 1 auto; text-align: right; }
+
+            /* Contador centrado y con marco diseñado */
+            .div3{
+                width: 180px;
+                text-align: center;
+                flex: 0 0 180px;
+                margin: 0 auto;
+            }
+
+            /* Contador definitivo: N de N */
+            .div3::before{
+                content: counter(page) ' de ' counter(pages);
+            }
+
+            
+            /* Responsivo: en pantallas estrechas, apilar elementos */
+            @media (max-width: 600px) {
+                .cont { flex-direction: column; align-items: stretch; }
+                .div1, .div5 { width: 100%; }
+                .div3 { width: auto; flex: 0 0 auto; }
             }
         /* Estilo para el contenido FIN */
         /* */
@@ -253,11 +285,11 @@
                         $fecha = new DateTime();
                         $formatter = new IntlDateFormatter(
                             'es_MX', // Idioma y región
-                            IntlDateFormatter::LONG, // Estilo de fecha (puedes cambiarlo)
-                            IntlDateFormatter::NONE, // No mostrar la hora
+                            IntlDateFormatter::LONG, // Estilo de fecha mostrado
+                            IntlDateFormatter::NONE, // Sin hora
                             'America/Mexico_City', // Zona horaria
-                            IntlDateFormatter::GREGORIAN, // Calendario
-                            "d 'de' MMMM 'de' y" // Formato personalizado
+                            IntlDateFormatter::GREGORIAN,
+                            "d 'de' MMMM 'de' y" // Ej.: 3 de noviembre de 2025
                         );
                         echo $formatter->format($fecha);
                     ?>
@@ -415,18 +447,19 @@
             <p class="title">{{$clave}}:&nbsp;{{Str::limit($proyt->nomproy, 120)}}</p>
             <hr>
         </div>
-        <div class="footer">
+        @php
+            // Fecha ORIGINAL del formato (Ymd) -> se muestra en el footer en todas las páginas
+            $fechaFormatoOriginal = '20250130';
+            $dtOriginal = \DateTime::createFromFormat('Ymd', $fechaFormatoOriginal);
+            $fechaOriginalFormateada = $dtOriginal ? $dtOriginal->format('d/m/Y') : $fechaFormatoOriginal;
+        @endphp
+        <footer class="footer" role="contentinfo">
             <div class="cont">
-                <div class="div1" style="text-align: left">REV 06, FECHA: 20250130</div>
-                {{-- <div class="div2"></div> --}}
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <div class="div3" style="height: 15px; width: 50px;"></div>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {{-- <div class="div4"></div> --}}
-                <div class="div5" style="text-align: right">F1 RI-001</div>
+                <div class="div1">REV 06, FECHA: {{ $fechaOriginalFormateada }}</div>
+                <div class="div3"></div>
+                <div class="div5">F1 RI-001</div>
             </div>
-            
-        </div>
+        </footer>
         <div class="contenido">
            <h2>1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JUSTIFICACIÓN DEL PROYECTO</h2>
 <h3>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ALINEACIÓN AL PROGRAMA SECTORIAL</h3>
@@ -703,9 +736,13 @@
                         @endif
                     </table>
                 </div>
+            @if ($proyt->notapresupuesto != '')
+                <br>
+                <h3>Notas de Recursos: </h3>
+                <div class="contenido-quill">{!! $q($proyt->notapresupuesto) !!}</div>
+            @endif
             <br>
             <h2>11&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ANÁLISIS DE RIESGOS</h2>
-            <p style="text-align: justify">{{$proyt->notapresupuesto}}</p>
             <style>
                 #riesgotabla{
                   text-align: center;
@@ -760,11 +797,11 @@
             <br>
         </div>
         <div class="section">
-            <h2>REFERENCIAS</h2>
+            <h2>12&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;REFERENCIAS</h2>
             <div>{!! $proyt->referencias !!}</div>
             @if ($proyt->notasmetodologia != '')
                 <br>
-                <h2>NOTAS</h2>
+                <h2>13&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOTAS</h2>
                 <p>{{$proyt->notasmetodologia}}</p>
             @endif
                 
@@ -775,3 +812,4 @@
     <!--FIN DEL SEGMENTO DEL PIE -->
 
 </html>
+<!-- ///////////////////// -->

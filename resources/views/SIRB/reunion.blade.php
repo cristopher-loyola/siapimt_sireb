@@ -646,6 +646,19 @@
     @endphp
     <tr>
         <td style='text-align: center; vertical-align: middle;'>
+            @php
+                $participantesIds = explode(',', $reunion->participantes);
+                $nombresParticipantes = [];
+                foreach ($participantesIds as $participanteId) {
+                    if (!empty($participanteId)) {
+                        $usuario = DB::table('usuarios')->where('id', $participanteId)->first();
+                        if ($usuario) {
+                            $nombresParticipantes[] = $usuario->Nombre . ' ' . $usuario->Apellido_Paterno . ' ' . $usuario->Apellido_Materno;
+                        }
+                    }
+                }
+                $nombresParticipantesString = implode(',', $nombresParticipantes);
+            @endphp
             <button type="button" id="btnviz" class="btn"
               data-id="{{ $reunion->id }}"
               data-fecha="{{ $reunion->fecha_reunion }}"
@@ -655,6 +668,7 @@
               data-dependencia="{{ $reunion->D_vinculacion }}"
               data-descripcion="{{ $reunion->descripcion_R }}"
               data-usuariosseleccionados="{{ $reunion->participantes }}"
+              data-nombresparticipantes="{{ $nombresParticipantesString }}"
               data-lugar="{{ $reunion->lugar_reunion }}">
               <i class="bi bi-info-circle"></i>
             </button>
@@ -824,8 +838,20 @@
     @endphp
     <tr>
     <td style='text-align: center; vertical-align: middle;'>
+            @php
+                $participantesIds = explode(',', $reunionRelacionada->participantes);
+                $nombresParticipantes = [];
+                foreach ($participantesIds as $participanteId) {
+                    if (!empty($participanteId)) {
+                        $usuario = DB::table('usuarios')->where('id', $participanteId)->first();
+                        if ($usuario) {
+                            $nombresParticipantes[] = $usuario->Nombre . ' ' . $usuario->Apellido_Paterno . ' ' . $usuario->Apellido_Materno;
+                        }
+                    }
+                }
+                $nombresParticipantesString = implode(',', $nombresParticipantes);
+            @endphp
             <button type="button" id="btnviz" class="btn"
-            data-id="{{ $reunionRelacionada->id }}"
             data-id="{{ $reunionRelacionada->id }}"
               data-fecha="{{ $reunionRelacionada->fecha_reunion }}"
               data-tipo="{{ $reunionRelacionada->tipo_reunion }}"
@@ -834,6 +860,7 @@
               data-dependencia="{{ $reunionRelacionada->D_vinculacion }}"
               data-descripcion="{{ $reunionRelacionada->descripcion_R }}"
               data-usuariosseleccionados="{{ $reunionRelacionada->participantes }}"
+              data-nombresparticipantes="{{ $nombresParticipantesString }}"
               data-lugar="{{ $reunionRelacionada->lugar_reunion }}">
               <i class="bi bi-info-circle"></i>
             </button>

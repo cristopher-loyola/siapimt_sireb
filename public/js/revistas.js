@@ -77,6 +77,15 @@ $('.button').click(function(){
         const removeAllButtonedit = document.getElementById("remove-all-edit");
         const usuariosSeleccionados = usuariosseleccionados.toString().split(','); // Convierte la cadena en un array
     
+        // Agregar automáticamente al usuario logueado como coautor si no está ya presente
+        const idUsuarioLogueadoEdit = document.getElementById("idUsuarioLogueadoEdit");
+        if (idUsuarioLogueadoEdit && idUsuarioLogueadoEdit.value) {
+          const organizadorId = idUsuarioLogueadoEdit.value;
+          if (!usuariosSeleccionados.includes(organizadorId)) {
+            usuariosSeleccionados.unshift(organizadorId); // Agregar al inicio
+          }
+        }
+    
         // Función para actualizar el campo oculto y la lista de usuarios
         function actualizarUsuariosSeleccionados() {
           usuariosSeleccionadosInputedit.value = usuariosSeleccionados.join(",");
@@ -288,7 +297,9 @@ $(document).ready(function() {
     var ciudadpais = $(this).data('ciudadpais');
     var fecha = $(this).data('fecha');
     var encargadoservicio = $(this).data('encargado');
+    var nombrepersona = $(this).data('nombrepersona');
     var usuariosseleccionados = $(this).data('usuariosseleccionados');
+    var idusuariologueado = $(this).data('idusuariologueado');
 
     // Llenar los campos del formulario modal con los datos de la fila
     $('#tiporevistaviz').text(tiporevista);
@@ -299,33 +310,51 @@ $(document).ready(function() {
     $('#editorialviz').text(editorial);
     $('#ciudadpaisviz').text(ciudadpais);
     $('#fechaviz').text(fecha);
-    $('#encargadoservicioviz').text(encargadoservicio);
+
+    // Fallback robusto para mostrar el autor/organizador
+    var autor = (encargadoservicio && String(encargadoservicio).trim().length > 0)
+      ? encargadoservicio
+      : (nombrepersona && String(nombrepersona).trim().length > 0 ? nombrepersona : '');
+    $('#encargadoservicioviz').text(autor || 'No disponible');
 
     // Declaración de variables para los elementos y arreglos
     const selectedOptionsParrafoEdit = document.getElementById("selected-options-paragraph-editar");
     const usuariosSeleccionadosInputEdit = document.getElementById("usuarios_seleccionadosedit");
     const selectedit = document.getElementById("oprtedit");
-    const usuariosSeleccionados = usuariosseleccionados.toString().split(',');
+    const usuariosSeleccionados = (usuariosseleccionados && usuariosseleccionados.toString().length > 0)
+      ? usuariosseleccionados.toString().split(',').filter(Boolean)
+      : [];
+
+    // Forzar al organizador primero en la lista
+    const organizadorId = idusuariologueado ? idusuariologueado.toString() : null;
+    if (organizadorId) {
+      const idx = usuariosSeleccionados.indexOf(organizadorId);
+      if (idx === -1) {
+        usuariosSeleccionados.unshift(organizadorId);
+      } else if (idx > 0) {
+        usuariosSeleccionados.splice(idx, 1);
+        usuariosSeleccionados.unshift(organizadorId);
+      }
+    }
+
+    // Definir nombreCompletoUsuario para fallback de coautores
+    var nombreCompletoUsuario = autor;
 
     // Función para actualizar el campo oculto y el párrafo de usuarios seleccionados
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
       
-      if (!usuariosSeleccionados.length || (usuariosSeleccionados.length === 1 && usuariosSeleccionados[0] === '')) {
-        // Si no hay usuarios seleccionados, mostrar solo el autor
-        selectedOptionsParrafoEdit.innerHTML = `<strong>${nombreCompletoUsuario}</strong>`;
+      if (!usuariosSeleccionadosInputEdit.value) {
+        // Si no hay usuarios seleccionados
+        selectedOptionsParrafoEdit.textContent = "No hay ningún coautor seleccionado";
       } else {
         const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
           const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : null;
-        }).filter(nombre => nombre !== null);
-        
-        // Crear la lista final con el autor primero
-        const listaFinal = [`<strong>${nombreCompletoUsuario}</strong>`, ...usuariosSeleccionadosNombres];
-        selectedOptionsParrafoEdit.innerHTML = listaFinal.join("<br>");
+          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
+        });
+        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
       }
     }
-
 
     actualizarUsuariosSeleccionadosEnParrafo();
 
@@ -361,6 +390,62 @@ document.addEventListener("DOMContentLoaded", function () {
   function updateHiddenInput() {
     usuariosSeleccionadosInput.value = usuariosSeleccionados.join(",");
   }
+
+  // Función para agregar automáticamente al usuario logueado como coautor
+  function agregarOrganizadorAutomaticamente() {
+    const selectElement = document.getElementById("oprt");
+    const listaSeleccionados = document.getElementById("selected-options-solicitudes");
+    const inputOculto = document.getElementById("usuarios_seleccionados");
+    const idUsuarioLogueado = document.getElementById("idUsuarioLogueado");
+    
+    if (selectElement && listaSeleccionados && inputOculto && idUsuarioLogueado && idUsuarioLogueado.value) {
+      const organizadorId = idUsuarioLogueado.value;
+      
+      // Verificar que no esté ya agregado
+      if (!usuariosSeleccionados.includes(organizadorId)) {
+        // Buscar el nombre del usuario en las opciones del select
+        const selectOption = Array.from(selectElement.options).find(option => option.value === organizadorId);
+        if (selectOption) {
+          usuariosSeleccionados.unshift(organizadorId);
+          
+          const listItem = document.createElement("li");
+          listItem.textContent = selectOption.text;
+          listItem.dataset.userId = organizadorId;
+          listItem.style.fontWeight = "bold"; // Destacar al organizador
+          listItem.style.color = "#0066cc"; // Color distintivo
+          listItem.title = "Organizador (agregado automáticamente)";
+          listaSeleccionados.prepend(listItem);
+          
+          updateHiddenInput();
+          
+          console.log("Organizador agregado automáticamente:", selectOption.text);
+          return true; // Éxito
+        }
+      }
+    }
+    return false; // No se pudo agregar
+  }
+
+  // Intentar agregar al organizador con múltiples intentos
+  let intentos = 0;
+  const maxIntentos = 10;
+  
+  function intentarAgregarOrganizador() {
+    if (agregarOrganizadorAutomaticamente()) {
+      console.log("Organizador agregado exitosamente en el intento:", intentos + 1);
+      return;
+    }
+    
+    intentos++;
+    if (intentos < maxIntentos) {
+      setTimeout(intentarAgregarOrganizador, 200 * intentos); // Incrementar el tiempo de espera
+    } else {
+      console.log("No se pudo agregar al organizador después de", maxIntentos, "intentos");
+    }
+  }
+
+  // Iniciar el proceso de agregar al organizador
+  intentarAgregarOrganizador();
 
   select.addEventListener("change", function () {
     if (select.value) {
@@ -417,6 +502,37 @@ document.addEventListener("DOMContentLoaded", function () {
       target.classList.toggle("selectedsoli");
     }
   });
+
+  // Agregar automáticamente al usuario logueado como coautor al cargar la página
+  const idUsuarioLogueado = document.getElementById("idUsuarioLogueado");
+  if (idUsuarioLogueado && idUsuarioLogueado.value) {
+    const organizadorId = idUsuarioLogueado.value;
+    
+    // Buscar el nombre del usuario en el select
+    const selectOptions = select.options;
+    let nombreUsuario = "";
+    for (let i = 0; i < selectOptions.length; i++) {
+      if (selectOptions[i].value === organizadorId) {
+        nombreUsuario = selectOptions[i].text;
+        break;
+      }
+    }
+    
+    // Solo agregar si no está ya en la lista y se encontró el nombre
+    if (nombreUsuario && !usuariosSeleccionados.includes(organizadorId)) {
+      usuariosSeleccionados.unshift(organizadorId);
+      
+      const listItem = document.createElement("li");
+      listItem.textContent = nombreUsuario;
+      listItem.dataset.userId = organizadorId;
+      listItem.style.fontWeight = "bold";
+      listItem.style.color = "#0066cc";
+      listItem.title = "Organizador";
+      selectedOptionsList.prepend(listItem);
+      
+      updateHiddenInput();
+    }
+  }
 });
 
 

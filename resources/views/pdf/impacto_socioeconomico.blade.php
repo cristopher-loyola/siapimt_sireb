@@ -206,7 +206,7 @@ th,td{ border:1px solid #ddd; padding:6px; font-size:12px; text-align:left; }
 <h1>Impacto Socioeconómico del Proyecto</h1>
 <div class="proyecto-info">
     <p style="margin: 0; font-size: 14px;">
-        <strong>Clave:</strong> {{ $proyt->clavea }}-@if($proyt->claven < 10)0{{ $proyt->claven }}@else{{ $proyt->claven }}@endif/{{ $proyt->clavey }}
+        <strong>Clave:</strong> {{ $proyt->clavea }}{{ $proyt->clavet }}-@if($proyt->claven < 10)0{{ $proyt->claven }}@else{{ $proyt->claven }}@endif/{{ $proyt->clavey }}
     </p>
     <p style="margin: 10px 0 0 0; font-size: 16px; font-weight: bold; color: #0F52BA;">
         {{ $proyt->nomproy }}

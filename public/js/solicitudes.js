@@ -312,34 +312,15 @@ $(document).on("click", "#btnviz",function(){
     function actualizarUsuariosSeleccionadosEnParrafo() {
       usuariosSeleccionadosInputEdit.value = usuariosSeleccionados.join(",");
 
-      // Crear array para mostrar participantes, comenzando con la persona logueada
-      let participantesParaMostrar = [];
-      
-      // Agregar la persona logueada al principio de la lista
-      if (nombreCompletoUsuario) {
-        participantesParaMostrar.push(nombreCompletoUsuario);
-      }
-
       if (!usuariosSeleccionadosInputEdit.value) {
-        // Si no hay usuarios seleccionados, solo mostrar la persona logueada
-        selectedOptionsParrafoEdit.textContent = participantesParaMostrar.join("\n");
+        // Si no hay usuarios seleccionados
+        selectedOptionsParrafoEdit.textContent = "No hay ningún participante seleccionado";
       } else {
-        // Filtrar el encargado del servicio de la lista de participantes
-        const usuariosFiltrados = usuariosSeleccionados.filter(function(userId) {
-          return userId !== encargadoservicio;
+        const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
+          const selectOption = selectedit.querySelector(`option[value="${userId}`);
+          return selectOption ? selectOption.getAttribute("data-nombre") : nombreCompletoUsuario;
         });
-        
-        if (usuariosFiltrados.length > 0) {
-          const usuariosSeleccionadosNombres = usuariosFiltrados.map(function (userId) {
-            const selectOption = selectedit.querySelector(`option[value="${userId}`);
-            return selectOption ? selectOption.getAttribute("data-nombre") : "Usuario desconocido";
-          });
-          
-          // Agregar los demás participantes después de la persona logueada
-          participantesParaMostrar = participantesParaMostrar.concat(usuariosSeleccionadosNombres);
-        }
-        
-        selectedOptionsParrafoEdit.textContent = participantesParaMostrar.join("\n");
+        selectedOptionsParrafoEdit.textContent = usuariosSeleccionadosNombres.join("\n");
       }
     }
 

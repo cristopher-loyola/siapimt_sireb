@@ -549,8 +549,8 @@
             padding: 10px;
         }
         .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
-        border-color: #ced4da !important;
-        }
+    border-color: #aacfe7 !important;  /* ← CAMBIO: era #ced4da */
+}
         .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
             border-color: #e74c3c !important;
         }
@@ -722,38 +722,6 @@
     pointer-events: none;
     cursor: not-allowed;
     opacity: 0.8;
-  }
-</style>
-@else
-<style>
-  /* Estilo para modo edición - bordes azules */
-  input:not([type="hidden"]),
-  select,
-  textarea {
-    border-color: #3498db !important;
-  }
-  input:not([type="hidden"]):hover,
-  select:hover,
-  textarea:hover {
-    border-color: #3498db !important;
-  }
-  input:not([type="hidden"]):focus,
-  select:focus,
-  textarea:focus {
-    border-color: #3498db !important;
-  }
-  /* Estilo específico para Quill editors en modo edición */
-  .editor-quill,
-  .ql-toolbar {
-    border-color: #3498db !important;
-  }
-  .editor-quill:hover,
-  .ql-toolbar:hover {
-    border-color: #3498db !important;
-  }
-  .editor-quill:focus,
-  .ql-toolbar:focus {
-    border-color: #3498db !important;
   }
 </style>
 @endif

@@ -547,7 +547,7 @@
             overflow-y: auto;
             background: #fff;
             border-radius: 0 0 10px 10px;
-            border: 3px solid #ced4da;
+            border: 3px solidrgb(102, 105, 107);
             border-top: none;
             padding: 10px;
         }
@@ -715,34 +715,34 @@
   .solo-lectura input:not([type="hidden"]),
   .solo-lectura select,
   .solo-lectura textarea {
-    background-color: #e9ecef !important;
+    background: #e9ecef !important;
     color: #6c757d !important;
     border-color: #ced4da !important;
-    pointer-events: none; /* bloquea clicks/ediciones */
-    cursor: not-allowed;
-    opacity: 0.8;
+    pointer-events: none !important; /* bloquea clicks/ediciones */
+    cursor: not-allowed !important;
+    opacity: 0.8 !important;
   }
   .solo-lectura textarea {
-    resize: none;
+    resize: none !important;
   }
   .solo-lectura select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
   }
   /* Estilo específico para Quill editors en modo solo lectura */
   .solo-lectura .editor-quill {
     background: #e9ecef !important;
     color: #6c757d !important;
-    border-color: #ced4da !important;
+    border-color: #ced4da !important; /* MISMO GRIS QUE LOS DEMÁS CAMPOS */
     pointer-events: none !important;
     cursor: not-allowed !important;
     opacity: 0.8 !important;
   }
-  /* Estilo para la toolbar de Quill en modo solo lectura */
-  .solo-lectura .ql-toolbar {
+  /* Estilo para la toolbar de Quill en modo solo lectura - TAMBIÉN GRIS */
+  .solo-lectura .ql-toolbar.ql-snow {
     background: #e9ecef !important;
-    border-color: #ced4da !important;
+    border-color: #ced4da(103, 158, 212) !important; /* MISMO GRIS QUE EL EDITOR */
     pointer-events: none !important;
     cursor: not-allowed !important;
     opacity: 0.8 !important;
@@ -981,52 +981,8 @@
                     margin-right: 10px;
                 }
             }
-            .ql-toolbar.ql-snow,
-            .editor-quill {
-                width: 800px;
-                margin: 0 auto;
-                border-width: 3px !important;
-                border-style: solid !important;
-                border-color: #ced4da !important; 
-                box-sizing: border-box;
-                margin-bottom: 6px !important;
-            }
-
-            .ql-toolbar.ql-snow {
-                background: #fff;
-                border-radius: 10px 10px 0 0;
-                border: 3px solid #aacfe7;
-                border-bottom: none;
-                padding: 10px;
-            }
-
-            .editor-quill {
-                min-height: 150px;
-                max-height: 300px;
-                height: 200px;
-                overflow-y: auto;
-                background: #fff;
-                border-radius: 0 0 10px 10px;
-                border: 3px solid #ced4da;
-                border-top: none;
-                padding: 10px;
-            }
-            .editor-quill.borde-azul, .ql-toolbar.ql-snow.borde-azul {
-               border-color: #aacfe7 !important;
-            }
-            .editor-quill.borde-rojo, .ql-toolbar.ql-snow.borde-rojo {
-                border-color: #e74c3c !important;
-            }
-            .ql-toolbar .ql-formats button[title] {
-                position: relative;
-            }
-            .ql-table::before {
-                content: '▦'; 
-                font-size: 16px;
-                color: #444;
-                display: inline-block;
-                line-height: 1;
-            }
+           
+            
         </style>
         <div class="sidebar">
             <div class="sidebar-header">

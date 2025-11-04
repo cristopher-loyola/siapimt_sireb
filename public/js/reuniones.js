@@ -82,6 +82,15 @@ $('.button').click(function(){
 
     // Función para actualizar el campo oculto y la lista de usuarios
     function actualizarUsuariosSeleccionados() {
+      // Incluir automáticamente al organizador si no está ya en la lista
+      const idUsuarioLogueadoEdit = document.getElementById("idUsuarioLogueadoEdit");
+      if (idUsuarioLogueadoEdit && idUsuarioLogueadoEdit.value) {
+        const organizadorId = idUsuarioLogueadoEdit.value;
+        if (!usuariosSeleccionados.includes(organizadorId)) {
+          usuariosSeleccionados.unshift(organizadorId); // Agregar al inicio
+        }
+      }
+
       usuariosSeleccionadosInputedit.value = usuariosSeleccionados.join(",");
       selectedOptionsListedit.innerHTML = "";
 
@@ -291,6 +300,7 @@ $(document).ready(function() {
     var descripcion = $(this).data('descripcion');
     var encargadoservicio = $(this).data('encargado');
     var usuariosseleccionados = $(this).data('usuariosseleccionados');
+    var nombresparticipantes = $(this).data('nombresparticipantes');
 
     // Llenar los campos del formulario modal con los datos de la fila
     $('#fechaviz').text(fecha);
@@ -304,7 +314,6 @@ $(document).ready(function() {
     // Declaración de variables para los elementos y arreglos
     const selectedOptionsParrafoEdit = document.getElementById("selected-options-paragraph-editar");
     const usuariosSeleccionadosInputEdit = document.getElementById("usuarios_seleccionadosedit");
-    const selectedit = document.getElementById("oprtedit");
     const usuariosSeleccionados = usuariosseleccionados.toString().split(',');
 
     // Función para actualizar el campo oculto y el párrafo de usuarios seleccionados
@@ -313,15 +322,13 @@ $(document).ready(function() {
 
       if (!usuariosSeleccionados.length || (usuariosSeleccionados.length === 1 && usuariosSeleccionados[0] === '')) {
         // Si no hay usuarios seleccionados, mostrar solo el organizador
-        selectedOptionsParrafoEdit.innerHTML = `<strong>${nombreCompletoUsuario}</strong>`;
+        selectedOptionsParrafoEdit.innerHTML = `<strong>${encargadoservicio}</strong>`;
       } else {
-        const usuariosSeleccionadosNombres = usuariosSeleccionados.map(function (userId) {
-          const selectOption = selectedit.querySelector(`option[value="${userId}"]`);
-          return selectOption ? selectOption.getAttribute("data-nombre") : null;
-        }).filter(nombre => nombre !== null);
+        // Usar los nombres de participantes del data attribute
+        const nombresParticipantesArray = nombresparticipantes ? nombresparticipantes.split(',') : [];
         
         // Crear la lista final con el organizador primero
-        const listaFinal = [`<strong>${nombreCompletoUsuario}</strong>`, ...usuariosSeleccionadosNombres];
+        const listaFinal = [`<strong>${encargadoservicio}</strong>`, ...nombresParticipantesArray];
         selectedOptionsParrafoEdit.innerHTML = listaFinal.join("<br>");
       }
     }
@@ -360,6 +367,19 @@ document.addEventListener("DOMContentLoaded", function () {
   // Función para actualizar el campo oculto
   function updateHiddenInput() {
     usuariosSeleccionadosInput.value = usuariosSeleccionados.join(",");
+  }
+
+  // Función para incluir automáticamente al organizador antes de enviar
+  function incluirOrganizadorEnParticipantes() {
+    const idUsuarioLogueado = document.getElementById("idUsuarioLogueado");
+    if (idUsuarioLogueado && idUsuarioLogueado.value) {
+      const organizadorId = idUsuarioLogueado.value;
+      // Solo agregar si no está ya en la lista
+      if (!usuariosSeleccionados.includes(organizadorId)) {
+        usuariosSeleccionados.unshift(organizadorId); // Agregar al inicio
+        updateHiddenInput();
+      }
+    }
   }
 
   select.addEventListener("change", function () {
@@ -417,6 +437,14 @@ document.addEventListener("DOMContentLoaded", function () {
       target.classList.toggle("selectedsoli");
     }
   });
+
+  // Event listener para el formulario de nueva reunión
+  const formNuevaReunion = document.querySelector('form[action*="nuevareunion"]');
+  if (formNuevaReunion) {
+    formNuevaReunion.addEventListener("submit", function(e) {
+      incluirOrganizadorEnParticipantes();
+    });
+  }
 });
 
 
